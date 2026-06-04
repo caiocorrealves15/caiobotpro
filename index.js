@@ -17,7 +17,7 @@ if (fs.existsSync('minha-sessao.tar.gz')) {
 const app = express();
 const PORT = process.env.PORT || 3000;
 app.get('/', (req, res) => res.send('Bot Online!'));
-app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
+app.listen(process.env.PORT || 3000, '0.0.0.0');
 
 let brincadeirasAtivas = true;
 const ARQUIVO_RANK = './rank.json';
