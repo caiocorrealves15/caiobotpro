@@ -282,27 +282,31 @@ async function connectToWhatsApp() {
         // Comando !clima
         // 8. COMANDO CLIMA (AJUSTADO)
         // 8. COMANDO CLIMA (COM DIAGNÓSTICO)
+        // 8. COMANDO CLIMA (TRADUZIDO)
         if (text.startsWith('!clima')) {
-            console.log("DEBUG: Comando clima detectado!"); // Isso vai aparecer no LOG do Render
             const cidade = text.replace('!clima', '').trim();
-            
-            if (!cidade) {
-                await sock.sendMessage(sender, { text: "❌ Você precisa digitar a cidade! Ex: !clima Cariacica" });
-                return;
-            }
+            if (!cidade) return await sock.sendMessage(sender, { text: "❌ Digite a cidade! Ex: !clima Cariacica" });
+
+            // Dicionário de tradução simples
+            const traduzir = (condicao) => {
+                const manual = {
+                    'light rain': 'Chuva leve', 'rain': 'Chuva', 'sunny': 'Ensolarado',
+                    'mostly sunny': 'Predominância de sol', 'cloudy': 'Nublado',
+                    'mostly cloudy': 'Predominância de nuvens', 'partly cloudy': 'Parcialmente nublado',
+                    'clear': 'Céu limpo', 'thunderstorms': 'Tempestades'
+                };
+                return manual[condicao.toLowerCase()] || condicao;
+            };
 
             weather.find({ search: cidade, degreeType: 'C' }, async (err, result) => {
-                if (err) {
-                    console.log("ERRO WEATHER: ", err); // Isso vai aparecer no LOG do Render
-                    return await sock.sendMessage(sender, { text: "❌ Erro ao buscar clima. Verifique o log." });
-                }
-                if (!result || result.length === 0) {
-                    return await sock.sendMessage(sender, { text: "❌ Cidade não encontrada." });
-                }
+                if (err || !result || result.length === 0) return await sock.sendMessage(sender, { text: "❌ Cidade não encontrada." });
+                
                 const current = result[0].current;
+                const condicaoTraduzida = traduzir(current.skytext);
+                
                 const msgClima = `🌤 *Tempo em: ${current.observationpoint}*\n` +
                                  `🌡 Temperatura: ${current.temperature}°C\n` +
-                                 `☁️ Condição: ${current.skytext}`;
+                                 `☁️ Condição: ${condicaoTraduzida}`;
                 await sock.sendMessage(sender, { text: msgClima });
             });
         }
