@@ -1,8 +1,17 @@
+const fs = require('fs');
 const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const express = require('express');
 const app = express();
 const port = process.env.PORT || 3000;
+
+// Lógica para carregar a sessão do Railway via variável de ambiente
+if (process.env.SESSION_BASE64) {
+    console.log("Detectado SESSION_BASE64, descompactando sessão...");
+    fs.writeFileSync('sessao.tar.base64', process.env.SESSION_BASE64);
+    require('child_process').execSync('base64 -d sessao.tar.base64 > sessao.tar && tar -xvf sessao.tar');
+    console.log("Sessão restaurada com sucesso!");
+}
 
 let qrCodeData = "";
 
@@ -20,18 +29,17 @@ async function iniciarBot() {
     sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update;
         
-        if (qr) qrCodeData = qr; // Salva o QR para exibir no site
+        if (qr) qrCodeData = qr; 
 
         if (connection === 'close') {
             const shouldReconnect = lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut;
             if (shouldReconnect) iniciarBot();
         } else if (connection === 'open') {
             console.log('CONECTADO COM SUCESSO!');
-            qrCodeData = ""; // Limpa o QR após conectar
+            qrCodeData = ""; 
         }
     });
 
-    // Código de Pareamento (Backup)
     if (!sock.authState.creds.me) {
         setTimeout(async () => {
             try {
@@ -44,14 +52,12 @@ async function iniciarBot() {
     }
 }
 
-// Rota do servidor Web para mostrar o QR Code
 app.get('/', (req, res) => {
     if (qrCodeData) {
         res.send(`
             <center>
                 <h1>Escaneie o QR Code abaixo com seu WhatsApp</h1>
                 <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrCodeData)}"/>
-                <p>Se não carregar, atualize a página.</p>
             </center>
         `);
     } else {
