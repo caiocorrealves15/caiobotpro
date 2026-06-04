@@ -13,11 +13,11 @@ if (fs.existsSync('minha-sessao.tar.gz')) {
     console.log("Sessão extraída!");
 }
 
-// 2. Servidor Web estável para o Render
+// 2. Servidor Web estável (O Render exige que isso suba primeiro)
 const app = express();
 const PORT = process.env.PORT || 3000;
-app.get('/', (req, res) => res.send('Bot Online!'));
-app.listen(process.env.PORT || 3000, '0.0.0.0');
+app.get('/', (req, res) => res.status(200).send('Bot Online!'));
+app.listen(PORT, '0.0.0.0', () => console.log(`Servidor rodando na porta ${PORT}`));
 
 let brincadeirasAtivas = true;
 const ARQUIVO_RANK = './rank.json';
@@ -39,19 +39,18 @@ async function connectToWhatsApp() {
     sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect } = update;
         
-        if (connection === 'connecting') {
-            console.log("Conectando...");
-        } else if (connection === 'open') {
+        if (connection === 'open') {
             console.log("✅ BOT CONECTADO COM SUCESSO!");
         } else if (connection === 'close') {
             const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
             if (shouldReconnect) {
-                console.log("Conexão caiu, tentando em 5s...");
-                setTimeout(connectToWhatsApp, 5000);
+                console.log("Conexão fechada. Reconectando em 5s...");
+                setTimeout(connectToWhatsApp, 5000); // Reconexão controlada
             }
         }
     });
 
+    // Função de figurinha (mantida conforme seu original)
     async function criarFigurinha(mediaMessage, sock, sender, type) {
         try {
             const ext = type === 'videoMessage' ? 'mp4' : 'jpg';
@@ -73,6 +72,7 @@ async function connectToWhatsApp() {
         } catch (err) { await sock.sendMessage(sender, { text: "❌ Erro ao criar figurinha." }); }
     }
 
+    // Processamento de mensagens
     sock.ev.on('messages.upsert', async (m) => {
         const msg = m.messages[0];
         if (!msg.message || msg.key.fromMe) return;
