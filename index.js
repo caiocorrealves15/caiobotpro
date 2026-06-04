@@ -125,24 +125,24 @@ async function connectToWhatsApp() {
         if (text === '!menu') {
             const menuText = `🤖 MENU DE COMANDOS DO BOT [Bonde do Brasil] 🎮\n` +
                 `Digite o comando correspondente para acionar o bot:\n\n` +
-                `⚽ 1. ROLÊS E ORGANIZAÇÃO\n` +
-                `• !rank: Ranking de mensagens.\n` +
-                `• !sortear: Sorteia alguém do grupo.\n` +
-                `• !tier [tema]: Ranking aleatório do grupo.\n\n` +
-                `😂 2. INTERAÇÃO E ZUEIRA\n` +
-                `• !musica [nome]: Busca música no YouTube.\n` +
-                `• !socar @usuario: Dá um soco no membro.\n` +
-                `• !beijar @usuario: Dá um beijo no membro.\n` +
-                `• !matar @usuario: Elimina o membro.\n` +
-                `• !f: Transforma foto/vídeo em figurinha.\n\n` +
+                `⚽⚽ 1. ROLÊS E ORGANIZAÇÃO\n` +
+                `🔰!rank: Ranking de mensagens.\n` +
+                `⌛!sortear: Sorteia alguém do grupo.\n` +
+                `🎇​!tier [tema]: Ranking aleatório do grupo.\n\n` +
+                `😂😂 2. INTERAÇÃO E ZUEIRA\n` +
+                `🎵!musica [nome]: Busca música no YouTube.\n` +
+                `🤜!socar @usuario: Dá um soco no membro.\n` +
+                `😘!beijar @usuario: Dá um beijo no membro.\n` +
+                `🗡️!matar @usuario: Elimina o membro.\n` +
+                `🤳 !f: Transforma foto/vídeo em figurinha.\n\n` +
                 `🚨 3. MODERAÇÃO (Para os administradores)\n` +
-                `• !ban @usuario: Expulsa o membro.\n` +
-                `• !adm @usuario: Promove membro a admin.\n` +
-                `• !fechar / !abrir: Abre ou fecha o grupo.\n\n` +
-                `⚙️ 4. UTILIDADES\n` +
-                `• !menu: Exibe esta lista de comandos.\n` +
-                `• !clima [sua cidade]: Previsão do tempo.\n\n` +
-                `👑 Desenvolvido por: Caio\n` +
+                `❌​!ban @usuario: Expulsa o membro.\n` +
+                `❇️!adm @usuario: Promove membro a admin.\n` +
+                `​🚫 !fechar / !abrir: Abre ou fecha o grupo.\n\n` +
+                `⚙️⚙️ 4. UTILIDADES\n` +
+                `📛!menu: Exibe esta lista de comandos.\n` +
+                `🌤️!clima [sua cidade]: Previsão do tempo.\n\n` +
+                `👑 Desenvolvido por: Caio😎😎😎\n` +
                 `⏰ Atualizado`;
 
             await sock.sendMessage(sender, { 
@@ -280,19 +280,23 @@ async function connectToWhatsApp() {
             }
         }
         // Comando !clima
+        // 8. COMANDO CLIMA (AJUSTADO)
         if (text.startsWith('!clima ')) {
             const cidade = text.replace('!clima ', '');
-            weather.find({ search: cidade, degreeType: 'C' }, (err, result) => {
-                if (err || !result || result.length === 0) {
-                    return sock.sendMessage(sender, { text: "❌ Não consegui encontrar essa cidade ou houve um erro." });
+            weather.find({ search: cidade, degreeType: 'C' }, async (err, result) => {
+                if (err) {
+                    console.log(err);
+                    return await sock.sendMessage(sender, { text: "❌ Erro ao buscar o clima." });
+                }
+                if (!result || result.length === 0) {
+                    return await sock.sendMessage(sender, { text: "❌ Cidade não encontrada." });
                 }
                 const current = result[0].current;
-                const msgClima = `🌤 *Previsão do tempo para: ${current.observationpoint}*\n` +
+                const msgClima = `🌤 *Tempo em: ${current.observationpoint}*\n` +
                                  `🌡 Temperatura: ${current.temperature}°C\n` +
                                  `☁️ Condição: ${current.skytext}\n` +
-                                 `💧 Umidade: ${current.humidity}%\n` +
-                                 `🌬 Vento: ${current.winddisplay}`;
-                sock.sendMessage(sender, { text: msgClima });
+                                 `💧 Umidade: ${current.humidity}%`;
+                await sock.sendMessage(sender, { text: msgClima });
             });
         }
     });
