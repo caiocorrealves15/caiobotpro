@@ -281,12 +281,20 @@ async function connectToWhatsApp() {
         }
         // Comando !clima
         // 8. COMANDO CLIMA (AJUSTADO)
-        if (text.startsWith('!clima ')) {
-            const cidade = text.replace('!clima ', '');
+        // 8. COMANDO CLIMA (COM DIAGNÓSTICO)
+        if (text.startsWith('!clima')) {
+            console.log("DEBUG: Comando clima detectado!"); // Isso vai aparecer no LOG do Render
+            const cidade = text.replace('!clima', '').trim();
+            
+            if (!cidade) {
+                await sock.sendMessage(sender, { text: "❌ Você precisa digitar a cidade! Ex: !clima Cariacica" });
+                return;
+            }
+
             weather.find({ search: cidade, degreeType: 'C' }, async (err, result) => {
                 if (err) {
-                    console.log(err);
-                    return await sock.sendMessage(sender, { text: "❌ Erro ao buscar o clima." });
+                    console.log("ERRO WEATHER: ", err); // Isso vai aparecer no LOG do Render
+                    return await sock.sendMessage(sender, { text: "❌ Erro ao buscar clima. Verifique o log." });
                 }
                 if (!result || result.length === 0) {
                     return await sock.sendMessage(sender, { text: "❌ Cidade não encontrada." });
@@ -294,8 +302,7 @@ async function connectToWhatsApp() {
                 const current = result[0].current;
                 const msgClima = `🌤 *Tempo em: ${current.observationpoint}*\n` +
                                  `🌡 Temperatura: ${current.temperature}°C\n` +
-                                 `☁️ Condição: ${current.skytext}\n` +
-                                 `💧 Umidade: ${current.humidity}%`;
+                                 `☁️ Condição: ${current.skytext}`;
                 await sock.sendMessage(sender, { text: msgClima });
             });
         }
