@@ -14,11 +14,12 @@ if (fs.existsSync('sessao.tar.gz')) {
 }
 
 const isRender = process.env.RENDER === 'true';
-if (isRender || process.env.PORT) {
-    const express = require('express');
-    const app = express();
-    app.get('/', (req, res) => res.send('Bot está online!'));
-    app.listen(process.env.PORT || 10000);
+// Mude de: if (fs.existsSync('sessao.tar.gz'))
+// Para:
+if (fs.existsSync('minha-sessao.tar.gz')) {
+    console.log("Extraindo sessão do arquivo...");
+    execSync('tar -xvzf minha-sessao.tar.gz');
+    console.log("Sessão extraída!");
 }
 
 let brincadeirasAtivas = true;
