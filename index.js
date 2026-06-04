@@ -1,21 +1,13 @@
-const fs = require('fs');
 const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const express = require('express');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Lógica para carregar a sessão do Railway via variável de ambiente
-if (process.env.SESSION_BASE64) {
-    console.log("Detectado SESSION_BASE64, descompactando sessão...");
-    fs.writeFileSync('sessao.tar.base64', process.env.SESSION_BASE64);
-    require('child_process').execSync('base64 -d sessao.tar.base64 > sessao.tar && tar -xvf sessao.tar');
-    console.log("Sessão restaurada com sucesso!");
-}
-
 let qrCodeData = "";
 
 async function iniciarBot() {
+    // O Railway sempre reinicia, então usamos a pasta auth_info que ele preserva
     const { state, saveCreds } = await useMultiFileAuthState('auth_info');
 
     const sock = makeWASocket({
@@ -35,34 +27,29 @@ async function iniciarBot() {
             const shouldReconnect = lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut;
             if (shouldReconnect) iniciarBot();
         } else if (connection === 'open') {
-            console.log('CONECTADO COM SUCESSO!');
+            console.log('✅ BOT CONECTADO COM SUCESSO!');
             qrCodeData = ""; 
         }
     });
 
+    // PAREAMENTO POR CÓDIGO (Mais estável no Railway)
     if (!sock.authState.creds.me) {
+        console.log("Aguardando 10 segundos para gerar o código...");
         setTimeout(async () => {
             try {
                 const code = await sock.requestPairingCode("5527988792916");
-                console.log('Código de pareamento gerado: ' + code);
+                console.log('================================================');
+                console.log('COPIE ESTE CÓDIGO: ' + code);
+                console.log('================================================');
             } catch (err) {
-                console.error("Erro no pareamento:", err);
+                console.error("Erro ao gerar código de pareamento:", err);
             }
         }, 10000);
     }
 }
 
 app.get('/', (req, res) => {
-    if (qrCodeData) {
-        res.send(`
-            <center>
-                <h1>Escaneie o QR Code abaixo com seu WhatsApp</h1>
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrCodeData)}"/>
-            </center>
-        `);
-    } else {
-        res.send("<h1>Bot Conectado ou aguardando gerar QR...</h1>");
-    }
+    res.send("<h1>Bot Online! Olhe o log no Railway para o código de pareamento.</h1>");
 });
 
 app.listen(port, () => console.log(`Servidor Web rodando na porta ${port}`));
