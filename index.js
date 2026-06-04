@@ -143,7 +143,7 @@ async function connectToWhatsApp() {
                 `• !menu: Exibe esta lista de comandos.\n` +
                 `• !clima [sua cidade]: Previsão do tempo.\n\n` +
                 `👑 Desenvolvido por: Caio\n` +
-                `⏰ Atualizado em: 04/06/2026`;
+                `⏰ Atualizado`;
 
             await sock.sendMessage(sender, { 
                 text: menuText, 
