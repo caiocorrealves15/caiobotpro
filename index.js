@@ -1,3 +1,11 @@
+const { execSync } = require('child_process');
+const fs = require('fs');
+
+if (fs.existsSync('sessao.tar.gz')) {
+    console.log("Extraindo sessão do arquivo...");
+    execSync('tar -xvzf sessao.tar.gz');
+    console.log("Sessão extraída!");
+}
 const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const express = require('express');
