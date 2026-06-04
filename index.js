@@ -4,32 +4,29 @@ const pino = require('pino');
 const fs = require('fs');
 const { Sticker, StickerTypes } = require('wa-sticker-formatter');
 const ytsr = require('ytsr');
+const express = require('express');
 
-// Lógica de extração da sessão (Arquivo único)
+// 1. Extração da sessão
 if (fs.existsSync('minha-sessao.tar.gz')) {
-    console.log("Extraindo sessão do arquivo...");
+    console.log("Extraindo sessão...");
     execSync('tar -xvzf minha-sessao.tar.gz');
     console.log("Sessão extraída!");
 }
 
-const isRender = process.env.RENDER === 'true';
-if (isRender || process.env.PORT) {
-    const express = require('express');
-    const app = express();
-    app.get('/', (req, res) => res.send('Bot está online!'));
-    app.listen(process.env.PORT || 10000);
-}
+// 2. Servidor Web estável para o Render
+const app = express();
+const PORT = process.env.PORT || 3000;
+app.get('/', (req, res) => res.send('Bot Online!'));
+app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
 
 let brincadeirasAtivas = true;
 const ARQUIVO_RANK = './rank.json';
 let contagemMensagens = fs.existsSync(ARQUIVO_RANK) ? JSON.parse(fs.readFileSync(ARQUIVO_RANK)) : {};
 
 async function connectToWhatsApp() {
-    console.log("--- FUNÇÃO DE CONEXÃO INICIADA ---");
-    
+    console.log("--- INICIANDO CONEXÃO ---");
     const { state, saveCreds } = await useMultiFileAuthState('auth_info');
 
-    console.log("Configurando socket...");
     const sock = makeWASocket({
         logger: pino({ level: 'silent' }),
         auth: state,
@@ -48,7 +45,10 @@ async function connectToWhatsApp() {
             console.log("✅ BOT CONECTADO COM SUCESSO!");
         } else if (connection === 'close') {
             const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
-            if (shouldReconnect) connectToWhatsApp();
+            if (shouldReconnect) {
+                console.log("Conexão caiu, tentando em 5s...");
+                setTimeout(connectToWhatsApp, 5000);
+            }
         }
     });
 
