@@ -3,23 +3,21 @@ const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, download
 const pino = require('pino');
 const fs = require('fs');
 const { Sticker, StickerTypes } = require('wa-sticker-formatter');
-const { execSync } = require('child_process');
 const ytsr = require('ytsr');
 
-// Lógica de extração da sessão (para o bot subir conectado)
-if (fs.existsSync('sessao.tar.gz')) {
-    console.log("Extraindo sessão do arquivo...");
-    execSync('tar -xvzf sessao.tar.gz');
-    console.log("Sessão extraída!");
-}
-
-const isRender = process.env.RENDER === 'true';
-// Mude de: if (fs.existsSync('sessao.tar.gz'))
-// Para:
+// Lógica de extração da sessão (Arquivo único)
 if (fs.existsSync('minha-sessao.tar.gz')) {
     console.log("Extraindo sessão do arquivo...");
     execSync('tar -xvzf minha-sessao.tar.gz');
     console.log("Sessão extraída!");
+}
+
+const isRender = process.env.RENDER === 'true';
+if (isRender || process.env.PORT) {
+    const express = require('express');
+    const app = express();
+    app.get('/', (req, res) => res.send('Bot está online!'));
+    app.listen(process.env.PORT || 10000);
 }
 
 let brincadeirasAtivas = true;
