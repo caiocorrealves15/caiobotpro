@@ -1,32 +1,34 @@
-console.log("--- TESTE DE INÍCIO ---");
-const { default: makeWASocket, useMultiFileAuthState } = require('@whiskeysockets/baileys');
-console.log("Bibliotecas carregadas!");
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
 const pino = require('pino');
+const qrcode = require('qrcode-terminal');
 
 async function iniciarBot() {
-    console.log("Entrando na função...");
-    try {
-        const { state, saveCreds } = await useMultiFileAuthState('auth_info');
-        console.log("Estado de autenticação criado!");
-        
-        const sock = makeWASocket({
-    logger: pino({ level: 'debug' }),
-    auth: state,
-    printQRTerminal: true,
-    browser: ['Chrome (Windows)', 'Chrome', '126.0.0.0'],
-    connectTimeoutMs: 60000, // Aumenta o tempo de espera para 60 segundos
-    defaultQueryTimeoutMs: 60000
-});
+    const { state, saveCreds } = await useMultiFileAuthState('auth_info');
 
-        sock.ev.on('creds.update', saveCreds);
-        sock.ev.on('connection.update', (update) => {
-            console.log("Atualização de conexão:", update);
-            if (update.connection === 'open') console.log('CONECTADO COM SUCESSO!');
-        });
-        console.log("Socket configurado!");
-    } catch (err) {
-        console.log("ERRO FATAL:", err);
-    }
+    const sock = makeWASocket({
+        logger: pino({ level: 'silent' }),
+        auth: state,
+        browser: ['Chrome (Windows)', 'Chrome', '126.0.0.0'],
+    });
+
+    sock.ev.on('connection.update', (update) => {
+        const { connection, lastDisconnect, qr } = update;
+
+        // Se houver um QR Code, exibe ele no terminal
+        if (qr) {
+            qrcode.generate(qr, { small: true });
+            console.log('Escaneie o QR Code acima com seu WhatsApp.');
+        }
+
+        if (connection === 'close') {
+            const shouldReconnect = lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut;
+            if (shouldReconnect) iniciarBot();
+        } else if (connection === 'open') {
+            console.log('CONECTADO COM SUCESSO!');
+        }
+    });
+
+    sock.ev.on('creds.update', saveCreds);
 }
 
 iniciarBot();
