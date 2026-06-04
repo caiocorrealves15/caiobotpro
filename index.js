@@ -1,3 +1,4 @@
+const weather = require('weather-js');
 const { execSync } = require('child_process');
 const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, downloadContentFromMessage } = require('@whiskeysockets/baileys');
 const pino = require('pino');
@@ -120,21 +121,27 @@ async function connectToWhatsApp() {
         }
 
         // 2. !MENU
+        // 2. !MENU (ESTILO PERSONALIZADO BASEADO NA IMAGEM)
         if (text === '!menu') {
-            const menuText = `✨ Olá @${participant.split('@')[0]}! Selecione uma das opções abaixo:\n\n` +
-                `🌌 MENU DE COMANDOS 🌌\n\n` +
-                `👤 GERAL\n` +
-                `🔹 !rank - Ranking msgs\n` +
-                `🔹 !sortear - Sorteia alguém\n\n` +
-                `🎮 DIVERSÃO\n` +
-                `🔹 !musica [nome] - Busca YouTube\n` +
-                `🔹 !f - Criar figurinha\n` +
-                `🔹 !socar @usuario\n` +
-                `🔹 !beijar @usuario\n` +
-                `🔹 !matar @usuario\n` +
-                `🔹 !tier [tema]\n\n` +
-                `🔨 ADMIN\n` +
-                `🔹 !ban, !fechar, !abrir, !adm @usuario\n\n` +
+            const menuText = `🤖 MENU DE COMANDOS DO BOT [Bonde do Brasil] 🎮\n` +
+                `Digite o comando correspondente para acionar o bot:\n\n` +
+                `⚽ 1. ROLÊS E ORGANIZAÇÃO\n` +
+                `• !rank: Ranking de mensagens.\n` +
+                `• !sortear: Sorteia alguém do grupo.\n` +
+                `• !tier [tema]: Ranking aleatório do grupo.\n\n` +
+                `😂 2. INTERAÇÃO E ZUEIRA\n` +
+                `• !musica [nome]: Busca música no YouTube.\n` +
+                `• !socar @usuario: Dá um soco no membro.\n` +
+                `• !beijar @usuario: Dá um beijo no membro.\n` +
+                `• !matar @usuario: Elimina o membro.\n` +
+                `• !f: Transforma foto/vídeo em figurinha.\n\n` +
+                `🚨 3. MODERAÇÃO (Para os administradores)\n` +
+                `• !ban @usuario: Expulsa o membro.\n` +
+                `• !adm @usuario: Promove membro a admin.\n` +
+                `• !fechar / !abrir: Abre ou fecha o grupo.\n\n` +
+                `⚙️ 4. UTILIDADES\n` +
+                `• !menu: Exibe esta lista de comandos.\n` +
+                `• !clima [sua cidade]: Previsão do tempo.\n\n` +
                 `👑 Desenvolvido por: Caio\n` +
                 `⏰ Atualizado em: 04/06/2026`;
 
@@ -145,11 +152,9 @@ async function connectToWhatsApp() {
         }
 
         // 3. !BAN
-        // 3. !BAN (AJUSTADO COM PROTEÇÃO AO CRIADOR)
-        // 3. !BAN (COM PROTEÇÃO TOTAL AO CRIADOR)
         if (text.startsWith('!ban')) {
             if (!isAdmin) {
-                await sock.sendMessage(sender, { text: "Tentando furar as regras, né?? HAHAHHAHA 👀👀👀" });
+                await sock.sendMessage(sender, { text: "Tentando furar as regras, né?? HAHAHHAHA 👀👀👀\n\nSabe que um ADM está de olho em você agora né?" });
             } else {
                 const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
                 const meuIDProtegido = '96057379803159';
@@ -157,7 +162,7 @@ async function connectToWhatsApp() {
                 if (mention && mention.includes(meuIDProtegido)) {
                     await sock.sendMessage(sender, { text: "❌ Nem tenta! O criador é intocável! 👑" });
                 } else if (mention) {
-                    await sock.sendMessage(sender, { text: `Tchauuuu!`, mentions: [mention] });
+                    await sock.sendMessage(sender, { text: `Tchauuuu, chora para um ADM depois no PV se quiser voltar, viu???`, mentions: [mention] });
                     setTimeout(async () => { await sock.groupParticipantsUpdate(sender, [mention], 'remove'); }, 2000);
                 }
             }
@@ -273,6 +278,22 @@ async function connectToWhatsApp() {
                 const type = (quoted?.videoMessage || msg.message.videoMessage) ? 'videoMessage' : 'imageMessage';
                 await criarFigurinha(media, sock, sender, type);
             }
+        }
+        // Comando !clima
+        if (text.startsWith('!clima ')) {
+            const cidade = text.replace('!clima ', '');
+            weather.find({ search: cidade, degreeType: 'C' }, (err, result) => {
+                if (err || !result || result.length === 0) {
+                    return sock.sendMessage(sender, { text: "❌ Não consegui encontrar essa cidade ou houve um erro." });
+                }
+                const current = result[0].current;
+                const msgClima = `🌤 *Previsão do tempo para: ${current.observationpoint}*\n` +
+                                 `🌡 Temperatura: ${current.temperature}°C\n` +
+                                 `☁️ Condição: ${current.skytext}\n` +
+                                 `💧 Umidade: ${current.humidity}%\n` +
+                                 `🌬 Vento: ${current.winddisplay}`;
+                sock.sendMessage(sender, { text: msgClima });
+            });
         }
     });
 }
