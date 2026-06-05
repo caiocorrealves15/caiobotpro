@@ -327,30 +327,31 @@ if (text.startsWith('!beijar')) {
 
 // Dentro de sock.ev.on('messages.upsert', ...), substitua o seu bloco !musica atual por este:
 // 7. Música e Figurinha
-        if (text.startsWith('!musica ')) {
-            const busca = text.replace('!musica ', '');
-            try {
-                await sock.sendMessage(sender, { text: "🔍 Buscando e preparando seu áudio, calma aí..." });
-                
-                const searchResults = await ytsr(busca, { limit: 1 });
-                const video = searchResults.items[0];
-                
-                if (!video) return await sock.sendMessage(sender, { text: "❌ Não achei nada." });
-
-                // Extração do Áudio via stream (ótimo para plano Pro)
-                const stream = ytdl(video.url, { filter: 'audioonly', quality: 'highestaudio' });
-                
-                await sock.sendMessage(sender, { 
-                    audio: { stream: stream }, 
-                    mimetype: 'audio/mpeg' 
-                });
-                
-                await sock.sendMessage(sender, { text: `🎵 *Tocando agora:* ${video.title}` });
-            } catch (e) { 
-                console.error(e);
-                await sock.sendMessage(sender, { text: "❌ Erro ao processar o áudio." }); 
+        // Substitua seu bloco !musica por este:
+if (text.startsWith('!musica ')) {
+    const busca = text.replace('!musica ', '');
+    try {
+        await sock.sendMessage(sender, { text: "🔍 Buscando..." });
+        const searchResults = await ytsr(busca, { limit: 1 });
+        const video = searchResults.items[0];
+        
+        // Adicionando um 'agent' para o YouTube achar que é um navegador
+        const stream = ytdl(video.url, { 
+            filter: 'audioonly', 
+            quality: 'highestaudio',
+            requestOptions: {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                }
             }
-        }
+        });
+
+        await sock.sendMessage(sender, { audio: { stream: stream }, mimetype: 'audio/mpeg' });
+    } catch (e) {
+        console.error(e);
+        await sock.sendMessage(sender, { text: "❌ Erro ao baixar música. O YouTube bloqueou a requisição." });
+    }
+}
         // Comando !clima
         // 8. COMANDO CLIMA (AJUSTADO)
         // 8. COMANDO CLIMA (COM DIAGNÓSTICO)
