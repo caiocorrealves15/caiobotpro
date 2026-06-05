@@ -3,6 +3,7 @@ const { execSync } = require('child_process');
 const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, downloadContentFromMessage } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const fs = require('fs');
+const cookies = JSON.parse(fs.readFileSync('./cookies.json'));
 const { Sticker, StickerTypes } = require('wa-sticker-formatter');
 const ytsr = require('ytsr');
 const qrcode = require('qrcode-terminal');
@@ -335,12 +336,14 @@ if (text.startsWith('!musica ')) {
         const searchResults = await ytsr(busca, { limit: 1 });
         const video = searchResults.items[0];
         
-        // Adicionando um 'agent' para o YouTube achar que é um navegador
+        if (!video) return await sock.sendMessage(sender, { text: "❌ Não encontrado." });
+
         const stream = ytdl(video.url, { 
             filter: 'audioonly', 
             quality: 'highestaudio',
             requestOptions: {
                 headers: {
+                    'Cookie': cookies.map(c => `${c.name}=${c.value}`).join('; '),
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
                 }
             }
@@ -349,7 +352,7 @@ if (text.startsWith('!musica ')) {
         await sock.sendMessage(sender, { audio: { stream: stream }, mimetype: 'audio/mpeg' });
     } catch (e) {
         console.error(e);
-        await sock.sendMessage(sender, { text: "❌ Erro ao baixar música. O YouTube bloqueou a requisição." });
+        await sock.sendMessage(sender, { text: "❌ Erro ao baixar. O YouTube bloqueou a requisição." });
     }
 }
         // Comando !clima
