@@ -28,16 +28,15 @@ let mutados = fs.existsSync(ARQUIVO_MUTADOS) ? JSON.parse(fs.readFileSync(ARQUIV
 
 // --- FUNÇÃO DE CONEXÃO ---
 async function connectToWhatsApp() {
-    // ... aqui começa o resto do seu código ...
-    console.log("--- FUNÇÃO DE CONEXÃO INICIADA ---");
-    const { state, saveCreds } = await useMultiFileAuthState('auth_info');
+        console.log("--- FUNÇÃO DE CONEXÃO INICIADA ---");
+        const { state, saveCreds } = await useMultiFileAuthState('auth_info');
 
-    const sock = makeWASocket({
-        logger: pino({ level: 'silent' }),
-        auth: state,
-        syncFullHistory: true,
-        browser: ['Desktop', 'Chrome', '121.0.0.0'] 
-    });
+        const sock = makeWASocket({
+            logger: pino({ level: 'silent' }),
+            auth: state,
+            syncFullHistory: false, // Mudei para false para estabilizar
+            browser: ['Desktop', 'Chrome', '121.0.0.0'] 
+        });
 
     sock.ev.on('creds.update', saveCreds);
 
@@ -72,9 +71,16 @@ async function connectToWhatsApp() {
     sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update;
         if (qr) qrcode.generate(qr, { small: true });
-        if (connection === 'open') console.log("✅ Bot conectado!");
-        else if (connection === 'close') {
-            if (lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut) connectToWhatsApp();
+        
+        if (connection === 'open') {
+            console.log("✅ Bot conectado!");
+        } else if (connection === 'close') {
+            const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
+            console.log('Conexão fechada, tentando reconectar:', shouldReconnect);
+            if (shouldReconnect) {
+                // A DIFERENÇA ESTÁ AQUI: Espera 5 segundos antes de tentar novamente
+                setTimeout(() => connectToWhatsApp(), 5000);
+            }
         }
     });
 
