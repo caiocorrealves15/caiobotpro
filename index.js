@@ -205,7 +205,7 @@ if (text.startsWith('!matar')) {
         const alvo = mention.split('@')[0];
         
         // Link do GIF (você pode trocar por outro link que termine em .gif)
-        const linkGifMatar = "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExOW50YnNwOGgxbzA5YTY2N2xqb2Izc21hYWt2ZXZyNWQwc2wzaG84OSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/kglCIBjmVrnOAwRTYK/giphy.gif";
+        const linkGifMatar = "https://media.tenor.com/3gus0SGhiEIAAAPo/cool-beans.mp4";
 
         await sock.sendMessage(sender, { 
             video: { url: linkGifMatar }, 
@@ -248,7 +248,7 @@ if (text.startsWith('!adm')) {
                 await sock.groupParticipantsUpdate(sender, [mention], 'promote');
                 
                 // Link do GIF para promoção (substitua por um link de sua preferência)
-                const linkGifAdm = "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExanJnMnZlOXpxdWV0Y3puM3F0MTQ0amR2MmhtZHF6YTJ6bjVnMjA1cyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/Jp4dchTKX6BzGkZ5DL/giphy.gif";
+                const linkGifAdm = "https://media.tenor.com/ASV7XuWQLXwAAAPo/alligator-crocodile.mp4";
 
                 await sock.sendMessage(sender, { 
                     video: { url: linkGifAdm },
@@ -271,7 +271,7 @@ if (text.startsWith('!adm')) {
     if (mention) {
         // Exemplo de como enviar um GIF junto com a mensagem
         await sock.sendMessage(sender, { 
-            video: { url: 'https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExczZzaDQ1aXVkdWh0ZHFibjFzemc5bW9sdHN5dzV5Yjd4b2FyZWNxdSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/NY3tXwOBUwQYq7lbXx/giphy.gif' }, // O WhatsApp entende vídeo/gif
+            video: { url: 'https://media.tenor.com/6Cp5tiRwh-YAAAPo/meme-memes.mp4' }, // O WhatsApp entende vídeo/gif
             gifPlayback: true, // Isso faz o arquivo tocar como GIF
             caption: `O @${participant.split('@')[0]} deu um soco no @${mention.split('@')[0]}! 🤜`,
             mentions: [participant, mention]
@@ -290,7 +290,7 @@ if (text.startsWith('!beijar')) {
         const quemRecebe = mention.split('@')[0];
         
         // Exemplo de link de GIF (você pode trocar esse link depois)
-        const linkGif = "https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExbTNlYWl4OGc2ajl5bnpscDNoZTNkcm53OGlhNXNxZWZ5ZG1zcGM1YSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/W1hd3uXRIbddu/giphy.gif";
+        const linkGif = "https://media.tenor.com/2ES7YijqoOwAAAPo/kiss.mp4";
 
         await sock.sendMessage(sender, { 
             video: { url: linkGif }, 
