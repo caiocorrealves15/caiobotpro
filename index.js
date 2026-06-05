@@ -6,6 +6,7 @@ const fs = require('fs');
 const { Sticker, StickerTypes } = require('wa-sticker-formatter');
 const ytsr = require('ytsr');
 const qrcode = require('qrcode-terminal');
+const ytdl = require('ytdl-core'); // Requisito movido para o topo
 
 const isRender = process.env.RENDER === 'true';
 if (isRender) {
@@ -127,7 +128,8 @@ async function connectToWhatsApp() {
         const participant = msg.key.participant || msg.key.remoteJid;
         
         contagemMensagens[participant] = (contagemMensagens[participant] || 0) + 1;
-        // fs.writeFileSync(ARQUIVO_RANK, JSON.stringify(contagemMensagens));
+        fs.writeFileSync(ARQUIVO_RANK, JSON.stringify(contagemMensagens));
+        
         
         const getIsAdmin = async () => { if (!sender.endsWith('@g.us')) return false; try { const metadata = await sock.groupMetadata(sender); return metadata.participants.find(p => p.id === participant)?.admin !== null; } catch { return false; } };
         const isAdmin = await getIsAdmin();
@@ -195,69 +197,111 @@ async function connectToWhatsApp() {
             await sock.sendMessage(sender, { text: res, mentions: ppts.map(p => p.id) });
         }
 
-        if (text.startsWith('!matar')) {
-            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
-            if (mention) {
-                const autor = participant.split('@')[0];
-                const alvo = mention.split('@')[0];
-                await sock.sendMessage(sender, { 
-                    text: `O @${autor} mandou o @${alvo} de arrasta pra cima! Que vacilo, hein? 💀`, 
-                    mentions: [participant, mention] 
-                });
-            } else {
-                await sock.sendMessage(sender, { text: "❌ Mencione alguém para eliminar!" });
-            }
-        }
+        // 5.2 !MATAR (COM GIF)
+if (text.startsWith('!matar')) {
+    const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+    if (mention) {
+        const autor = participant.split('@')[0];
+        const alvo = mention.split('@')[0];
+        
+        // Link do GIF (você pode trocar por outro link que termine em .gif)
+        const linkGifMatar = "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExOW50YnNwOGgxbzA5YTY2N2xqb2Izc21hYWt2ZXZyNWQwc2wzaG84OSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/kglCIBjmVrnOAwRTYK/giphy.gif";
+
+        await sock.sendMessage(sender, { 
+            video: { url: linkGifMatar }, 
+            gifPlayback: true,
+            caption: `O @${autor} mandou o @${alvo} de arrasta pra cima! Que vacilo, hein? 💀`, 
+            mentions: [participant, mention] 
+        });
+    } else {
+        await sock.sendMessage(sender, { text: "❌ Mencione alguém para eliminar!" });
+    }
+}
 
         // 5.3 !ADM
-        if (text.startsWith('!adm')) {
-            if (!isAdmin) {
-                await sock.sendMessage(sender, { text: "Tentando furar as regras, né?? HAHAHHAHA 👀👀👀\n\nSabe que um ADM está de olho em você agora né?" });
-            } else {
-                const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
-                if (mention) {
-                    try {
-                        await sock.groupParticipantsUpdate(sender, [mention], 'promote');
-                        await sock.sendMessage(sender, { 
-                            text: `👑 O @${mention.split('@')[0]} agora é um ADMINISTRADOR do grupo! Parabéns!`, 
-                            mentions: [mention] 
-                        });
-                    } catch (e) {
-                        await sock.sendMessage(sender, { text: "❌ Não consegui promover. Verifique se o bot é administrador do grupo." });
-                    }
-                } else {
-                    await sock.sendMessage(sender, { text: "❌ Você precisa mencionar alguém para tornar administrador!" });
-                }
-            }
+        // 1. !RANK (ORGANIZADO)
+        if (text === '!rank') {
+            // Ordena os usuários pelo número de mensagens (do maior para o menor)
+            const ranking = Object.entries(contagemMensagens)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10); // Mostra apenas os 10 primeiros
+
+            let res = `🏆 *RANKING DE MENSAGENS (TOP 10)*\n\n`;
+            ranking.forEach((entry, index) => {
+                const [id, count] = entry;
+                res += `${index + 1}. @${id.split('@')[0]} - ${count} mensagens\n`;
+            });
+
+            await sock.sendMessage(sender, { 
+                text: res, 
+                mentions: ranking.map(entry => entry[0]) 
+            });
         }
+        // 5.3 !ADM (COM GIF)
+if (text.startsWith('!adm')) {
+    if (!isAdmin) {
+        await sock.sendMessage(sender, { text: "Tentando furar as regras, né?? HAHAHHAHA 👀👀👀\n\nSabe que um ADM está de olho em você agora né?" });
+    } else {
+        const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+        if (mention) {
+            try {
+                await sock.groupParticipantsUpdate(sender, [mention], 'promote');
+                
+                // Link do GIF para promoção (substitua por um link de sua preferência)
+                const linkGifAdm = "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExanJnMnZlOXpxdWV0Y3puM3F0MTQ0amR2MmhtZHF6YTJ6bjVnMjA1cyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/Jp4dchTKX6BzGkZ5DL/giphy.gif";
+
+                await sock.sendMessage(sender, { 
+                    video: { url: linkGifAdm },
+                    gifPlayback: true,
+                    caption: `👑 O @${mention.split('@')[0]} agora é um ADMINISTRADOR do grupo! Parabéns!`, 
+                    mentions: [mention] 
+                });
+            } catch (e) {
+                await sock.sendMessage(sender, { text: "❌ Não consegui promover. Verifique se o bot é administrador do grupo." });
+            }
+        } else {
+            await sock.sendMessage(sender, { text: "❌ Você precisa mencionar alguém para tornar administrador!" });
+        }
+    }
+}
 
         // 5. !SOCAR
         if (text.startsWith('!socar')) {
-            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
-            if (mention) {
-                await sock.sendMessage(sender, { 
-                    text: `O @${mention.split('@')[0]} acabou de levar um nocaute técnico! Quem mandou vacilar?`, 
-                    mentions: [mention] 
-                });
-            } else {
-                await sock.sendMessage(sender, { text: "❌ Você precisa mencionar alguém para socar!" });
-            }
-        }
+    const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+    if (mention) {
+        // Exemplo de como enviar um GIF junto com a mensagem
+        await sock.sendMessage(sender, { 
+            video: { url: 'https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExczZzaDQ1aXVkdWh0ZHFibjFzemc5bW9sdHN5dzV5Yjd4b2FyZWNxdSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/NY3tXwOBUwQYq7lbXx/giphy.gif' }, // O WhatsApp entende vídeo/gif
+            gifPlayback: true, // Isso faz o arquivo tocar como GIF
+            caption: `O @${participant.split('@')[0]} deu um soco no @${mention.split('@')[0]}! 🤜`,
+            mentions: [participant, mention]
+        });
+    } else {
+        await sock.sendMessage(sender, { text: "❌ Mencione alguém!" });
+    }
+}
 
         // 5.1 !BEIJAR
-        if (text.startsWith('!beijar')) {
-            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
-            if (mention) {
-                const quemBeija = participant.split('@')[0];
-                const quemRecebe = mention.split('@')[0];
-                await sock.sendMessage(sender, { 
-                    text: `O @${quemBeija} está dando um beijão no @${quemRecebe}! Que clima de romance... 💋`, 
-                    mentions: [participant, mention] 
-                });
-            } else {
-                await sock.sendMessage(sender, { text: "❌ Mencione alguém para beijar!" });
-            }
-        }
+        // 5.1 !BEIJAR (COM GIF)
+if (text.startsWith('!beijar')) {
+    const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+    if (mention) {
+        const quemBeija = participant.split('@')[0];
+        const quemRecebe = mention.split('@')[0];
+        
+        // Exemplo de link de GIF (você pode trocar esse link depois)
+        const linkGif = "https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExbTNlYWl4OGc2ajl5bnpscDNoZTNkcm53OGlhNXNxZWZ5ZG1zcGM1YSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/W1hd3uXRIbddu/giphy.gif";
+
+        await sock.sendMessage(sender, { 
+            video: { url: linkGif }, 
+            gifPlayback: true,
+            caption: `O @${quemBeija} está dando um beijão no @${quemRecebe}! Que clima de romance... 💋`, 
+            mentions: [participant, mention] 
+        });
+    } else {
+        await sock.sendMessage(sender, { text: "❌ Mencione alguém para beijar!" });
+    }
+}
 
         // 6. Admin Fechar/Abrir
         if (text === '!fechar') {
@@ -279,21 +323,32 @@ async function connectToWhatsApp() {
         }
 
         // 7. Música e Figurinha
+        // Adicione lá no topo do arquivo (junto com os outros 'require')
+
+// Dentro de sock.ev.on('messages.upsert', ...), substitua o seu bloco !musica atual por este:
+// 7. Música e Figurinha
         if (text.startsWith('!musica ')) {
             const busca = text.replace('!musica ', '');
             try {
+                await sock.sendMessage(sender, { text: "🔍 Buscando e preparando seu áudio, calma aí..." });
+                
                 const searchResults = await ytsr(busca, { limit: 1 });
                 const video = searchResults.items[0];
-                await sock.sendMessage(sender, { text: `🎵 *Encontrei:* ${video.title}\n${video.url}` });
-            } catch (e) { await sock.sendMessage(sender, { text: "❌ Não achei nada." }); }
-        }
-        
-        if (text.startsWith('!f')) {
-            const quoted = msg.message.extendedTextMessage?.contextInfo?.quotedMessage;
-            const media = quoted?.imageMessage || quoted?.videoMessage || msg.message.imageMessage || msg.message.videoMessage;
-            if (media) {
-                const type = (quoted?.videoMessage || msg.message.videoMessage) ? 'videoMessage' : 'imageMessage';
-                await criarFigurinha(media, sock, sender, type);
+                
+                if (!video) return await sock.sendMessage(sender, { text: "❌ Não achei nada." });
+
+                // Extração do Áudio via stream (ótimo para plano Pro)
+                const stream = ytdl(video.url, { filter: 'audioonly', quality: 'highestaudio' });
+                
+                await sock.sendMessage(sender, { 
+                    audio: { stream: stream }, 
+                    mimetype: 'audio/mpeg' 
+                });
+                
+                await sock.sendMessage(sender, { text: `🎵 *Tocando agora:* ${video.title}` });
+            } catch (e) { 
+                console.error(e);
+                await sock.sendMessage(sender, { text: "❌ Erro ao processar o áudio." }); 
             }
         }
         // Comando !clima
@@ -333,11 +388,11 @@ async function connectToWhatsApp() {
             await sock.sendMessage(sender, { text: "Você está falando demais, dá um tempo.", mentions: [mention] });
         }
         // 8. COMANDO CLIMA (TRADUZIDO)
+        // 8. COMANDO CLIMA (Ajustado)
         if (text.startsWith('!clima')) {
             const cidade = text.replace('!clima', '').trim();
             if (!cidade) return await sock.sendMessage(sender, { text: "❌ Digite a cidade! Ex: !clima Cariacica" });
 
-            // Dicionário de tradução simples
             const traduzir = (condicao) => {
                 const manual = {
                     'light rain': 'Chuva leve', 'rain': 'Chuva', 'sunny': 'Ensolarado',
@@ -360,6 +415,17 @@ async function connectToWhatsApp() {
                 await sock.sendMessage(sender, { text: msgClima });
             });
         }
-    });
-}
+
+        // --- VERIFICAÇÃO DE COMANDO ERRADO (FORA DOS IFs) ---
+        const comandosExistentes = ['!menu', '!rank', '!sortear', '!tier', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute'];
+
+        if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd))) {
+            await sock.sendMessage(sender, { 
+                text: "Aí que você quer demais né, amigo? Olha o menu e digite esse maldito comando direito!!!!!" 
+            });
+        }
+        
+    }); // Fecha o messages.upsert
+} // Fecha o connectToWhatsApp
+
 connectToWhatsApp();
