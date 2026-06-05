@@ -15,11 +15,20 @@ if (isRender) {
     app.listen(process.env.PORT || 10000);
 }
 
+// --- CONFIGURAÇÕES E VARIÁVEIS INICIAIS ---
 let brincadeirasAtivas = true;
-const ARQUIVO_RANK = './rank.json';
-let contagemMensagens = fs.existsSync(ARQUIVO_RANK) ? JSON.parse(fs.readFileSync(ARQUIVO_RANK)) : {};
 
+// Definição dos arquivos de dados
+const ARQUIVO_RANK = './rank.json';
+const ARQUIVO_MUTADOS = './mutados.json';
+
+// Carregamento dos dados (se existirem)
+let contagemMensagens = fs.existsSync(ARQUIVO_RANK) ? JSON.parse(fs.readFileSync(ARQUIVO_RANK)) : {};
+let mutados = fs.existsSync(ARQUIVO_MUTADOS) ? JSON.parse(fs.readFileSync(ARQUIVO_MUTADOS)) : {};
+
+// --- FUNÇÃO DE CONEXÃO ---
 async function connectToWhatsApp() {
+    // ... aqui começa o resto do seu código ...
     console.log("--- FUNÇÃO DE CONEXÃO INICIADA ---");
     const { state, saveCreds } = await useMultiFileAuthState('auth_info');
 
@@ -282,6 +291,39 @@ async function connectToWhatsApp() {
         // Comando !clima
         // 8. COMANDO CLIMA (AJUSTADO)
         // 8. COMANDO CLIMA (COM DIAGNÓSTICO)
+        if (text.startsWith('!desmute')) {
+            if (!isAdmin) return await sock.sendMessage(sender, { text: "Tentando furar as regras, né?? HAHAHHAHA 👀👀👀\n\nSabe que um ADM está de olho em você agora né?" });
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            if (mention && mutados[mention]) {
+                delete mutados[mention];
+                // ADICIONE ESSA LINHA PARA SALVAR A REMOÇÃO NO ARQUIVO:
+                fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
+                
+                await sock.sendMessage(sender, { text: "Fala agora, mas com cuidado, ok?", mentions: [mention] });
+            }
+        }
+        // 4. COMANDO !MUTE (CORRIGIDO)
+        // 4. COMANDO !MUTE (CORRIGIDO E PROTEGIDO)
+        if (text.startsWith('!mute')) {
+            if (!isAdmin) return await sock.sendMessage(sender, { text: "Tentando furar as regras, né?? HAHAHHAHA 👀👀👀\n\nSabe que um ADM está de olho em você agora né?" });
+            
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            
+            // --- PROTEÇÃO DO CRIADOR ---
+            const meuNumero = "96057379803159"; // ALTERE AQUI!
+            if (mention === meuNumero) {
+                return await sock.sendMessage(sender, { text: "❌ Não posso mutar o criador, respeita o chefe! 👑" });
+            }
+            // ---------------------------
+
+            if (!mention) return await sock.sendMessage(sender, { text: "Mencione quem você quer mutar." });
+
+            const tempo = text.includes('h') ? 3600000 : 1800000;
+            mutados[mention] = Date.now() + tempo;
+            
+            fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
+            await sock.sendMessage(sender, { text: "Você está falando demais, dá um tempo.", mentions: [mention] });
+        }
         // 8. COMANDO CLIMA (TRADUZIDO)
         if (text.startsWith('!clima')) {
             const cidade = text.replace('!clima', '').trim();
