@@ -329,27 +329,32 @@ if (text.startsWith('!beijar')) {
 // Dentro de sock.ev.on('messages.upsert', ...), substitua o seu bloco !musica atual por este:
 // 7. Música e Figurinha
         // Substitua seu bloco !musica por este:
+const { exec } = require('yt-dlp-exec');
+
 if (text.startsWith('!musica ')) {
     const busca = text.replace('!musica ', '');
     try {
-        await sock.sendMessage(sender, { text: "🔍 Buscando..." });
-        const searchResults = await ytsr(busca, { limit: 1 });
-        const video = searchResults.items[0];
+        await sock.sendMessage(sender, { text: "🔍 Buscando e convertendo..." });
         
-        if (!video) return await sock.sendMessage(sender, { text: "❌ Não encontrado." });
+        // O yt-dlp baixa o áudio diretamente sem depender do ytdl-core
+        const output = await exec(busca, {
+            dumpSingleJson: true,
+            noCheckCertificates: true,
+            format: 'bestaudio',
+            defaultSearch: 'ytsearch'
+        });
 
-        const agent = ytdl.createAgent(cookies); // Cria um agente usando seus cookies
+        // Pega a URL do áudio que o yt-dlp encontrou
+        const audioUrl = output.stdout.url;
 
-const stream = ytdl(video.url, { 
-    filter: 'audioonly', 
-    quality: 'highestaudio',
-    agent: agent // O agente gerencia os cookies e o User-Agent automaticamente
-})
-
-        await sock.sendMessage(sender, { audio: { stream: stream }, mimetype: 'audio/mpeg' });
+        await sock.sendMessage(sender, { 
+            audio: { url: audioUrl }, 
+            mimetype: 'audio/mpeg' 
+        });
     } catch (e) {
-        console.error(e);
-        await sock.sendMessage(sender, { text: "❌ Erro ao baixar. O YouTube bloqueou a requisição." });
+        // Se der erro aqui, agora o erro vai aparecer no log do Render com certeza!
+        console.log("Erro técnico detalhado:", e);
+        await sock.sendMessage(sender, { text: "❌ Erro ao processar o áudio pelo servidor." });
     }
 }
         // Comando !clima
