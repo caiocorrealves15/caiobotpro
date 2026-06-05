@@ -125,7 +125,7 @@ async function connectToWhatsApp() {
         const participant = msg.key.participant || msg.key.remoteJid;
         
         contagemMensagens[participant] = (contagemMensagens[participant] || 0) + 1;
-        fs.writeFileSync(ARQUIVO_RANK, JSON.stringify(contagemMensagens));
+        // fs.writeFileSync(ARQUIVO_RANK, JSON.stringify(contagemMensagens));
         
         const getIsAdmin = async () => { if (!sender.endsWith('@g.us')) return false; try { const metadata = await sock.groupMetadata(sender); return metadata.participants.find(p => p.id === participant)?.admin !== null; } catch { return false; } };
         const isAdmin = await getIsAdmin();
@@ -303,7 +303,7 @@ async function connectToWhatsApp() {
             if (mention && mutados[mention]) {
                 delete mutados[mention];
                 // ADICIONE ESSA LINHA PARA SALVAR A REMOÇÃO NO ARQUIVO:
-                fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
+                //fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
                 
                 await sock.sendMessage(sender, { text: "Fala agora, mas com cuidado, ok?", mentions: [mention] });
             }
@@ -327,7 +327,7 @@ async function connectToWhatsApp() {
             const tempo = text.includes('h') ? 3600000 : 1800000;
             mutados[mention] = Date.now() + tempo;
             
-            fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
+            //fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
             await sock.sendMessage(sender, { text: "Você está falando demais, dá um tempo.", mentions: [mention] });
         }
         // 8. COMANDO CLIMA (TRADUZIDO)
