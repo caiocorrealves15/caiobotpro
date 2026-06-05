@@ -338,16 +338,13 @@ if (text.startsWith('!musica ')) {
         
         if (!video) return await sock.sendMessage(sender, { text: "❌ Não encontrado." });
 
-        const stream = ytdl(video.url, { 
-            filter: 'audioonly', 
-            quality: 'highestaudio',
-            requestOptions: {
-                headers: {
-                    'Cookie': cookies.map(c => `${c.name}=${c.value}`).join('; '),
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-                }
-            }
-        });
+        const agent = ytdl.createAgent(cookies); // Cria um agente usando seus cookies
+
+const stream = ytdl(video.url, { 
+    filter: 'audioonly', 
+    quality: 'highestaudio',
+    agent: agent // O agente gerencia os cookies e o User-Agent automaticamente
+})
 
         await sock.sendMessage(sender, { audio: { stream: stream }, mimetype: 'audio/mpeg' });
     } catch (e) {
