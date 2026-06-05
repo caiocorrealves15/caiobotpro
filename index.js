@@ -50,13 +50,15 @@ async function connectToWhatsApp() {
 
             const textoBoasVindas = `👋 Olá @${userMention}.\n` +
                 `✨ Seja bem vindo(a) ao *Bonde do Brasil*!\n\n` +
-                `📌 🔔 🔔 LEIA AS REGRAS E SE APRESENTE! 🔔 🔔\n` +
+                `📌 LEIA AS REGRAS E SE APRESENTE! 🔔 \n` +
                 `( Leia Descrição )\n` +
                 `• Obrigatório se apresentar com :\n` +
                 `• FOTO/CIDADE/IDADE/NOME.\n\n` +
                 `📌 PASSIVO DE BAN:\n` +
                 `• 1. SEM LINKS 🔗\n` +                
                 `• 2. SEM BRIGAS 🥊\n` +
+                `• 3. ANUNCIAR VENDAS SEM AUTORIZAÇÃO 🚫\n` +
+                `• 4. INVADIR O PV SEM AUTORIZAÇÃO ❌\n` +
                 `• Não abuse dos comandos do BOT 🤖\n\n` +
                 `• Dúvidas?\n` +
                 `• Qualquer dúvida pergunta ou marcar ou chamar qualquer *Administrador* no privado ou no Grupo.`;
@@ -139,7 +141,7 @@ async function connectToWhatsApp() {
         // 2. !MENU (ESTILO PERSONALIZADO BASEADO NA IMAGEM)
         if (text === '!menu') {
             const menuText = `🤖 MENU DE COMANDOS DO BOT [Bonde do Brasil] 🎮\n` +
-                `Digite o comando correspondente para acionar o bot:\n\n` +
+                `Digite o comando correspondente sem ACENTOS para acionar o bot:\n\n` +
                 `⚽⚽ 1. ROLÊS E ORGANIZAÇÃO\n` +
                 `🔰!rank: Ranking de mensagens.\n` +
                 `⌛!sortear: Sorteia alguém do grupo.\n` +
@@ -150,15 +152,15 @@ async function connectToWhatsApp() {
                 `😘!beijar @usuario: Dá um beijo no membro.\n` +
                 `🗡️!matar @usuario: Elimina o membro.\n` +
                 `🤳 !f: Transforma foto/vídeo em figurinha.\n\n` +
-                `🚨 3. MODERAÇÃO (Para os administradores)\n` +
+                `🚨 3. MODERAÇÃO (Para os administradores somente)\n` +
                 `❌​!ban @usuario: Expulsa o membro.\n` +
                 `❇️!adm @usuario: Promove membro a admin.\n` +
                 `​🚫 !fechar / !abrir: Abre ou fecha o grupo.\n\n` +
                 `⚙️⚙️ 4. UTILIDADES\n` +
                 `📛!menu: Exibe esta lista de comandos.\n` +
                 `🌤️!clima [sua cidade]: Previsão do tempo.\n\n` +
-                `👑 Desenvolvido por: Caio😎😎😎\n` +
-                `⏰ Atualizado`;
+                `👑 Desenvolvido por: Caio o melhor😎\n` +
+                `🤖 O BOT é atualizado toda semana com novas funções`;
 
             await sock.sendMessage(sender, { 
                 text: menuText, 
@@ -271,7 +273,7 @@ async function connectToWhatsApp() {
             if (!isAdmin) {
                 await sock.sendMessage(sender, { text: "Tentando furar as regras, né?? HAHAHHAHA 👀👀👀\n\nSabe que um ADM está de olho em você agora né?" });
             } else {
-                await sock.sendMessage(sender, { text: "Pronto, podem falar a vontade criançada HAHAHAHA." });
+                await sock.sendMessage(sender, { text: "Pronto, podem falar a vontade bando de desempregados HAHAHAHA." });
                 await sock.groupSettingUpdate(sender, 'not_announcement');
             }
         }
