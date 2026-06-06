@@ -344,7 +344,7 @@ if (text.startsWith('!penalti')) {
         });
     }
 
-    const defesa = Math.random() < 0.3;
+    const defesa = Math.random() < 0.5;
     if (!defesa) {
         placar[senderId] += 1;
         fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
