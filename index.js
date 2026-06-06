@@ -136,117 +136,65 @@ async function connectToWhatsApp() {
         const isAdmin = await getIsAdmin();
 
         // 1. Resposta ao mencionar Bot
-        if (text.includes('bot')) {
-            await sock.sendMessage(sender, { text: `Fala aí @${participant.split('@')[0]}, tá falando de mim, por que? Deixa eu comer e beber de boa, pô`, mentions: [participant] });
-        }
+        // --- LOGICA DE COMANDOS ---
+const lowerText = text.toLowerCase();
 
-        // 2. !MENUconst lowerText = text.toLowerCase();// Verifica se alguém falou em dinheiro
-if (lowerText.includes('dinheiro') || lowerText.includes('grana') || lowerText.includes('cash')) {
-    
-    // 1. Reage com uma nota de dinheiro ou cifrão
-    await sock.sendMessage(sender, {
-        react: {
-            text: '💸',
-            key: m.key
-        }
-    });
-
-    // 2. Responde com um GIF irônico ou de "ostentação"
-    await sock.sendMessage(sender, { 
-        video: { url: 'https://media.tenor.com/cLjA_QYEHesAAAPo/grana.mp4' },
-        gifPlayback: true,
-        caption: 'Opa, falou em dinheiro? Tá sobrando ou tá faltando, meu parceiro? 💸👀',
-        quoted: m 
-    });
+// 1. Resposta ao mencionar Bot
+if (lowerText.includes('bot')) {
+    await sock.sendMessage(sender, { text: `Fala aí @${participant.split('@')[0]}, tá falando de mim, por que? Quer morrer?S`, mentions: [participant] });
 }
 
-// Verifica se a mensagem contém as saudações
+// 2. Dinheiro
+if (lowerText.includes('dinheiro') || lowerText.includes('grana') || lowerText.includes('cash')) {
+    await sock.sendMessage(sender, { react: { text: '💸', key: msg.key } });
+    await sock.sendMessage(sender, { video: { url: 'https://media.tenor.com/cLjA_QYEHesAAAPo/grana.mp4' }, gifPlayback: true, caption: 'Opa, falou em dinheiro? Tá sobrando ou tá faltando, meu parceiro? 💸👀', quoted: msg });
+}
+
+// 3. Bom dia, Boa tarde e Boa noite
 if (lowerText.includes('bom dia') || lowerText.includes('boa tarde') || lowerText.includes('boa noite')) {
-    let emoji = '☀️'; // padrão sol
-    let urlGif = 'https://media.tenor.com/7HPdFKRYFwMAAAPo/thank-you.mp4'; // padrão bom dia
-    let frase = 'Bom dia! Tudo bem com você? Hoje é dia do dinheiro, hein? 💰';
+    let emoji = '☀️';
+    let urlGif = 'https://media.tenor.com/7HPdFKRYFwMAAAPo/thank-you.mp4';
+    let frase = 'Bom dia! Tudo bem com você?';
 
     if (lowerText.includes('boa tarde')) {
         emoji = '🌤️';
         urlGif = 'https://media.tenor.com/C78aGUgwTEYAAAPo/good-afternoon-rollygifs.mp4';
-        frase = 'Boa tarde! Como vai o dia? Bebendo muito café para aguentar a tarde? ☕';
+        frase = 'Boa tarde! Como vai o dia?';
     } else if (lowerText.includes('boa noite')) {
         emoji = '🌙';
         urlGif = 'https://media.tenor.com/0RCfPxdUCs8AAAPo/dvfedvr.mp4';
         frase = 'Boa noite! Tenha um ótimo descanso.';
     }
 
-    // 1. Reagir à mensagem do usuário
-    await sock.sendMessage(sender, {
-        react: {
-            text: emoji,
-            key: m.key
-        }
-    });
+    await sock.sendMessage(sender, { react: { text: emoji, key: msg.key } });
+    await sock.sendMessage(sender, { video: { url: urlGif }, gifPlayback: true, caption: `🤖 *${frase}*`, quoted: msg });
+}
 
-    // 2. Enviar o GIF com a saudação// Verifica se a mensagem contém a palavra Sextou
+// 4. Sextou
 if (lowerText.includes('sextou')) {
-    
-    // 1. Reage com uma carinha de festa
-    await sock.sendMessage(sender, {
-        react: {
-            text: '🥳',
-            key: m.key
-        }
-    });
+    await sock.sendMessage(sender, { react: { text: '🥳', key: msg.key } });
+    await sock.sendMessage(sender, { video: { url: 'https://media.tenor.com/IuZs76jQrG4AAAPo/sextou-familia.mp4' }, gifPlayback: true, caption: 'Sextou meu parceiro!', quoted: msg });
+}
 
-    // 2. Responde citando a mensagem (reply) com um GIF de festa// Verifica se alguém falou em trabalho
+// 5. Trabalho
 if (lowerText.includes('trabalhar') || lowerText.includes('trabalho')) {
-    
-    // 1. Reage com um emoji de desânimo ou suor
-    await sock.sendMessage(sender, {
-        react: {
-            text: '😰',
-            key: m.key
-        }
-    });
+    await sock.sendMessage(sender, { react: { text: '😰', key: msg.key } });
+    await sock.sendMessage(sender, { video: { url: 'https://media.tenor.com/ONR_In8tDa8AAAPo/meme-funny-funny-meme.mp4' }, gifPlayback: true, caption: 'Credo, vira essa boca pra lá! 😰🏃‍♂️', quoted: msg });
+}
 
-    // 2. Responde com um GIF irônico de quem não quer nada com o trabalho
-    await sock.sendMessage(sender, { 
-        video: { url: 'https://media.tenor.com/ONR_In8tDa8AAAPo/meme-funny-funny-meme.mp4' },
-        gifPlayback: true,
-        caption: 'Opa, falou em trabalho? Credo, vira essa boca pra lá! 😰🏃‍♂️',
-        quoted: m 
-    });
-}
-    await sock.sendMessage(sender, { 
-        video: { url: 'https://media.tenor.com/IuZs76jQrG4AAAPo/sextou-familia.mp4' },
-        gifPlayback: true,
-        caption: 'Sextou meu parceiro! Bora que hoje é dia de alegria! 🍻🔥',
-        quoted: m 
-    });
-}
-    await sock.sendMessage(sender, {
-        video: { url: urlGif },
-        gifPlayback: true,
-        caption: `🤖 *${frase}*`
-    });
-}
-        // 2. !MENU (ESTILO PERSONALIZADO BASEADO NA IMAGEM)// Verifica se a mensagem contém a palavra chave
+// 6. Bebida
 if (lowerText.includes('bebida') || lowerText.includes('cerveja') || lowerText.includes('vodka') || lowerText.includes('whisky')) {
-    
-    await sock.sendMessage(sender, { 
-        text: 'Opa, alguém falou em bebida???? 👀👀👀👀 É comigo mesmo, viu?',
-        quoted: m // Isso faz o bot responder diretamente a mensagem da pessoa
-    });
+    await sock.sendMessage(sender, { text: 'Opa, falou em bebida???? 👀👀👀👀', quoted: msg });
 }
-    // Tratamento para garantir que o nome esteja sempre bonito
-    if (text === '!menu') {
-    let nomeUsuario = m.pushName;
-    if (!nomeUsuario || nomeUsuario.trim() === '' || nomeUsuario.trim() === '.') {
-        nomeUsuario = 'Amigo(a)';
-    }
 
+
+
+        // 2. !MENU
+        // 2. !MENU (ESTILO PERSONALIZADO BASEADO NA IMAGEM)
+        if (text === '!menu') {
+    const nomeUsuario = m.pushName || 'visitante';
     const dataAtual = new Date().toLocaleDateString('pt-BR');
     const horaAtual = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-    
-    // Seu número no formato correto para menção
-    const meuNumero = '96057379803159'; 
 
     const menuTexto = `
 「 ❍ BONDE DO BRASIL ❍ 」
@@ -256,7 +204,7 @@ if (lowerText.includes('bebida') || lowerText.includes('cerveja') || lowerText.i
 ↪ 🫧 NICK: ${nomeUsuario}
 ↪ 🔔 DATA: ${dataAtual}
 ↪ ⏰ HORA: ${horaAtual}
-↪ 👑 DEV: @${meuNumero.split('@')[0]}
+↪ 👑 DEV: Caio o melhor 😎
 ↪ 🤖 ATUALIZAÇÕES: Semanais
 
 🔔 MENU DE COMANDOS 🫧
@@ -283,11 +231,10 @@ if (lowerText.includes('bebida') || lowerText.includes('cerveja') || lowerText.i
     `.trim();
 
     await sock.sendMessage(sender, { 
-        video: { url: 'https://media.tenor.com/WV_2tGerThoAAAPo/farming-aura-farming.mp4' },
+video: { url: 'https://media.tenor.com/WV_2tGerThoAAAPo/farming-aura-farming.mp4' },
         gifPlayback: true, 
         caption: menuTexto,
-        // Aqui o bot marca o usuário que digitou e você (o dono)
-        mentions: [sender, meuNumero] 
+        mentions: [sender]
     });
 }
 
@@ -492,26 +439,6 @@ if (text.startsWith('!musica ')) {
             }
         }
         // 4. COMANDO !MUTE (CORRIGIDO)
-        if (text === '!sortear') {
-    try {
-        const groupMetadata = await sock.groupMetadata(sender);
-        const participants = groupMetadata.participants;
-        const sortudo = participants[Math.floor(Math.random() * participants.length)];
-
-        const mensagem = `🎰 *SORTEIO DO BONDE* 🎰\n\n` +
-                         `🎉 O sorteado da vez foi: @${sortudo.id.split('@')[0]}\n` +
-                         `🍀 Parabéns, muita sorte hein!`;
-
-        await sock.sendMessage(sender, { 
-            video: { url: 'https://media1.tenor.com/m/Qf_HIQNQ95wAAAAC/dogs-dog.gif' }, // GIF de máquina de caça-níqueis
-            gifPlayback: true, 
-            caption: mensagem,
-            mentions: [sortudo.id] 
-        });
-    } catch (e) {
-        await sock.sendMessage(sender, { text: "❌ O comando !sortear só funciona em grupos!" });
-    }
-}
         // 4. COMANDO !MUTE (CORRIGIDO E PROTEGIDO)
         if (text.startsWith('!mute')) {
             if (!isAdmin) return await sock.sendMessage(sender, { text: "Tentando furar as regras, né?? HAHAHHAHA 👀👀👀\n\nSabe que um ADM está de olho em você agora né?" });
