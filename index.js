@@ -223,7 +223,7 @@ if (lowerText.includes('bot')) {
     // 9. Comandos extras (ban, tier, matar, rank, adm, socar, beijar, fechar, abrir, musica, desmute, mute, clima)
     // *Dica: Aplique o quoted: msg em todos os sock.sendMessage dentro desses blocos também!*
 
-    const comandosExistentes = ['!menu', '!rank', '!sortear', '!tier', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute'];
+    const comandosExistentes = ['!menu', '!rank', '!sortear', '!jogar', '!tier', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute'];
     if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd))) {
         await sock.sendMessage(sender, { text: "Aí que você quer demais né, amigo? Olha o menu e digite esse maldito comando direito!!!!!", quoted: msg });
     }
@@ -277,6 +277,38 @@ if (lowerText.includes('bot')) {
         caption: menuTexto,
         mentions: [sender]
     });
+}
+// Adicione !jogar na sua lista de comandosExistentes
+if (text.startsWith('!jogar')) {
+    const args = text.split(' ');
+    const escolha = parseInt(args[1]);
+
+    // Se o usuário não digitou um número, mostra o menu do jogo
+    if (!escolha || escolha < 1 || escolha > 3) {
+        return await sock.sendMessage(sender, { 
+            text: "🎮 *RPG DO BONDE*\n\nVocê encontrou uma caverna misteriosa! 🕯️\nEscolha um caminho (digite !jogar 1, 2 ou 3):\n\n1. Caminho da Esquerda (Tesouro)\n2. Caminho do Centro (Perigo)\n3. Caminho da Direita (Mistério)",
+            quoted: msg 
+        });
+    }
+
+    // O bot sorteia o caminho vencedor (1, 2 ou 3)
+    const caminhoVencedor = Math.floor(Math.random() * 3) + 1;
+
+    if (escolha === caminhoVencedor) {
+        await sock.sendMessage(sender, { 
+            video: { url: 'https://media.tenor.com/J3y8G1y8z6cAAAPo/money-shower.mp4' }, 
+            gifPlayback: true, 
+            caption: `🏆 BOA! Você escolheu o caminho ${escolha} e encontrou um tesouro épico!`, 
+            quoted: msg 
+        });
+    } else {
+        await sock.sendMessage(sender, { 
+            video: { url: 'https://media.tenor.com/b2t7O28_G4AAAAAP/oh-no-skeleton.mp4' }, 
+            gifPlayback: true, 
+            caption: `💀 Xiii... você escolheu o caminho ${escolha} e deu de cara com um monstro! O caminho certo era o ${caminhoVencedor}. Tente de novo!`, 
+            quoted: msg 
+        });
+    }
 }
 
 
