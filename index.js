@@ -511,13 +511,6 @@ if (text.startsWith('!musica ')) {
                 await sock.sendMessage(sender, { text: msgClima, quoted: msg });
             });
         }
-
-        // --- VERIFICAÇÃO DE COMANDO ERRADO ---
-        const comandosExistentes = ['!menu', '!rank', '!sortear', '!tier', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute'];
-        if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd))) {
-            await sock.sendMessage(sender, { text: "Aí que você quer demais né, amigo? Olha o menu e digite esse maldito comando direito!!!!!", quoted: msg });
-        }
-        S
     }); // Fecha o messages.upsert
 } // Fecha o connectToWhatsApp
 
