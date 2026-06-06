@@ -284,6 +284,9 @@ if (lowerText.includes('bot')) {
 }
 // Adicione !jogar na sua lista de comandosExistentes
 if (text.startsWith('!jogar')) {
+    // Reação de videogame
+    await sock.sendMessage(sender, { react: { text: '🎮', key: msg.key } });
+
     const args = text.split(' ');
     const escolha = parseInt(args[1]);
 
@@ -300,9 +303,8 @@ if (text.startsWith('!jogar')) {
         return await sock.sendMessage(sender, { 
             video: { url: 'https://media.tenor.com/jhsMAREYalUAAAPo/pacman-gaming.mp4' }, // GIF de abertura
             gifPlayback: true,
-            caption: `🎮 *RPG DO BONDE - ${cenarioSorteado.nome}*\n\n${cenarioSorteado.desc}\n\n1. Esquerda\n2. Centro\n3. Direita\n\nDigite !jogar [1, 2 ou 3]`,
-            quoted: msg // Responde ao jogador
-        });
+            caption: `🎮 *RPG DO BONDE - ${cenarioSorteado.nome}*\n\n${cenarioSorteado.desc}\n\n1. Esquerda\n2. Centro\n3. Direita\n\nDigite !jogar [1, 2 ou 3]`
+        }, { quoted: msg }); // Responde ao jogador corretamente
     }
 
     // Lógica de resultado
@@ -312,21 +314,23 @@ if (text.startsWith('!jogar')) {
         await sock.sendMessage(sender, { 
             video: { url: 'https://media.tenor.com/FCtDCj3ihF8AAAPo/bugs-bunny-looney-tunes.mp4' }, 
             gifPlayback: true, 
-            caption: `🏆 BOA! Você escolheu o caminho ${escolha} e encontrou um tesouro épico!`, 
-            quoted: msg 
-        });
+            caption: `🏆 BOA! Você escolheu o caminho ${escolha} e encontrou um tesouro épico!`
+        }, { quoted: msg });
     } else {
         await sock.sendMessage(sender, { 
             video: { url: 'https://media.tenor.com/Lhwo0gmSWLcAAAPo/higuruma-jjk.mp4' }, 
             gifPlayback: true, 
-            caption: `💀 Xiii... deu ruim! Você escolheu o ${escolha} e deu de cara com um monstro. O caminho certo era o ${caminhoVencedor}.`, 
-            quoted: msg 
-        });
+            caption: `💀 Xiii... deu ruim! Você escolheu o ${escolha} e deu de cara com um monstro. O caminho certo era o ${caminhoVencedor}.`
+        }, { quoted: msg });
     }
 }
 
 
+
 if (text.startsWith('!penalti')) {
+    // Reação de bola de futebol
+    await sock.sendMessage(sender, { react: { text: '⚽', key: msg.key } });
+
     const args = text.split(' ');
     const escolha = parseInt(args[1]);
     const senderId = msg.key.remoteJid;
@@ -338,11 +342,10 @@ if (text.startsWith('!penalti')) {
     // Mensagem inicial com GIF e respondendo a quem chamou
     if (!escolha || escolha < 1 || escolha > 3) {
         return await sock.sendMessage(sender, { 
-            video: { url: 'https://media.tenor.com/Rfz8o91xR5wAAAPo/jonathan-david-jo-david.mp4' }, // GIF de abertura
+            video: { url: 'https://media.tenor.com/Rfz8o91xR5wAAAPo/jonathan-david-jo-david.mp4' }, 
             gifPlayback: true,
-            caption: `⚽ *DISPUTA DE PÊNALTIS*\n\nSeu total de gols: ${placar[senderId]}\n\nEscolha o canto para bater o pênalti: 1, 2 ou 3`, 
-            quoted: msg // Agora o bot responde exatamente quem mandou o comando
-        });
+            caption: `⚽ *DISPUTA DE PÊNALTIS*\n\nSeu total de gols: ${placar[senderId]}\n\nEscolha o canto para bater o pênalti: 1, 2 ou 3`
+        }, { quoted: msg });
     }
 
     const defesa = Math.random() < 0.5;
@@ -352,18 +355,17 @@ if (text.startsWith('!penalti')) {
         await sock.sendMessage(sender, { 
             caption: `⚽ GOOOOOL! Você marcou! Total de gols: ${placar[senderId]}`, 
             video: { url: 'https://media.tenor.com/vnXD4h47_ZwAAAPo/kick-goal.mp4' }, 
-            gifPlayback: true, 
-            quoted: msg 
-        });
+            gifPlayback: true
+        }, { quoted: msg });
     } else {
         await sock.sendMessage(sender, { 
             caption: `🧤 DEFESA! O goleiro pegou. Seu total continua ${placar[senderId]} gols.`, 
             video: { url: 'https://media.tenor.com/AdTJAjjVaIkAAAPo/goalkeeper.mp4' }, 
-            gifPlayback: true, 
-            quoted: msg 
-        });
+            gifPlayback: true
+        }, { quoted: msg });
     }
 }
+
         // 3. !BAN
         if (text.startsWith('!ban')) {
             if (!isAdmin) {
