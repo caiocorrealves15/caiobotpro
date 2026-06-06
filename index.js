@@ -691,62 +691,65 @@ if (text.startsWith('!musica ')) {
         const msgForca = await sock.sendMessage(sender, { 
             video: { url: 'https://media.tenor.com/7HUogy7rXs4AAAPo/feel-me-think-about-it.mp4' }, 
             gifPlayback: true,
-            caption: `💀 *JOGO DA FORCA (NÍVEL HARD)*\n\nPalavra: ${jogoForca.descobertas.join(' ')}\n\nResponda dando reply (em cima) com uma letra!` 
+            caption: `💀 *JOGO DA FORCA, QUERO VER ACERTAR (NÍVEL HARD)*\n\nPalavra: ${jogoForca.descobertas.join(' ')}\n\nResponda dando reply (em cima) com uma letra!` 
         }, { quoted: msg });
         jogoForca.idMensagem = msgForca.key.id; 
         return; // Sai após iniciar
     }
 
-    // 2. Lógica de Adivinhação (SÓ EXECUTA SE FOR REPLY)
-    // Lógica de adivinhação (Substitua todo o bloco antigo por este)
-// 2. Lógica de Adivinhação
-    // 2. Lógica de Adivinhação (Com Reações ✅ / ❌)
+    // 2. Lógica de Adivinhação
     // 2. Lógica de Adivinhação
     if (jogoForca.ativo && !jogoForca.processando) {
         const contextInfo = msg.message?.extendedTextMessage?.contextInfo || 
                             msg.message?.imageMessage?.contextInfo || 
                             msg.message?.videoMessage?.contextInfo;
 
-        if (contextInfo?.stanzaId === jogoForca.idMensagem && text.length === 1 && !text.startsWith('!')) {
+        if (contextInfo?.stanzaId === jogoForca.idMensagem && !text.startsWith('!')) {
             jogoForca.processando = true;
-            const letra = text.toLowerCase();
-            const autor = msg.key.participant || msg.key.remoteJid; // Identifica quem enviou
-            
-            if (jogoForca.tentativas.includes(letra)) {
-                await sock.sendMessage(sender, { text: `⚠️ @${autor.split('@')[0]}, você já tentou a letra "${letra.toUpperCase()}".`, mentions: [autor] }, { quoted: msg });
-            } else {
-                jogoForca.tentativas.push(letra);
+            const resposta = text.toLowerCase().trim();
+            const autor = msg.key.participant || msg.key.remoteJid;
 
-                if (jogoForca.palavra.includes(letra)) {
-                    // Reação de acerto na mensagem do usuário
-                    await sock.sendMessage(sender, { react: { text: '✅', key: msg.key } });
-
-                    for (let i = 0; i < jogoForca.palavra.length; i++) {
-                        if (jogoForca.palavra[i] === letra) jogoForca.descobertas[i] = letra;
-                    }
-                    
-                    if (!jogoForca.descobertas.includes('_')) {
-                        jogoForca.ativo = false;
-                        await sock.sendMessage(sender, { text: `🎉 PARABÉNS @${autor.split('@')[0]}! Você salvou a alma dele! A palavra era: *${jogoForca.palavra.toUpperCase()}*`, mentions: [autor] }, { quoted: msg });
-                    } else {
-                        // Resposta personalizada
-                        await sock.sendMessage(sender, { text: `Boa, campeão @${autor.split('@')[0]}!! Continue: ${jogoForca.descobertas.join(' ')}`, mentions: [autor] });
-                    }
+            // 1. TENTAR PALAVRA COMPLETA
+            if (resposta === jogoForca.palavra) {
+                jogoForca.ativo = false;
+                await sock.sendMessage(sender, { react: { text: '✅', key: msg.key } });
+                await sock.sendMessage(sender, { text: `🎉 PARABÉNS @${autor.split('@')[0]}! Você acertou a palavra completa: *${jogoForca.palavra.toUpperCase()}*`, mentions: [autor] }, { quoted: msg });
+            } 
+            // 2. TENTAR LETRA ÚNICA
+            else if (resposta.length === 1) {
+                const letra = resposta;
+                
+                if (jogoForca.tentativas.includes(letra)) {
+                    await sock.sendMessage(sender, { text: `⚠️ @${autor.split('@')[0]}, você já tentou a letra "${letra.toUpperCase()}".`, mentions: [autor] }, { quoted: msg });
                 } else {
-                    // Reação de erro na mensagem do usuário
-                    await sock.sendMessage(sender, { react: { text: '❌', key: msg.key } });
-                    
-                    jogoForca.erros++;
-                    if (jogoForca.erros >= jogoForca.maxErros) {
-                        jogoForca.ativo = false;
-                        await sock.sendMessage(sender, { 
-                            video: { url: 'https://media.tenor.com/HyeG4dSurbwAAAPo/hanging-skeleton-skeleton.mp4' }, 
-                            gifPlayback: true, 
-                            caption: `💀 VOCÊ PERDEU, @${autor.split('@')[0]}! A palavra era *${jogoForca.palavra.toUpperCase()}*`,
-                            mentions: [autor]
-                        }, { quoted: msg });
+                    jogoForca.tentativas.push(letra);
+
+                    if (jogoForca.palavra.includes(letra)) {
+                        await sock.sendMessage(sender, { react: { text: '✅', key: msg.key } });
+                        for (let i = 0; i < jogoForca.palavra.length; i++) {
+                            if (jogoForca.palavra[i] === letra) jogoForca.descobertas[i] = letra;
+                        }
+                        
+                        if (!jogoForca.descobertas.includes('_')) {
+                            jogoForca.ativo = false;
+                            await sock.sendMessage(sender, { text: `🎉 PARABÉNS @${autor.split('@')[0]}! Você salvou a alma dele! A palavra era: *${jogoForca.palavra.toUpperCase()}*`, mentions: [autor] }, { quoted: msg });
+                        } else {
+                            await sock.sendMessage(sender, { text: `Boa, campeão @${autor.split('@')[0]}!! Continue: ${jogoForca.descobertas.join(' ')}`, mentions: [autor] });
+                        }
                     } else {
-                        await sock.sendMessage(sender, { text: `❌ Errou, @${autor.split('@')[0]}! ${jogoForca.maxErros - jogoForca.erros} vidas restando.`, mentions: [autor] });
+                        await sock.sendMessage(sender, { react: { text: '❌', key: msg.key } });
+                        jogoForca.erros++;
+                        if (jogoForca.erros >= jogoForca.maxErros) {
+                            jogoForca.ativo = false;
+                            await sock.sendMessage(sender, { 
+                                video: { url: 'https://media.tenor.com/HyeG4dSurbwAAAPo/hanging-skeleton-skeleton.mp4' }, 
+                                gifPlayback: true, 
+                                caption: `💀 VOCÊ PERDEU, @${autor.split('@')[0]}! A palavra era *${jogoForca.palavra.toUpperCase()}*`,
+                                mentions: [autor]
+                            }, { quoted: msg });
+                        } else {
+                            await sock.sendMessage(sender, { text: `❌ Errou, @${autor.split('@')[0]}! ${jogoForca.maxErros - jogoForca.erros} vidas restando.`, mentions: [autor] });
+                        }
                     }
                 }
             }
