@@ -145,7 +145,7 @@ async function connectToWhatsApp() {
 
 // 1. Resposta ao mencionar Bot
 if (lowerText.includes('bot')) {
-    await sock.sendMessage(sender, { text: `Fala aí @${participant.split('@')[0]}, tá falando de mim, por que? Quer morrer?S`, mentions: [participant] });
+    await sock.sendMessage(sender, { text: `Fala aí @${participant.split('@')[0]}, tá falando de mim, por que? Quer morrer?🔫👀`, mentions: [participant] });
 }
 
     // 2. Dinheiro
@@ -171,16 +171,16 @@ if (lowerText.includes('bot')) {
     if (lowerText.includes('bom dia') || lowerText.includes('boa tarde') || lowerText.includes('boa noite')) {
         let emoji = '☀️';
         let urlGif = 'https://media.tenor.com/7HPdFKRYFwMAAAPo/thank-you.mp4';
-        let frase = 'Bom dia! Tudo bem com você?';
+        let frase = 'Bom dia! Dormi igual a um anjo, acordei igual a um boleto vencido.😂😂 ';
         
         if (lowerText.includes('boa tarde')) { 
             emoji = '🌤️'; 
             urlGif = 'https://media.tenor.com/C78aGUgwTEYAAAPo/good-afternoon-rollygifs.mp4'; 
-            frase = 'Boa tarde!'; 
+            frase = 'Boa tarde! Que a força do café esteja comigo, porque a minha já acabou.💔😂'; 
         } else if (lowerText.includes('boa noite')) { 
             emoji = '🌙'; 
             urlGif = 'https://media.tenor.com/0RCfPxdUCs8AAAPo/dvfedvr.mp4'; 
-            frase = 'Boa noite! Tenha um bom sonhos, sonhe comigo!!🤖🤖'; 
+            frase = 'Boa noite! Que o seu sono seja tão profundo quanto o saldo negativo da minha conta.🥱😵‍💫'; 
         }
 
         await sock.sendMessage(sender, { react: { text: emoji, key: msg.key } });
@@ -196,13 +196,13 @@ if (lowerText.includes('bot')) {
     // 5. Sextou
     if (lowerText.includes('sextou')) {
         await sock.sendMessage(sender, { react: { text: '🥳', key: msg.key } });
-        await sock.sendMessage(sender, { video: { url: 'https://media.tenor.com/IuZs76jQrG4AAAPo/sextou-familia.mp4' }, gifPlayback: true, caption: 'Sextou meu parceiro!', quoted: msg });
+        await sock.sendMessage(sender, { video: { url: 'https://media.tenor.com/IuZs76jQrG4AAAPo/sextou-familia.mp4' }, gifPlayback: true, caption: 'Sextou! Corpo no trabalho, mente no primeiro gole de cerveja.🍺😜', quoted: msg });
     }
 
     // 6. Trabalho
     if (lowerText.includes('trabalhar') || lowerText.includes('trabalho')) {
         await sock.sendMessage(sender, { react: { text: '😰', key: msg.key } });
-        await sock.sendMessage(sender, { video: { url: 'https://media.tenor.com/ONR_In8tDa8AAAPo/meme-funny-funny-meme.mp4' }, gifPlayback: true, caption: 'Credo, vira essa boca pra lá! 😰🏃‍♂️', quoted: msg });
+        await sock.sendMessage(sender, { video: { url: 'https://media.tenor.com/ONR_In8tDa8AAAPo/meme-funny-funny-meme.mp4' }, gifPlayback: true, caption: 'Se trabalho desse dinheiro, o dono da empresa não estaria milionário enquanto eu tomo café morno.😪☕️', quoted: msg });
     }
 
     // 7. Bebida
@@ -384,7 +384,7 @@ if (text.startsWith('!adm')) {
         await sock.sendMessage(sender, { 
             video: { url: 'https://media.tenor.com/6Cp5tiRwh-YAAAPo/meme-memes.mp4' }, // O WhatsApp entende vídeo/gif
             gifPlayback: true, // Isso faz o arquivo tocar como GIF
-            caption: `O @${participant.split('@')[0]} deu um soco no @${mention.split('@')[0]}! 🤜`,
+            caption: `TOMAAAAAAAA 😤😤!!!! O @${participant.split('@')[0]} deu um soco no @${mention.split('@')[0]}! 🤜`,
             mentions: [participant, mention]
         });
     } else {
@@ -419,7 +419,7 @@ if (text.startsWith('!beijar')) {
             if (!isAdmin) {
                 await sock.sendMessage(sender, { text: "Tentando furar as regras, né?? HAHAHHAHA 👀👀👀\n\nSabe que um ADM está de olho em você agora né?" });
             } else {
-                await sock.sendMessage(sender, { text: "Vocês estão falando demais, dá um tempo!!!" });
+                await sock.sendMessage(sender, { text: "Vocês estão falando demais, dá um tempo aí tiozão!!!😤" });
                 await sock.groupSettingUpdate(sender, 'announcement');
             }
         }
@@ -428,7 +428,7 @@ if (text.startsWith('!beijar')) {
             if (!isAdmin) {
                 await sock.sendMessage(sender, { text: "Tentando furar as regras, né?? HAHAHHAHA 👀👀👀\n\nSabe que um ADM está de olho em você agora né?" });
             } else {
-                await sock.sendMessage(sender, { text: "Pronto, podem falar a vontade bando de desempregados HAHAHAHA." });
+                await sock.sendMessage(sender, { text: "Pronto, podem falar a vontade bando de desempregados HAHAHAHA.😂😂" });
                 await sock.groupSettingUpdate(sender, 'not_announcement');
             }
         }
@@ -442,7 +442,7 @@ if (text.startsWith('!beijar')) {
 if (text.startsWith('!musica ')) {
     const busca = text.replace('!musica ', '');
     try {
-        await sock.sendMessage(sender, { text: "🔍 Buscando sua música..." });
+        await sock.sendMessage(sender, { text: "🔍 Calma aí "Cantor", estou Buscando sua música..." });
         
         // Busca o link do vídeo
         const searchResults = await ytsr(busca, { limit: 1 });
@@ -478,7 +478,7 @@ if (text.startsWith('!musica ')) {
                 // ADICIONE ESSA LINHA PARA SALVAR A REMOÇÃO NO ARQUIVO:
                 fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
                 
-                await sock.sendMessage(sender, { text: "Fala agora, mas com cuidado, ok?", mentions: [mention] });
+                await sock.sendMessage(sender, { text: "Fala agora, mas com cuidado, ok? To doidinho pra mutar de novo😎😂", mentions: [mention] });
             }
         }
         // 4. COMANDO !MUTE (CORRIGIDO)
@@ -502,7 +502,7 @@ if (text.startsWith('!musica ')) {
             mutados[mention] = Date.now() + tempo;
             
             fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
-            await sock.sendMessage(sender, { text: "Você está falando demais, dá um tempo seu rabugento.", mentions: [mention] });
+            await sock.sendMessage(sender, { text: "Você está falando demais, dá um tempo seu rabugento.😂❌", mentions: [mention] });
         }
         // 8. COMANDO CLIMA (TRADUZIDO)
         // 8. COMANDO CLIMA (Ajustado)
