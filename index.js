@@ -122,76 +122,97 @@ async function connectToWhatsApp() {
     }
 
     sock.ev.on('messages.upsert', async (m) => {
-        const msg = m.messages[0];
-        if (!msg.message || msg.key.fromMe) return;
-        const sender = msg.key.remoteJid;
-        const text = (msg.message.conversation || msg.message.extendedTextMessage?.text || "").toLowerCase();
-        const participant = msg.key.participant || msg.key.remoteJid;
-        
-        contagemMensagens[participant] = (contagemMensagens[participant] || 0) + 1;
-        fs.writeFileSync(ARQUIVO_RANK, JSON.stringify(contagemMensagens));
-        
-        
-        const getIsAdmin = async () => { if (!sender.endsWith('@g.us')) return false; try { const metadata = await sock.groupMetadata(sender); return metadata.participants.find(p => p.id === participant)?.admin !== null; } catch { return false; } };
-        const isAdmin = await getIsAdmin();
+    const msg = m.messages[0];
+    if (!msg.message || msg.key.fromMe) return;
+    
+    const participant = msg.key.participant || msg.key.remoteJid;
 
-        // 1. Resposta ao mencionar Bot
-        // --- LOGICA DE COMANDOS ---
-const lowerText = text.toLowerCase();
-
-// 1. Resposta ao mencionar Bot
-if (lowerText.includes('bot')) {
-    await sock.sendMessage(sender, { text: `Fala aí @${participant.split('@')[0]}, tá falando de mim, por que? Quer morrer?S`, mentions: [participant] });
-}
-
-// 2. Dinheiro
-if (lowerText.includes('dinheiro') || lowerText.includes('grana') || lowerText.includes('cash')) {
-    await sock.sendMessage(sender, { react: { text: '💸', key: msg.key } });
-    await sock.sendMessage(sender, { video: { url: 'https://media.tenor.com/cLjA_QYEHesAAAPo/grana.mp4' }, gifPlayback: true, caption: 'Opa, falou em dinheiro? Tá sobrando ou tá faltando, meu parceiro? 💸👀', quoted: msg });
-}
-
-// 3. Bom dia, Boa tarde e Boa noite
-if (lowerText.includes('bom dia') || lowerText.includes('boa tarde') || lowerText.includes('boa noite')) {
-    let emoji = '☀️';
-    let urlGif = 'https://media.tenor.com/7HPdFKRYFwMAAAPo/thank-you.mp4';
-    let frase = 'Bom dia! Tudo bem com você?';
-
-    if (lowerText.includes('boa tarde')) {
-        emoji = '🌤️';
-        urlGif = 'https://media.tenor.com/C78aGUgwTEYAAAPo/good-afternoon-rollygifs.mp4';
-        frase = 'Boa tarde! Como vai o dia?';
-    } else if (lowerText.includes('boa noite')) {
-        emoji = '🌙';
-        urlGif = 'https://media.tenor.com/0RCfPxdUCs8AAAPo/dvfedvr.mp4';
-        frase = 'Boa noite! Tenha um ótimo descanso.';
+    if (mutados[participant] && Date.now() < mutados[participant]) {
+        await sock.sendMessage(msg.key.remoteJid, { delete: msg.key });
+        return; 
     }
 
-    await sock.sendMessage(sender, { react: { text: emoji, key: msg.key } });
-    await sock.sendMessage(sender, { video: { url: urlGif }, gifPlayback: true, caption: `🤖 *${frase}*`, quoted: msg });
-}
+    const sender = msg.key.remoteJid;
+    const text = (msg.message.conversation || msg.message.extendedTextMessage?.text || "").toLowerCase();
+    
+    contagemMensagens[participant] = (contagemMensagens[participant] || 0) + 1;
+    fs.writeFileSync(ARQUIVO_RANK, JSON.stringify(contagemMensagens));
+    
+    const getIsAdmin = async () => { if (!sender.endsWith('@g.us')) return false; try { const metadata = await sock.groupMetadata(sender); return metadata.participants.find(p => p.id === participant)?.admin !== null; } catch { return false; } };
+    const isAdmin = await getIsAdmin();
 
-// 4. Sextou
-if (lowerText.includes('sextou')) {
-    await sock.sendMessage(sender, { react: { text: '🥳', key: msg.key } });
-    await sock.sendMessage(sender, { video: { url: 'https://media.tenor.com/IuZs76jQrG4AAAPo/sextou-familia.mp4' }, gifPlayback: true, caption: 'Sextou meu parceiro!', quoted: msg });
-}
+    const lowerText = text.toLowerCase();
 
-// 5. Trabalho
-if (lowerText.includes('trabalhar') || lowerText.includes('trabalho')) {
-    await sock.sendMessage(sender, { react: { text: '😰', key: msg.key } });
-    await sock.sendMessage(sender, { video: { url: 'https://media.tenor.com/ONR_In8tDa8AAAPo/meme-funny-funny-meme.mp4' }, gifPlayback: true, caption: 'Credo, vira essa boca pra lá! 😰🏃‍♂️', quoted: msg });
-}
+    // 1. Resposta ao mencionar Bot
+    if (lowerText.includes('bot')) {
+        await sock.sendMessage(sender, { text: `Fala aí @${participant.split('@')[0]}, tá falando de mim, por que? Quer morrer?`, mentions: [participant], quoted: msg });
+    }
 
-// 6. Bebida
-if (lowerText.includes('bebida') || lowerText.includes('cerveja') || lowerText.includes('vodka') || lowerText.includes('whisky')) {
-    await sock.sendMessage(sender, { text: 'Opa, falou em bebida???? 👀👀👀👀', quoted: msg });
-}
+    // 2. Dinheiro
+    if (lowerText.includes('dinheiro') || lowerText.includes('grana') || lowerText.includes('cash')) {
+        await sock.sendMessage(sender, { react: { text: '💸', key: msg.key } });
+        await sock.sendMessage(sender, { video: { url: 'https://media.tenor.com/cLjA_QYEHesAAAPo/grana.mp4' }, gifPlayback: true, caption: 'Opa, falou em dinheiro? Tá sobrando ou tá faltando, meu parceiro? 💸👀', quoted: msg });
+    }
+
+    // 3. !SORTEAR
+    if (text === '!sortear') {
+        try {
+            const metadata = await sock.groupMetadata(sender);
+            const ppts = metadata.participants;
+            const sorteado = ppts[Math.floor(Math.random() * ppts.length)];
+            await sock.sendMessage(sender, { video: { url: "https://media.tenor.com/9o4vX6kOlUcAAAPo/cat-dance-dancing-cat.mp4" }, gifPlayback: true, caption: `🎲 A sorte foi lançada! O sorteado da vez foi: @${sorteado.id.split('@')[0]}`, mentions: [sorteado.id], quoted: msg });
+        } catch (e) {
+            await sock.sendMessage(sender, { text: "❌ Erro ao sortear. Verifique se sou administrador do grupo.", quoted: msg });
+        }
+    }
+
+    // 4. Saudações
+    if (lowerText.includes('bom dia') || lowerText.includes('boa tarde') || lowerText.includes('boa noite')) {
+        let emoji = '☀️';
+        let urlGif = 'https://media.tenor.com/7HPdFKRYFwMAAAPo/thank-you.mp4';
+        let frase = 'Bom dia! Tudo bem com você?';
+        if (lowerText.includes('boa tarde')) { emoji = '🌤️'; urlGif = 'https://media.tenor.com/C78aGUgwTEYAAAPo/good-afternoon-rollygifs.mp4'; frase = 'Boa tarde!'; }
+        else if (lowerText.includes('boa noite')) { emoji = '🌙'; urlGif = 'https://media.tenor.com/0RCfPxdUCs8AAAPo/dvfedvr.mp4'; frase = 'Boa noite!'; }
+        await sock.sendMessage(sender, { react: { text: emoji, key: msg.key } });
+        await sock.sendMessage(sender, { video: { url: urlGif }, gifPlayback: true, caption: `🤖 *${frase}*`, quoted: msg });
+    }
+
+    // 5. Sextou
+    if (lowerText.includes('sextou')) {
+        await sock.sendMessage(sender, { react: { text: '🥳', key: msg.key } });
+        await sock.sendMessage(sender, { video: { url: 'https://media.tenor.com/IuZs76jQrG4AAAPo/sextou-familia.mp4' }, gifPlayback: true, caption: 'Sextou meu parceiro!', quoted: msg });
+    }
+
+    // 6. Trabalho
+    if (lowerText.includes('trabalhar') || lowerText.includes('trabalho')) {
+        await sock.sendMessage(sender, { react: { text: '😰', key: msg.key } });
+        await sock.sendMessage(sender, { video: { url: 'https://media.tenor.com/ONR_In8tDa8AAAPo/meme-funny-funny-meme.mp4' }, gifPlayback: true, caption: 'Credo, vira essa boca pra lá! 😰🏃‍♂️', quoted: msg });
+    }
+
+    // 7. Bebida
+    if (lowerText.includes('bebida') || lowerText.includes('cerveja') || lowerText.includes('vodka') || lowerText.includes('whisky')) {
+        await sock.sendMessage(sender, { text: 'Opa, falou em bebida???? 👀👀👀👀', quoted: msg });
+    }
+
+    // 8. !MENU
+    if (text === '!menu') {
+        await sock.sendMessage(sender, { video: { url: 'https://media.tenor.com/WV_2tGerThoAAAPo/farming-aura-farming.mp4' }, gifPlayback: true, caption: "MENU DO BOT", quoted: msg });
+    }
+
+    // 9. Comandos extras (ban, tier, matar, rank, adm, socar, beijar, fechar, abrir, musica, desmute, mute, clima)
+    // *Dica: Aplique o quoted: msg em todos os sock.sendMessage dentro desses blocos também!*
+
+    const comandosExistentes = ['!menu', '!rank', '!sortear', '!tier', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute'];
+    if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd))) {
+        await sock.sendMessage(sender, { text: "Aí que você quer demais né, amigo? Olha o menu e digite esse maldito comando direito!!!!!", quoted: msg });
+    }
 
 
 
         // 2. !MENU
         // 2. !MENU (ESTILO PERSONALIZADO BASEADO NA IMAGEM)
-        if (text === '!menu') {
+        // 2. !MENU (ESTILO PERSONALIZADO BASEADO NA IMAGEM)
+if (text === '!menu') {
     const nomeUsuario = m.pushName || 'visitante';
     const dataAtual = new Date().toLocaleDateString('pt-BR');
     const horaAtual = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -231,10 +252,11 @@ if (lowerText.includes('bebida') || lowerText.includes('cerveja') || lowerText.i
     `.trim();
 
     await sock.sendMessage(sender, { 
-video: { url: 'https://media.tenor.com/WV_2tGerThoAAAPo/farming-aura-farming.mp4' },
+        video: { url: 'https://media.tenor.com/WV_2tGerThoAAAPo/farming-aura-farming.mp4' },
         gifPlayback: true, 
         caption: menuTexto,
-        mentions: [sender]
+        mentions: [sender],
+        quoted: msg // <--- Adicionado aqui!
     });
 }
 
@@ -411,7 +433,7 @@ if (text.startsWith('!musica ')) {
         const mensagem = `🎵 *Música Encontrada!*\n\n` +
                          `🎤 *Título:* ${video.title}\n` +
                          `🔗 *Link:* ${video.url}\n\n` +
-                         `Dançando enquanto prepara o som... 😎, se você não tem Youtube Premium, melhor pagar seu pobre.S`;
+                         `Dançando enquanto prepara o som... 😎, se você não tem Youtube Premium ou Spotify, melhor pagar seu pobre.`;
 
         await sock.sendMessage(sender, { 
             video: { url: 'https://media.tenor.com/9SFSfC2n0lkAAAPo/head-phones-music.mp4' }, // GIF divertido
@@ -433,7 +455,7 @@ if (text.startsWith('!musica ')) {
             if (mention && mutados[mention]) {
                 delete mutados[mention];
                 // ADICIONE ESSA LINHA PARA SALVAR A REMOÇÃO NO ARQUIVO:
-                //fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
+                fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
                 
                 await sock.sendMessage(sender, { text: "Fala agora, mas com cuidado, ok?", mentions: [mention] });
             }
@@ -444,6 +466,7 @@ if (text.startsWith('!musica ')) {
             if (!isAdmin) return await sock.sendMessage(sender, { text: "Tentando furar as regras, né?? HAHAHHAHA 👀👀👀\n\nSabe que um ADM está de olho em você agora né?" });
             
             const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            
             
             // --- PROTEÇÃO DO CRIADOR ---
             const meuNumero = "96057379803159"; // ALTERE AQUI!
@@ -457,14 +480,14 @@ if (text.startsWith('!musica ')) {
             const tempo = text.includes('h') ? 3600000 : 1800000;
             mutados[mention] = Date.now() + tempo;
             
-            //fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
-            await sock.sendMessage(sender, { text: "Você está falando demais, dá um tempo.", mentions: [mention] });
+            fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
+            await sock.sendMessage(sender, { text: "Você está falando demais, dá um tempo seu rabugento.", mentions: [mention] });
         }
         // 8. COMANDO CLIMA (TRADUZIDO)
         // 8. COMANDO CLIMA (Ajustado)
         if (text.startsWith('!clima')) {
             const cidade = text.replace('!clima', '').trim();
-            if (!cidade) return await sock.sendMessage(sender, { text: "❌ Digite a cidade! Ex: !clima Cariacica" });
+            if (!cidade) return await sock.sendMessage(sender, { text: "❌ Digite a cidade! Ex: !clima Cariacica", quoted: msg });
 
             const traduzir = (condicao) => {
                 const manual = {
@@ -477,7 +500,7 @@ if (text.startsWith('!musica ')) {
             };
 
             weather.find({ search: cidade, degreeType: 'C' }, async (err, result) => {
-                if (err || !result || result.length === 0) return await sock.sendMessage(sender, { text: "❌ Cidade não encontrada." });
+                if (err || !result || result.length === 0) return await sock.sendMessage(sender, { text: "❌ Cidade não encontrada.", quoted: msg });
                 
                 const current = result[0].current;
                 const condicaoTraduzida = traduzir(current.skytext);
@@ -485,19 +508,16 @@ if (text.startsWith('!musica ')) {
                 const msgClima = `🌤 *Tempo em: ${current.observationpoint}*\n` +
                                  `🌡 Temperatura: ${current.temperature}°C\n` +
                                  `☁️ Condição: ${condicaoTraduzida}`;
-                await sock.sendMessage(sender, { text: msgClima });
+                await sock.sendMessage(sender, { text: msgClima, quoted: msg });
             });
         }
 
-        // --- VERIFICAÇÃO DE COMANDO ERRADO (FORA DOS IFs) ---
+        // --- VERIFICAÇÃO DE COMANDO ERRADO ---
         const comandosExistentes = ['!menu', '!rank', '!sortear', '!tier', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute'];
-
         if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd))) {
-            await sock.sendMessage(sender, { 
-                text: "Aí que você quer demais né, amigo? Olha o menu e digite esse maldito comando direito!!!!!" 
-            });
+            await sock.sendMessage(sender, { text: "Aí que você quer demais né, amigo? Olha o menu e digite esse maldito comando direito!!!!!", quoted: msg });
         }
-        
+        S
     }); // Fecha o messages.upsert
 } // Fecha o connectToWhatsApp
 
