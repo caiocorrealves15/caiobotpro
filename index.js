@@ -253,6 +253,8 @@ if (lowerText.includes('bot')) {
 🩸 🔰 !rank
 🩸 ⌛ !sortear
 🩸 🎇 !tier [tema]
+🩸 🎮 !jogar
+
 
 😂😂 2. INTERAÇÃO E ZUEIRA
 🩸 🤜 !socar @usuario
@@ -303,7 +305,7 @@ if (text.startsWith('!jogar')) {
         });
     } else {
         await sock.sendMessage(sender, { 
-            video: { url: 'https://media.tenor.com/b2t7O28_G4AAAAAP/oh-no-skeleton.mp4' }, 
+            video: { url: 'https://media.tenor.com/7HPdFKRYFwMAAAPo/thank-you.mp4' }, 
             gifPlayback: true, 
             caption: `💀 Xiii... você escolheu o caminho ${escolha} e deu de cara com um monstro! O caminho certo era o ${caminhoVencedor}. Tente de novo!`, 
             quoted: msg 
