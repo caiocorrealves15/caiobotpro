@@ -25,6 +25,7 @@ let brincadeirasAtivas = true;
 
 let jogoForca = {
     ativo: false,
+    processando: false, // <--- ADICIONE ESTA LINHA
     palavra: "",
     descobertas: [],
     tentativas: [],
@@ -698,57 +699,63 @@ if (text.startsWith('!musica ')) {
 
     // 2. Lógica de Adivinhação (SÓ EXECUTA SE FOR REPLY)
     // Lógica de adivinhação (Substitua todo o bloco antigo por este)
-if (jogoForca.ativo) {
-    const contextInfo = msg.message?.extendedTextMessage?.contextInfo || 
-                        msg.message?.imageMessage?.contextInfo || 
-                        msg.message?.videoMessage?.contextInfo;
+// 2. Lógica de Adivinhação
+    // 2. Lógica de Adivinhação (Com Reações ✅ / ❌)
+    // 2. Lógica de Adivinhação
+    if (jogoForca.ativo && !jogoForca.processando) {
+        const contextInfo = msg.message?.extendedTextMessage?.contextInfo || 
+                            msg.message?.imageMessage?.contextInfo || 
+                            msg.message?.videoMessage?.contextInfo;
 
-    // Se o bot não estiver respondendo à mensagem certa (o ID da forca), ele ignora
-    if (contextInfo?.stanzaId === jogoForca.idMensagem) {
-        
-        // Verifica se é uma letra única e não um comando
-        if (text.length === 1 && !text.startsWith('!')) {
+        if (contextInfo?.stanzaId === jogoForca.idMensagem && text.length === 1 && !text.startsWith('!')) {
+            jogoForca.processando = true;
             const letra = text.toLowerCase();
+            const autor = msg.key.participant || msg.key.remoteJid; // Identifica quem enviou
             
             if (jogoForca.tentativas.includes(letra)) {
-                await sock.sendMessage(sender, { 
-                    video: { url: 'https://media.tenor.com/D9IyHTfml_gAAAPo/ai-meu-deus-do-ceu-ai-meu-deus.mp4' }, 
-                    gifPlayback: true,
-                    caption: `⚠️ Você já tentou a letra "${letra.toUpperCase()}". Presta atenção, tenta outra!` 
-                }, { quoted: msg });
-                return;
-            }
-            
-            jogoForca.tentativas.push(letra);
-
-            if (jogoForca.palavra.includes(letra)) {
-                for (let i = 0; i < jogoForca.palavra.length; i++) {
-                    if (jogoForca.palavra[i] === letra) jogoForca.descobertas[i] = letra;
-                }
-                
-                if (!jogoForca.descobertas.includes('_')) {
-                    jogoForca.ativo = false;
-                    await sock.sendMessage(sender, { text: `🎉 PARABÉNS! Você salvou a alma dele! A palavra era: *${jogoForca.palavra.toUpperCase()}*` }, { quoted: msg });
-                } else {
-                    await sock.sendMessage(sender, { text: `Boa! ${jogoForca.descobertas.join(' ')}` }, { quoted: msg });
-                }
+                await sock.sendMessage(sender, { text: `⚠️ @${autor.split('@')[0]}, você já tentou a letra "${letra.toUpperCase()}".`, mentions: [autor] }, { quoted: msg });
             } else {
-                jogoForca.erros++;
-                if (jogoForca.erros >= jogoForca.maxErros) {
-                    jogoForca.ativo = false;
-                    await sock.sendMessage(sender, { 
-                        video: { url: 'https://media.tenor.com/HyeG4dSurbwAAAPo/hanging-skeleton-skeleton.mp4' }, 
-                        gifPlayback: true, 
-                        caption: `💀 VOCÊ PERDEU! A palavra era *${jogoForca.palavra.toUpperCase()}*` 
-                    }, { quoted: msg });
+                jogoForca.tentativas.push(letra);
+
+                if (jogoForca.palavra.includes(letra)) {
+                    // Reação de acerto na mensagem do usuário
+                    await sock.sendMessage(sender, { react: { text: '✅', key: msg.key } });
+
+                    for (let i = 0; i < jogoForca.palavra.length; i++) {
+                        if (jogoForca.palavra[i] === letra) jogoForca.descobertas[i] = letra;
+                    }
+                    
+                    if (!jogoForca.descobertas.includes('_')) {
+                        jogoForca.ativo = false;
+                        await sock.sendMessage(sender, { text: `🎉 PARABÉNS @${autor.split('@')[0]}! Você salvou a alma dele! A palavra era: *${jogoForca.palavra.toUpperCase()}*`, mentions: [autor] }, { quoted: msg });
+                    } else {
+                        // Resposta personalizada
+                        await sock.sendMessage(sender, { text: `Boa, campeão @${autor.split('@')[0]}!! Continue: ${jogoForca.descobertas.join(' ')}`, mentions: [autor] });
+                    }
                 } else {
-                    await sock.sendMessage(sender, { text: `❌ Errou! ${jogoForca.maxErros - jogoForca.erros} vidas restando. ${jogoForca.descobertas.join(' ')}` }, { quoted: msg });
+                    // Reação de erro na mensagem do usuário
+                    await sock.sendMessage(sender, { react: { text: '❌', key: msg.key } });
+                    
+                    jogoForca.erros++;
+                    if (jogoForca.erros >= jogoForca.maxErros) {
+                        jogoForca.ativo = false;
+                        await sock.sendMessage(sender, { 
+                            video: { url: 'https://media.tenor.com/HyeG4dSurbwAAAPo/hanging-skeleton-skeleton.mp4' }, 
+                            gifPlayback: true, 
+                            caption: `💀 VOCÊ PERDEU, @${autor.split('@')[0]}! A palavra era *${jogoForca.palavra.toUpperCase()}*`,
+                            mentions: [autor]
+                        }, { quoted: msg });
+                    } else {
+                        await sock.sendMessage(sender, { text: `❌ Errou, @${autor.split('@')[0]}! ${jogoForca.maxErros - jogoForca.erros} vidas restando.`, mentions: [autor] });
+                    }
                 }
             }
+
+            setTimeout(() => { 
+                jogoForca.processando = false; 
+            }, 1000); 
         }
-        return; // IMPORTANTE: Impede que o bot processe outros comandos para esta letra
     }
-}
     // --- FIM DA LÓGICA DA FORCA ---
         // 8. COMANDO CLIMA (COM DIAGNÓSTICO)
         if (text.startsWith('!desmute')) {
