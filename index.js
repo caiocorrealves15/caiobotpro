@@ -73,25 +73,30 @@ async function connectToWhatsApp() {
         
         // Mensagem de boas-vindas turbinada
 const textoBoasVindas = 
-    `🌟 *BEM-VINDO(A) AO BONDE DO BRASIL* 🌟\n\n` +
-    `Fala aí, @${userId.split('@')[0]}! 🎉 Você acaba de entrar no grupo mais zueiro e ativo do Zap!\n\n` +
+    `╔══════════════════════════════════╗\n` +
+    `║       🌟 BONDE DO BRASIL 🌟        ║\n` +
+    `╚══════════════════════════════════╝\n\n` +
+    `Fala aí, @${userId.split('@')[0]}! 🎉 \n` +
+    `Você acaba de entrar no grupo mais zueiro do Zap!\n\n` +
     `🚀 *O QUE ROLA POR AQUI?*\n` +
-    `🎮 Jogos: !jogar (RPG), !penalti, !forca e nosso novo *Jogo dos Emojis*!\n` +
-    `🎶 Música: Use !musica [nome] para achar seu som.\n` +
-    `🥊 Interação: !socar, !beijar, !matar e muita resenha.\n` +
-    `🏆 Ranking: Seja o mais ativo e chegue ao topo!\n\n` +
+    `🎮 Jogos divertidos e RPGs!\n` +
+    `🎶 Músicas para curtir.\n` +
+    `🥊 Muita interação e resenha.\n` +
+    `🏆 Ranking de membros ativos.\n\n` +
     `📝 *PARA COMEÇAR BEM:*\n` +
     `Envie sua *FOTO | CIDADE | IDADE | NOME*.\n\n` +
-    `🚫 *REGRAS DE OURO (BAN)*\n` +
-    `• Proibido links, spam, brigas ou invadir o PV alheio.\n\n` +
+    `┌────────── 🚫 REGRAS ──────────┐\n` +
+    `│ • Proibido links e spam.      │\n` +
+    `│ • Proibido vendas.            │\n` +
+    `│ • Proibido invadir PV.        │\n` +
+    `└───────────────────────────────┘\n\n` +
     `🤖 *DICA:* Digite *!menu* para ver todos os nossos comandos e divirta-se!`;
 
-        await sock.sendMessage(id, { 
-            text: textoBoasVindas, 
-            mentions: [userId] 
-        });
-    }
+await sock.sendMessage(id, { 
+    text: textoBoasVindas, 
+    mentions: [userId] 
 });
+
 
 
 
