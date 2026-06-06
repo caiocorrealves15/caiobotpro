@@ -48,7 +48,7 @@ async function connectToWhatsApp() {
        sock.ev.on('group-participants.update', async (update) => {
     const { id, participants, action } = update;
     if (action === 'add') {
-        const userId = participants[0];
+        const userId = typeof participants[0] === 'string' ? participants[0] : participants[0].id;
         
         const textoBoasVindas = 
             `🌟 *BEM-VINDO(A) AO BONDE DO BRASIL* 🌟\n\n` +
