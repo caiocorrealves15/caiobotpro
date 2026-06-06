@@ -23,6 +23,16 @@ if (isRender) {
 // --- CONFIGURAÇÕES E VARIÁVEIS INICIAIS ---
 let brincadeirasAtivas = true;
 
+let jogoForca = {
+    ativo: false,
+    palavra: "",
+    descobertas: [],
+    tentativas: [],
+    erros: 0,
+    maxErros: 6,
+    idMensagem: ""
+};
+
 
 let jogoEmoji = {
     ativo: false,
@@ -665,15 +675,7 @@ if (text.startsWith('!musica ')) {
         await sock.sendMessage(sender, { text: "❌ Erro ao buscar a música." });
     }
 }
-        // Comando !clima
-        // 8. COMANDO CLIMA (AJUSTADO)
-        let jogoForca = {
-    ativo: false,
-    palavra: "",
-    descobertas: [],
-    erros: 0,
-    maxErros: 6
-};
+       
 // --- BLOCO DO JOGO DA FORCA ---
     // 1. Comando de Início
     if (text.startsWith('!forca')) {
