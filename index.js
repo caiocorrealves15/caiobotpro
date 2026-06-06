@@ -56,19 +56,20 @@ async function connectToWhatsApp() {
     if (action === 'add') {
         const userId = typeof participants[0] === 'string' ? participants[0] : participants[0].id;
         
-        const textoBoasVindas = 
-            `🌟 *BEM-VINDO(A) AO BONDE DO BRASIL* 🌟\n\n` +
-            `Olá, @${userId.split('@')[0]}! Ficamos felizes com sua chegada.\n\n` +
-            `📝 *PARA UMA BOA CONVIVÊNCIA, ATENTE-SE:* \n\n` +
-            `📍 *APRESENTAÇÃO OBRIGATÓRIA*\n` +
-            `Envie: *FOTO | CIDADE | IDADE | NOME*\n\n` +
-            `🚫 *REGRAS DE OURO (BAN)*\n` +
-            `• Proibido links externos.\n` +
-            `• Proibido brigas ou ofensas.\n` +
-            `• Proibido spam ou vendas não autorizadas.\n` +
-            `• Respeite o espaço alheio (não invada o PV).\n\n` +
-            `🤖 *DICA:* O bot está disponível para uso, mas evite abusar dos comandos.\n\n` +
-            `❓ *Dúvidas?* Marque um administrador no grupo ou chame-o no privado.`;
+        // Mensagem de boas-vindas turbinada
+const textoBoasVindas = 
+    `🌟 *BEM-VINDO(A) AO BONDE DO BRASIL* 🌟\n\n` +
+    `Fala aí, @${userId.split('@')[0]}! 🎉 Você acaba de entrar no grupo mais zueiro e ativo do Zap!\n\n` +
+    `🚀 *O QUE ROLA POR AQUI?*\n` +
+    `🎮 Jogos: !jogar (RPG), !penalti e nosso novo *Jogo dos Emojis*!\n` +
+    `🎶 Música: Use !musica [nome] para achar seu som.\n` +
+    `🥊 Interação: !socar, !beijar, !matar e muita resenha.\n` +
+    `🏆 Ranking: Seja o mais ativo e chegue ao topo!\n\n` +
+    `📝 *PARA COMEÇAR BEM:*\n` +
+    `Envie sua *FOTO | CIDADE | IDADE | NOME*.\n\n` +
+    `🚫 *REGRAS DE OURO (BAN)*\n` +
+    `• Proibido links, spam, brigas ou invadir o PV alheio.\n\n` +
+    `🤖 *DICA:* Digite *!menu* para ver todos os nossos comandos e divirta-se!`;
 
         await sock.sendMessage(id, { 
             text: textoBoasVindas, 
