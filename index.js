@@ -687,7 +687,7 @@ if (text.startsWith('!forca')) {
 
     // GIF de entrada para o Jogo da Forca
     const msgForca = await sock.sendMessage(sender, { 
-    video: { url: 'https://media.tenor.com/L3659m4uL0EAAAPo/skull-scary.mp4' }, 
+    video: { url: 'https://media.tenor.com/7HUogy7rXs4AAAPo/feel-me-think-about-it.mp4' }, 
     gifPlayback: true,
     caption: `💀 *JOGO DA FORCA (NÍVEL HARD)*\n\nPalavra: ${jogoForca.descobertas.join(' ')}\n\nResponda dando reply (em cima) com uma letra!` 
 }, { quoted: msg });
