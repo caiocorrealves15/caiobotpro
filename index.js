@@ -192,30 +192,22 @@ if (lowerText.includes('bebida') || lowerText.includes('cerveja') || lowerText.i
         // 2. !MENU
         // 2. !MENU (ESTILO PERSONALIZADO BASEADO NA IMAGEM)
         if (text === '!menu') {
-    // 1. Definição do nick (com fallback caso esteja vazio)
-    let nomeUsuario = m.pushName || 'Amigo';
-    if (nomeUsuario.trim() === '' || nomeUsuario.trim() === '.') nomeUsuario = 'Amigo';
-    
-    // 2. Variáveis de menção e tempo
-    const userMention = participant; 
+    // 1. Variáveis de data e hora (Fuso Brasil)
     const optionsDate = { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric' };
     const optionsTime = { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', hour12: false };
     
     const dataAtual = new Date().toLocaleDateString('pt-BR', optionsDate);
     const horaAtual = new Date().toLocaleTimeString('pt-BR', optionsTime);
     
-    // Seu ID conforme você confirmou que funciona
-    const meuNumero = '96057379803159'; 
-
+    // 2. Texto do menu (usando a menção simples conforme você validou)
     const menuTexto = `
 「 ❍ BONDE DO BRASIL ❍ 」
 
 ✨ BOAS-VINDAS, @${participant.split('@')[0]}! 🔔✨
 
-↪ 🫧 NICK: ${nomeUsuario}
 ↪ 🔔 DATA: ${dataAtual}
 ↪ ⏰ HORA: ${horaAtual}
-↪ 👑 DEV: @${meuNumero}
+↪ 👑 DEV: Caio o melhor 😎
 ↪ 🤖 ATUALIZAÇÕES: Semanais
 
 🔔 MENU DE COMANDOS 🫧
@@ -241,14 +233,15 @@ if (lowerText.includes('bebida') || lowerText.includes('cerveja') || lowerText.i
 🩸 🌤️ !clima [cidade]
     `.trim();
 
+    // 3. Envio com menção apenas para o usuário que chamou
     await sock.sendMessage(sender, { 
         video: { url: 'https://media.tenor.com/WV_2tGerThoAAAPo/farming-aura-farming.mp4' },
         gifPlayback: true, 
         caption: menuTexto,
-        // Aqui o bot marca quem chamou e o seu número de dev
-        mentions: [participant, meuNumero + '@s.whatsapp.net'] 
+        mentions: [participant] // Apenas o usuário que chamou será mencionado no '@'
     });
 }
+
 
 
         // 3. !BAN
