@@ -9,6 +9,7 @@ const ytsr = require('ytsr');
 const qrcode = require('qrcode-terminal');
 const ytdl = require('ytdl-core'); // Requisito movido para o topo
 const ARQUIVO_PLACAR_EMOJI = './placar_emoji.json';
+
 let placarEmoji = fs.existsSync(ARQUIVO_PLACAR_EMOJI) ? JSON.parse(fs.readFileSync(ARQUIVO_PLACAR_EMOJI)) : {};
 
 const isRender = process.env.RENDER === 'true';
@@ -685,11 +686,11 @@ if (text.startsWith('!forca')) {
     jogoForca.maxErros = 6;
 
     // GIF de entrada para o Jogo da Forca
-    await sock.sendMessage(sender, { 
-        video: { url: 'https://media.tenor.com/7HUogy7rXs4AAAPo/feel-me-think-about-it.mp4' }, 
-        gifPlayback: true,
-        caption: `💀 *JOGO DA FORCA (NÍVEL HARD)*\n\nPalavra: ${jogoForca.descobertas.join(' ')}\n\nResponda dando reply (em cima) com uma letra para tentar!` 
-    }, { quoted: msg });
+    const msgForca = await sock.sendMessage(sender, { 
+    video: { url: 'https://media.tenor.com/L3659m4uL0EAAAPo/skull-scary.mp4' }, 
+    gifPlayback: true,
+    caption: `💀 *JOGO DA FORCA (NÍVEL HARD)*\n\nPalavra: ${jogoForca.descobertas.join(' ')}\n\nResponda dando reply (em cima) com uma letra!` 
+}, { quoted: msg });
     
     jogoForca.idMensagem = msg.key.id; // Salva o ID da própria mensagem de início
 }
