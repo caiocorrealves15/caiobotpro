@@ -674,9 +674,6 @@ if (text.startsWith('!musica ')) {
     erros: 0,
     maxErros: 6
 };
-
-// Comando para iniciar
-// Comando para iniciar
 // --- BLOCO DO JOGO DA FORCA ---
     // 1. Comando de Início
     if (text.startsWith('!forca')) {
@@ -698,29 +695,38 @@ if (text.startsWith('!musica ')) {
     }
 
     // 2. Lógica de Adivinhação (SÓ EXECUTA SE FOR REPLY)
-    if (jogoForca.ativo) {
-        const contextInfo = msg.message?.extendedTextMessage?.contextInfo || 
-                            msg.message?.imageMessage?.contextInfo || 
-                            msg.message?.videoMessage?.contextInfo;
+    // Lógica de adivinhação (Substitua todo o bloco antigo por este)
+if (jogoForca.ativo) {
+    const contextInfo = msg.message?.extendedTextMessage?.contextInfo || 
+                        msg.message?.imageMessage?.contextInfo || 
+                        msg.message?.videoMessage?.contextInfo;
 
-        if (contextInfo?.stanzaId === jogoForca.idMensagem && text.length === 1 && !text.startsWith('!')) {
+    // Se o bot não estiver respondendo à mensagem certa (o ID da forca), ele ignora
+    if (contextInfo?.stanzaId === jogoForca.idMensagem) {
+        
+        // Verifica se é uma letra única e não um comando
+        if (text.length === 1 && !text.startsWith('!')) {
             const letra = text.toLowerCase();
+            
             if (jogoForca.tentativas.includes(letra)) {
                 await sock.sendMessage(sender, { 
                     video: { url: 'https://media.tenor.com/D9IyHTfml_gAAAPo/ai-meu-deus-do-ceu-ai-meu-deus.mp4' }, 
                     gifPlayback: true,
-                    caption: `⚠️ Você já tentou a letra "${letra.toUpperCase()}". Presta atenção!` 
+                    caption: `⚠️ Você já tentou a letra "${letra.toUpperCase()}". Presta atenção, tenta outra!` 
                 }, { quoted: msg });
                 return;
             }
+            
             jogoForca.tentativas.push(letra);
+
             if (jogoForca.palavra.includes(letra)) {
                 for (let i = 0; i < jogoForca.palavra.length; i++) {
                     if (jogoForca.palavra[i] === letra) jogoForca.descobertas[i] = letra;
                 }
+                
                 if (!jogoForca.descobertas.includes('_')) {
                     jogoForca.ativo = false;
-                    await sock.sendMessage(sender, { text: `🎉 PARABÉNS! A palavra era: *${jogoForca.palavra.toUpperCase()}*` }, { quoted: msg });
+                    await sock.sendMessage(sender, { text: `🎉 PARABÉNS! Você salvou a alma dele! A palavra era: *${jogoForca.palavra.toUpperCase()}*` }, { quoted: msg });
                 } else {
                     await sock.sendMessage(sender, { text: `Boa! ${jogoForca.descobertas.join(' ')}` }, { quoted: msg });
                 }
@@ -737,9 +743,10 @@ if (text.startsWith('!musica ')) {
                     await sock.sendMessage(sender, { text: `❌ Errou! ${jogoForca.maxErros - jogoForca.erros} vidas restando. ${jogoForca.descobertas.join(' ')}` }, { quoted: msg });
                 }
             }
-            return; // Impede que o código continue para outros comandos
         }
+        return; // IMPORTANTE: Impede que o bot processe outros comandos para esta letra
     }
+}
     // --- FIM DA LÓGICA DA FORCA ---
         // 8. COMANDO CLIMA (COM DIAGNÓSTICO)
         if (text.startsWith('!desmute')) {
