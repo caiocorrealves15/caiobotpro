@@ -676,6 +676,7 @@ if (text.startsWith('!musica ')) {
 };
 
 // Comando para iniciar
+// Comando para iniciar
 if (text.startsWith('!forca')) {
     const palavrasDificeis = ['abstrato', 'efemeridade', 'paradoxo', 'onisciente', 'idiossincrasia', 'inexoravel'];
     jogoForca.palavra = palavrasDificeis[Math.floor(Math.random() * palavrasDificeis.length)];
@@ -687,12 +688,13 @@ if (text.startsWith('!forca')) {
 
     // GIF de entrada para o Jogo da Forca
     const msgForca = await sock.sendMessage(sender, { 
-    video: { url: 'https://media.tenor.com/7HUogy7rXs4AAAPo/feel-me-think-about-it.mp4' }, 
-    gifPlayback: true,
-    caption: `💀 *JOGO DA FORCA (NÍVEL HARD)*\n\nPalavra: ${jogoForca.descobertas.join(' ')}\n\nResponda dando reply (em cima) com uma letra!` 
-}, { quoted: msg });
+        video: { url: 'https://media.tenor.com/7HUogy7rXs4AAAPo/feel-me-think-about-it.mp4' }, 
+        gifPlayback: true,
+        caption: `💀 *JOGO DA FORCA (NÍVEL HARD)*\n\nPalavra: ${jogoForca.descobertas.join(' ')}\n\nResponda dando reply (em cima) com uma letra!` 
+    }, { quoted: msg });
     
-    jogoForca.idMensagem = msg.key.id; // Salva o ID da própria mensagem de início
+    // CORREÇÃO AQUI: Salvamos o ID da mensagem que o BOT enviou
+    jogoForca.idMensagem = msgForca.key.id; 
 }
 
 // Lógica de adivinhação
