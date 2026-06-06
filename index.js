@@ -167,14 +167,30 @@ if (lowerText.includes('bot')) {
     }
 
     // 4. Saudações
+    // 4. Saudações
     if (lowerText.includes('bom dia') || lowerText.includes('boa tarde') || lowerText.includes('boa noite')) {
         let emoji = '☀️';
         let urlGif = 'https://media.tenor.com/7HPdFKRYFwMAAAPo/thank-you.mp4';
         let frase = 'Bom dia! Tudo bem com você?';
-        if (lowerText.includes('boa tarde')) { emoji = '🌤️'; urlGif = 'https://media.tenor.com/C78aGUgwTEYAAAPo/good-afternoon-rollygifs.mp4'; frase = 'Boa tarde!'; }
-        else if (lowerText.includes('boa noite')) { emoji = '🌙'; urlGif = 'https://media.tenor.com/0RCfPxdUCs8AAAPo/dvfedvr.mp4'; frase = 'Boa noite!'; }
+        
+        if (lowerText.includes('boa tarde')) { 
+            emoji = '🌤️'; 
+            urlGif = 'https://media.tenor.com/C78aGUgwTEYAAAPo/good-afternoon-rollygifs.mp4'; 
+            frase = 'Boa tarde!'; 
+        } else if (lowerText.includes('boa noite')) { 
+            emoji = '🌙'; 
+            urlGif = 'https://media.tenor.com/0RCfPxdUCs8AAAPo/dvfedvr.mp4'; 
+            frase = 'Boa noite! Tenha um bom sonhos, sonhe comigo!!🤖🤖'; 
+        }
+
         await sock.sendMessage(sender, { react: { text: emoji, key: msg.key } });
-        await sock.sendMessage(sender, { video: { url: urlGif }, gifPlayback: true, caption: `🤖 *${frase}*`, quoted: msg });
+        
+        // Ajuste aqui: o quoted agora aponta para a chave da mensagem original
+        await sock.sendMessage(sender, { 
+            video: { url: urlGif }, 
+            gifPlayback: true, 
+            caption: `🤖 *${frase}*` 
+        }, { quoted: msg }); 
     }
 
     // 5. Sextou
@@ -191,8 +207,13 @@ if (lowerText.includes('bot')) {
 
     // 7. Bebida
     if (lowerText.includes('bebida') || lowerText.includes('cerveja') || lowerText.includes('vodka') || lowerText.includes('whisky')) {
-        await sock.sendMessage(sender, { text: 'Opa, falou em bebida???? 👀👀👀👀', quoted: msg });
-    }
+    await sock.sendMessage(sender, { 
+        video: { url: 'https://media.tenor.com/6ZIClIzEuGwAAAPo/drink-dog.mp4' }, 
+        gifPlayback: true, 
+        caption: 'Opa, falou em bebida???? 👀👀👀👀', 
+        quoted: msg 
+    });
+}
 
     // 8. !MENU
     if (text === '!menu') {
