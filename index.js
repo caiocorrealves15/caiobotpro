@@ -141,7 +141,7 @@ const lowerText = text.toLowerCase();
 
 // 1. Resposta ao mencionar Bot
 if (lowerText.includes('bot')) {
-    await sock.sendMessage(sender, { text: `Fala aí @${participant.split('@')[0]}, tá falando de mim, por que? Quer morrer?S`, mentions: [participant] });
+    await sock.sendMessage(sender, { text: `Fala aí @${participant.split('@')[0]}, tá falando de mim, por que? Quer morrer?`, mentions: [participant] });
 }
 
 // 2. Dinheiro
