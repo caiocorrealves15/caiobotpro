@@ -192,19 +192,30 @@ if (lowerText.includes('bebida') || lowerText.includes('cerveja') || lowerText.i
         // 2. !MENU
         // 2. !MENU (ESTILO PERSONALIZADO BASEADO NA IMAGEM)
         if (text === '!menu') {
-    const nomeUsuario = m.pushName || 'visitante';
-    const dataAtual = new Date().toLocaleDateString('pt-BR');
-    const horaAtual = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    // 1. Definição do nick (com fallback caso esteja vazio)
+    let nomeUsuario = m.pushName || 'Amigo';
+    if (nomeUsuario.trim() === '' || nomeUsuario.trim() === '.') nomeUsuario = 'Amigo';
+    
+    // 2. Variáveis de menção e tempo
+    const userMention = participant; 
+    const optionsDate = { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric' };
+    const optionsTime = { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', hour12: false };
+    
+    const dataAtual = new Date().toLocaleDateString('pt-BR', optionsDate);
+    const horaAtual = new Date().toLocaleTimeString('pt-BR', optionsTime);
+    
+    // Seu ID conforme você confirmou que funciona
+    const meuNumero = '96057379803159'; 
 
     const menuTexto = `
 「 ❍ BONDE DO BRASIL ❍ 」
 
-✨ BOAS-VINDAS, ${nomeUsuario}! 🔔✨
+✨ BOAS-VINDAS, @${participant.split('@')[0]}! 🔔✨
 
 ↪ 🫧 NICK: ${nomeUsuario}
 ↪ 🔔 DATA: ${dataAtual}
 ↪ ⏰ HORA: ${horaAtual}
-↪ 👑 DEV: Caio o melhor 😎
+↪ 👑 DEV: @${meuNumero}
 ↪ 🤖 ATUALIZAÇÕES: Semanais
 
 🔔 MENU DE COMANDOS 🫧
@@ -231,12 +242,14 @@ if (lowerText.includes('bebida') || lowerText.includes('cerveja') || lowerText.i
     `.trim();
 
     await sock.sendMessage(sender, { 
-video: { url: 'https://media.tenor.com/WV_2tGerThoAAAPo/farming-aura-farming.mp4' },
+        video: { url: 'https://media.tenor.com/WV_2tGerThoAAAPo/farming-aura-farming.mp4' },
         gifPlayback: true, 
         caption: menuTexto,
-        mentions: [sender]
+        // Aqui o bot marca quem chamou e o seu número de dev
+        mentions: [participant, meuNumero + '@s.whatsapp.net'] 
     });
 }
+
 
         // 3. !BAN
         if (text.startsWith('!ban')) {
