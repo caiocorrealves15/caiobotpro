@@ -442,7 +442,7 @@ if (text.startsWith('!beijar')) {
 if (text.startsWith('!musica ')) {
     const busca = text.replace('!musica ', '');
     try {
-        await sock.sendMessage(sender, { text: "🔍 Calma aí "Cantor", estou Buscando sua música..." });
+        await sock.sendMessage(sender, { text: "🔍 Calma aí \"Cantor\", estou Buscando sua música..." });
         
         // Busca o link do vídeo
         const searchResults = await ytsr(busca, { limit: 1 });
