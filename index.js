@@ -44,33 +44,33 @@ async function connectToWhatsApp() {
 
     // Boas-vindas (VERSÃO COMPLETA)
     sock.ev.on('group-participants.update', async (update) => {
-        const { id, participants, action } = update;
-        if (action === 'add') {
-            const participantObj = participants[0];
-            const userId = participantObj.id || participantObj;
-            const userMention = userId.split('@')[0];
+    const { id, participants, action } = update;
+    if (action === 'add') {
+        const userId = participants[0];
+        
+        // Mensagem de boas-vindas aprimorada
+        const textoBoasVindas = 
+            `🌟 *BEM-VINDO(A) AO BONDE DO BRASIL* 🌟\n\n` +
+            `Olá, @${userId.split('@')[0]}! Ficamos felizes com sua chegada.\n\n` +
+            `📝 *PARA UMA BOA CONVIVÊNCIA, ATENTE-SE:* \n\n` +
+            `📍 *APRESENTAÇÃO OBRIGATÓRIA*\n` +
+            `Envie: *FOTO | CIDADE | IDADE | NOME*\n\n` +
+            `🚫 *REGRAS DE OURO (BAN)*\n` +
+            `• Proibido links externos.\n` +
+            `• Proibido brigas ou ofensas.\n` +
+            `• Proibido spam ou vendas não autorizadas.\n` +
+            `• Respeite o espaço alheio (não invada o PV).\n\n` +
+            `🤖 *DICA:* O bot está disponível para uso, mas evite abusar dos comandos.\n\n` +
+            `❓ *Dúvidas?* Marque um administrador no grupo ou chame-o no privado.`;
 
-            const textoBoasVindas = `👋 Olá @${userMention}.\n` +
-                `✨ Seja bem vindo(a) ao *Bonde do Brasil*!\n\n` +
-                `📌 LEIA AS REGRAS E SE APRESENTE! 🔔 \n` +
-                `( Leia Descrição )\n` +
-                `• Obrigatório se apresentar com :\n` +
-                `• FOTO/CIDADE/IDADE/NOME.\n\n` +
-                `📌 PASSIVO DE BAN:\n` +
-                `• 1. SEM LINKS 🔗\n` +                
-                `• 2. SEM BRIGAS 🥊\n` +
-                `• 3. ANUNCIAR VENDAS SEM AUTORIZAÇÃO 🚫\n` +
-                `• 4. INVADIR O PV SEM AUTORIZAÇÃO ❌\n` +
-                `• Não abuse dos comandos do BOT 🤖\n\n` +
-                `• Dúvidas?\n` +
-                `• Qualquer dúvida pergunta ou marcar ou chamar qualquer *Administrador* no privado ou no Grupo.`;
-
-            await sock.sendMessage(id, { 
-                text: textoBoasVindas, 
-                mentions: [userId] 
-            });
-        }
-    });
+        await sock.sendMessage(id, { 
+            video: { url: 'https://media.tenor.com/gJRJ_TQfC9EAAAPo/hi.mp4' }, // GIF de Boas-vindas
+            gifPlayback: true,
+            caption: textoBoasVindas, 
+            mentions: [userId] 
+        });
+    }
+});
 
     sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update;
@@ -223,7 +223,7 @@ if (lowerText.includes('bot')) {
     // 9. Comandos extras (ban, tier, matar, rank, adm, socar, beijar, fechar, abrir, musica, desmute, mute, clima)
     // *Dica: Aplique o quoted: msg em todos os sock.sendMessage dentro desses blocos também!*
 
-    const comandosExistentes = ['!menu', '!rank', '!sortear', '!jogar', '!tier', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute'];
+    const comandosExistentes = ['!menu', '!rank', '!sortear', '!jogar', '!tier', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute'];
     if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd))) {
         await sock.sendMessage(sender, { text: "Aí que você quer demais né, amigo? Olha o menu e digite esse maldito comando direito!!!!!", quoted: msg });
     }
@@ -249,11 +249,12 @@ if (lowerText.includes('bot')) {
 
 🔔 MENU DE COMANDOS 🫧
 
-⚽ 1. ROLÊS E ORGANIZAÇÃO
+⚽ 1. JOGOS E ORGANIZAÇÃO
 🩸 🔰 !rank
 🩸 ⌛ !sortear
 🩸 🎇 !tier [tema]
 🩸 🎮 !jogar
+🩸 ⚽️ !penalti
 
 
 😂😂 2. INTERAÇÃO E ZUEIRA
@@ -285,36 +286,83 @@ if (text.startsWith('!jogar')) {
     const args = text.split(' ');
     const escolha = parseInt(args[1]);
 
-    // Se o usuário não digitou um número, mostra o menu do jogo
+    // Definição dos cenários possíveis
+    const cenarios = [
+        { nome: "Caverna Misteriosa", desc: "Você encontrou uma caverna! Escolha um caminho:" },
+        { nome: "Castelo Assombrado", desc: "Você está na porta de um castelo! Escolha uma porta:" },
+        { nome: "Floresta Proibida", desc: "Você se perdeu na floresta! Escolha uma trilha:" }
+    ];
+
+    // Se o usuário não digitou um número (ou número inválido)
     if (!escolha || escolha < 1 || escolha > 3) {
+        const cenarioSorteado = cenarios[Math.floor(Math.random() * cenarios.length)];
         return await sock.sendMessage(sender, { 
-            text: "🎮 *RPG DO BONDE*\n\nVocê encontrou uma caverna misteriosa! 🕯️\nEscolha um caminho (digite !jogar 1, 2 ou 3):\n\n1. Caminho da Esquerda (Tesouro)\n2. Caminho do Centro (Perigo)\n3. Caminho da Direita (Mistério)",
-            quoted: msg 
+            video: { url: 'https://media.tenor.com/jhsMAREYalUAAAPo/pacman-gaming.mp4' }, // GIF de abertura
+            gifPlayback: true,
+            caption: `🎮 *RPG DO BONDE - ${cenarioSorteado.nome}*\n\n${cenarioSorteado.desc}\n\n1. Esquerda\n2. Centro\n3. Direita\n\nDigite !jogar [1, 2 ou 3]`,
+            quoted: msg // Responde ao jogador
         });
     }
 
-    // O bot sorteia o caminho vencedor (1, 2 ou 3)
+    // Lógica de resultado
     const caminhoVencedor = Math.floor(Math.random() * 3) + 1;
 
     if (escolha === caminhoVencedor) {
         await sock.sendMessage(sender, { 
-            video: { url: 'https://media.tenor.com/7HPdFKRYFwMAAAPo/thank-you.mp4' }, 
+            video: { url: 'https://media.tenor.com/FCtDCj3ihF8AAAPo/bugs-bunny-looney-tunes.mp4' }, 
             gifPlayback: true, 
             caption: `🏆 BOA! Você escolheu o caminho ${escolha} e encontrou um tesouro épico!`, 
             quoted: msg 
         });
     } else {
         await sock.sendMessage(sender, { 
-            video: { url: 'https://media.tenor.com/7HPdFKRYFwMAAAPo/thank-you.mp4' }, 
+            video: { url: 'https://media.tenor.com/Lhwo0gmSWLcAAAPo/higuruma-jjk.mp4' }, 
             gifPlayback: true, 
-            caption: `💀 Xiii... você escolheu o caminho ${escolha} e deu de cara com um monstro! O caminho certo era o ${caminhoVencedor}. Tente de novo!`, 
+            caption: `💀 Xiii... deu ruim! Você escolheu o ${escolha} e deu de cara com um monstro. O caminho certo era o ${caminhoVencedor}.`, 
             quoted: msg 
         });
     }
 }
 
 
+if (text.startsWith('!penalti')) {
+    const args = text.split(' ');
+    const escolha = parseInt(args[1]);
+    const senderId = msg.key.remoteJid;
 
+    // Carrega o placar atual
+    let placar = JSON.parse(fs.readFileSync('./placar.json', 'utf8'));
+    if (!placar[senderId]) placar[senderId] = 0;
+
+    // Mensagem inicial com GIF e respondendo a quem chamou
+    if (!escolha || escolha < 1 || escolha > 3) {
+        return await sock.sendMessage(sender, { 
+            video: { url: 'https://media.tenor.com/Rfz8o91xR5wAAAPo/jonathan-david-jo-david.mp4' }, // GIF de abertura
+            gifPlayback: true,
+            caption: `⚽ *DISPUTA DE PÊNALTIS*\n\nSeu total de gols: ${placar[senderId]}\n\nEscolha o canto para bater o pênalti: 1, 2 ou 3`, 
+            quoted: msg // Agora o bot responde exatamente quem mandou o comando
+        });
+    }
+
+    const defesa = Math.random() < 0.3;
+    if (!defesa) {
+        placar[senderId] += 1;
+        fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
+        await sock.sendMessage(sender, { 
+            caption: `⚽ GOOOOOL! Você marcou! Total de gols: ${placar[senderId]}`, 
+            video: { url: 'https://media.tenor.com/vnXD4h47_ZwAAAPo/kick-goal.mp4' }, 
+            gifPlayback: true, 
+            quoted: msg 
+        });
+    } else {
+        await sock.sendMessage(sender, { 
+            caption: `🧤 DEFESA! O goleiro pegou. Seu total continua ${placar[senderId]} gols.`, 
+            video: { url: 'https://media.tenor.com/AdTJAjjVaIkAAAPo/goalkeeper.mp4' }, 
+            gifPlayback: true, 
+            quoted: msg 
+        });
+    }
+}
         // 3. !BAN
         if (text.startsWith('!ban')) {
             if (!isAdmin) {
@@ -435,7 +483,7 @@ if (text.startsWith('!beijar')) {
         const quemRecebe = mention.split('@')[0];
         
         // Exemplo de link de GIF (você pode trocar esse link depois)
-        const linkGif = "https://media.tenor.com/2ES7YijqoOwAAAPo/kiss.mp4";
+        const linkGif = "https://media.tenor.com/eCNrTq7wOpgAAAPo/kiss.mp4";
 
         await sock.sendMessage(sender, { 
             video: { url: linkGif }, 
@@ -453,7 +501,7 @@ if (text.startsWith('!beijar')) {
             if (!isAdmin) {
                 await sock.sendMessage(sender, { text: "Tentando furar as regras, né?? HAHAHHAHA 👀👀👀\n\nSabe que um ADM está de olho em você agora né?" });
             } else {
-                await sock.sendMessage(sender, { text: "Vocês estão falando demais, dá um tempo aí tiozão!!!😤" });
+                await sock.sendMessage(sender, { text: "SILÊNCIO!!!!!!!!! Fechei mesmo🤫, Um ADM vai querer anunciar alguma coisa🫡🫡🫡" });
                 await sock.groupSettingUpdate(sender, 'announcement');
             }
         }
