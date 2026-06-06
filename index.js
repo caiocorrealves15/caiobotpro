@@ -344,9 +344,19 @@ if (text === '!sortear') {
     // 9. Comandos extras (ban, tier, matar, rank, adm, socar, beijar, fechar, abrir, musica, desmute, mute, clima)
     // *Dica: Aplique o quoted: msg em todos os sock.sendMessage dentro desses blocos também!*
     const comandosExistentes = ['!menu', '!rank', '!emoji', '!sortear', '!jogar', '!forca', '!tier', '!rankingemoji', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute'];
-    if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd))) {
-        await sock.sendMessage(sender, { text: "Aí que você quer demais né, amigo? Olha o menu e digite esse maldito comando direito!!!!!", quoted: msg });
-    }
+
+if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd))) {
+    const autor = msg.key.participant || msg.key.remoteJid;
+    
+    // Reação com o emoji 🤦‍♂️ na mensagem do usuário
+    await sock.sendMessage(sender, { react: { text: '🤦‍♂️', key: msg.key } });
+    
+    // Resposta citando o usuário e dando a bronca
+    await sock.sendMessage(sender, { 
+        text: `Aí que você quer demais né, @${autor.split('@')[0]}? Olha o menu e digite esse maldito comando direito!!!!!`, 
+        mentions: [autor] 
+    }, { quoted: msg });
+}
 
 
 
@@ -699,6 +709,7 @@ if (text.startsWith('!musica ')) {
 
     // 2. Lógica de Adivinhação
     // 2. Lógica de Adivinhação
+    // 2. Lógica de Adivinhação
     if (jogoForca.ativo && !jogoForca.processando) {
         const contextInfo = msg.message?.extendedTextMessage?.contextInfo || 
                             msg.message?.imageMessage?.contextInfo || 
@@ -712,8 +723,14 @@ if (text.startsWith('!musica ')) {
             // 1. TENTAR PALAVRA COMPLETA
             if (resposta === jogoForca.palavra) {
                 jogoForca.ativo = false;
-                await sock.sendMessage(sender, { react: { text: '✅', key: msg.key } });
-                await sock.sendMessage(sender, { text: `🎉 PARABÉNS @${autor.split('@')[0]}! Você acertou a palavra completa: *${jogoForca.palavra.toUpperCase()}*`, mentions: [autor] }, { quoted: msg });
+                await sock.sendMessage(sender, { react: { text: '🎉', key: msg.key } });
+                // GIF de vitória adicionado aqui
+                await sock.sendMessage(sender, { 
+                    video: { url: 'https://media.tenor.com/eakvOpIu7fAAAAPo/sarcastic-clap.mp4' }, 
+                    gifPlayback: true, 
+                    caption: `🎉 PARABÉNS @${autor.split('@')[0]}! Você acertou a palavra completa: *${jogoForca.palavra.toUpperCase()}*`,
+                    mentions: [autor]
+                }, { quoted: msg });
             } 
             // 2. TENTAR LETRA ÚNICA
             else if (resposta.length === 1) {
