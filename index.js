@@ -234,14 +234,16 @@ if (lowerText.includes('bot')) {
         // 2. !MENU
         // 2. !MENU (ESTILO PERSONALIZADO BASEADO NA IMAGEM)
         if (text === '!menu') {
-    const nomeUsuario = m.pushName || 'visitante';
+    // Definimos quem enviou a mensagem (o participante real)
+    const senderId = msg.key.participant || msg.key.remoteJid; 
+    const nomeUsuario = msg.pushName || 'visitante';
     const dataAtual = new Date().toLocaleDateString('pt-BR');
     const horaAtual = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
     const menuTexto = `
 「 ❍ BONDE DO BRASIL ❍ 」
 
-✨ BOAS-VINDAS, @${participant.split('@')[0]}! 🔔✨
+✨ BOAS-VINDAS, @${senderId.split('@')[0]}! 🔔✨
 
 ↪ 🔔 DATA: ${dataAtual}
 ↪ ⏰ HORA: ${horaAtual}
@@ -256,7 +258,6 @@ if (lowerText.includes('bot')) {
 🩸 🎇 !tier [tema]
 🩸 🎮 !jogar
 🩸 ⚽️ !penalti
-
 
 😂😂 2. INTERAÇÃO E ZUEIRA
 🩸 🤜 !socar @usuario
@@ -274,14 +275,15 @@ if (lowerText.includes('bot')) {
 🩸 🌤️ !clima [cidade]
     `.trim();
 
-    // 3. Envio com menção apenas para o usuário que chamou
+    // 3. Envio com menção correta ao senderId
     await sock.sendMessage(sender, { 
         video: { url: 'https://media.tenor.com/WV_2tGerThoAAAPo/farming-aura-farming.mp4' },
         gifPlayback: true, 
         caption: menuTexto,
-        mentions: [sender]
-    });
+        mentions: [senderId] // Garantimos que o ID está na lista de menções
+    }, { quoted: msg }); // Adicionei o quoted para responder sua mensagem!
 }
+
 // Adicione !jogar na sua lista de comandosExistentes
 if (text.startsWith('!jogar')) {
     // Reação de videogame
