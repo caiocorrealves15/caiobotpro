@@ -699,16 +699,30 @@ if (text.startsWith('!forca')) {
 
 // Lógica de adivinhação
 // Verifica se tem jogo ativo E se é um reply para a mensagem da forca
-if (jogoForca.ativo && 
-    text.length === 1 && 
-    !text.startsWith('!') && 
-    msg.message?.extendedTextMessage?.contextInfo?.stanzaId === jogoForca.idMensagem) {
+// Verifica se tem jogo ativo
+if (jogoForca.ativo && text.length === 1 && !text.startsWith('!')) {
     
+    // Pega o ID da mensagem respondida de forma mais segura
+    const contextInfo = msg.message?.extendedTextMessage?.contextInfo || 
+                        msg.message?.imageMessage?.contextInfo || 
+                        msg.message?.videoMessage?.contextInfo;
+    
+    const stanzaId = contextInfo?.stanzaId;
+
+    // Se NÃO for um reply para a mensagem do jogo, o bot simplesmente para aqui e não faz nada
+    if (stanzaId !== jogoForca.idMensagem) return;
+
+    // --- SE CHEGOU AQUI, É UM REPLY VÁLIDO PARA O JOGO ---
     const letra = text.toLowerCase();
     
     // Verifica se já foi tentada
+    // Verifica se já foi tentada
     if (jogoForca.tentativas.includes(letra)) {
-        return await sock.sendMessage(sender, { text: `⚠️ Você já tentou a letra "${letra.toUpperCase()}". Tente outra!` }, { quoted: msg });
+        return await sock.sendMessage(sender, { 
+            video: { url: 'https://media.tenor.com/D9IyHTfml_gAAAPo/ai-meu-deus-do-ceu-ai-meu-deus.mp4' }, 
+            gifPlayback: true,
+            caption: `⚠️ Você já tentou a letra "${letra.toUpperCase()}". Presta atenção, tenta outra!` 
+        }, { quoted: msg });
     }
     
     jogoForca.tentativas.push(letra);
