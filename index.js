@@ -146,26 +146,39 @@ async function connectToWhatsApp() {
 
 // 1. Resposta ao mencionar Bot
 if (lowerText.includes('bot')) {
-    await sock.sendMessage(sender, { text: `Fala aí @${participant.split('@')[0]}, tá falando de mim, por que? Quer morrer?🔫👀`, mentions: [participant] });
+    await sock.sendMessage(sender, { 
+        text: `Fala aí @${participant.split('@')[0]}, tá falando de mim, por que? Quer morrer?🔫👀`, 
+        mentions: [participant] 
+    }, { quoted: msg }); // Ajustado para responder em cima
 }
 
-    // 2. Dinheiro
-    if (lowerText.includes('dinheiro') || lowerText.includes('grana') || lowerText.includes('cash')) {
-        await sock.sendMessage(sender, { react: { text: '💸', key: msg.key } });
-        await sock.sendMessage(sender, { video: { url: 'https://media.tenor.com/cLjA_QYEHesAAAPo/grana.mp4' }, gifPlayback: true, caption: 'Opa, falou em dinheiro? Tá sobrando ou tá faltando, meu parceiro? 💸👀', quoted: msg });
-    }
+// 2. Dinheiro
+if (lowerText.includes('dinheiro') || lowerText.includes('grana') || lowerText.includes('cash')) {
+    await sock.sendMessage(sender, { react: { text: '💸', key: msg.key } });
+    await sock.sendMessage(sender, { 
+        video: { url: 'https://media.tenor.com/cLjA_QYEHesAAAPo/grana.mp4' }, 
+        gifPlayback: true, 
+        caption: 'Opa, falou em dinheiro? Tá sobrando ou tá faltando, meu parceiro? 💸👀' 
+    }, { quoted: msg }); // Ajustado para responder em cima
+}
 
-    // 3. !SORTEAR
-    if (text === '!sortear') {
-        try {
-            const metadata = await sock.groupMetadata(sender);
-            const ppts = metadata.participants;
-            const sorteado = ppts[Math.floor(Math.random() * ppts.length)];
-            await sock.sendMessage(sender, { video: { url: "https://media.tenor.com/9o4vX6kOlUcAAAPo/cat-dance-dancing-cat.mp4" }, gifPlayback: true, caption: `🎲 A sorte foi lançada! O sorteado da vez foi: @${sorteado.id.split('@')[0]}`, mentions: [sorteado.id], quoted: msg });
-        } catch (e) {
-            await sock.sendMessage(sender, { text: "❌ Erro ao sortear. Verifique se sou administrador do grupo.", quoted: msg });
-        }
+// 3. !SORTEAR
+if (text === '!sortear') {
+    try {
+        const metadata = await sock.groupMetadata(sender);
+        const ppts = metadata.participants;
+        const sorteado = ppts[Math.floor(Math.random() * ppts.length)];
+        await sock.sendMessage(sender, { 
+            video: { url: "https://media.tenor.com/9o4vX6kOlUcAAAPo/cat-dance-dancing-cat.mp4" }, 
+            gifPlayback: true, 
+            caption: `🎲 A sorte foi lançada! O sorteado da vez foi: @${sorteado.id.split('@')[0]}`, 
+            mentions: [sorteado.id] 
+        }, { quoted: msg }); // Ajustado para responder em cima
+    } catch (e) {
+        await sock.sendMessage(sender, { text: "❌ Erro ao sortear. Verifique se sou administrador do grupo." }, { quoted: msg }); // Ajustado para responder em cima
     }
+}
+
 
     // 4. Saudações
     // 4. Saudações
@@ -194,27 +207,36 @@ if (lowerText.includes('bot')) {
         }, { quoted: msg }); 
     }
 
-    // 5. Sextou
+        // 5. Sextou
     if (lowerText.includes('sextou')) {
         await sock.sendMessage(sender, { react: { text: '🥳', key: msg.key } });
-        await sock.sendMessage(sender, { video: { url: 'https://media.tenor.com/IuZs76jQrG4AAAPo/sextou-familia.mp4' }, gifPlayback: true, caption: 'Sextou! Corpo no trabalho, mente no primeiro gole de cerveja.🍺😜', quoted: msg });
+        await sock.sendMessage(sender, { 
+            video: { url: 'https://media.tenor.com/IuZs76jQrG4AAAPo/sextou-familia.mp4' }, 
+            gifPlayback: true, 
+            caption: 'Sextou! Corpo no trabalho, mente no primeiro gole de cerveja.🍺😜' 
+        }, { quoted: msg });
     }
 
     // 6. Trabalho
     if (lowerText.includes('trabalhar') || lowerText.includes('trabalho')) {
         await sock.sendMessage(sender, { react: { text: '😰', key: msg.key } });
-        await sock.sendMessage(sender, { video: { url: 'https://media.tenor.com/ONR_In8tDa8AAAPo/meme-funny-funny-meme.mp4' }, gifPlayback: true, caption: 'Se trabalho desse dinheiro, o dono da empresa não estaria milionário enquanto eu tomo café morno.😪☕️', quoted: msg });
+        await sock.sendMessage(sender, { 
+            video: { url: 'https://media.tenor.com/ONR_In8tDa8AAAPo/meme-funny-funny-meme.mp4' }, 
+            gifPlayback: true, 
+            caption: 'Se trabalho desse dinheiro, o dono da empresa não estaria milionário enquanto eu tomo café morno.😪☕️' 
+        }, { quoted: msg });
     }
 
     // 7. Bebida
     if (lowerText.includes('bebida') || lowerText.includes('cerveja') || lowerText.includes('vodka') || lowerText.includes('whisky')) {
-    await sock.sendMessage(sender, { 
-        video: { url: 'https://media.tenor.com/6ZIClIzEuGwAAAPo/drink-dog.mp4' }, 
-        gifPlayback: true, 
-        caption: 'Opa, falou em bebida???? 👀👀👀👀', 
-        quoted: msg 
-    });
-}
+        await sock.sendMessage(sender, { react: { text: '🍻', key: msg.key } });
+        await sock.sendMessage(sender, { 
+            video: { url: 'https://media.tenor.com/6ZIClIzEuGwAAAPo/drink-dog.mp4' }, 
+            gifPlayback: true, 
+            caption: 'Opa, falou em bebida???? 👀👀👀👀' 
+        }, { quoted: msg });
+    }
+
 
     // 9. Comandos extras (ban, tier, matar, rank, adm, socar, beijar, fechar, abrir, musica, desmute, mute, clima)
     // *Dica: Aplique o quoted: msg em todos os sock.sendMessage dentro desses blocos também!*
