@@ -700,59 +700,62 @@ if (text.startsWith('!forca')) {
 // Lógica de adivinhação
 // Verifica se tem jogo ativo E se é um reply para a mensagem da forca
 // Verifica se tem jogo ativo
-if (jogoForca.ativo && text.length === 1 && !text.startsWith('!')) {
-    
-    // Pega o ID da mensagem respondida de forma mais segura
-    const contextInfo = msg.message?.extendedTextMessage?.contextInfo || 
-                        msg.message?.imageMessage?.contextInfo || 
-                        msg.message?.videoMessage?.contextInfo;
-    
-    const stanzaId = contextInfo?.stanzaId;
+// --- LÓGICA DA FORCA (FORA DO IF DO COMANDO INICIAL) ---
+    // Verifica se tem jogo ativo E se é um reply para a mensagem da forca
+    if (jogoForca.ativo && text.length === 1 && !text.startsWith('!')) {
+        
+        // Pega o ID da mensagem respondida (Reply)
+        const contextInfo = msg.message?.extendedTextMessage?.contextInfo || 
+                            msg.message?.imageMessage?.contextInfo || 
+                            msg.message?.videoMessage?.contextInfo;
+        
+        const stanzaId = contextInfo?.stanzaId;
 
-    // Se NÃO for um reply para a mensagem do jogo, o bot simplesmente para aqui e não faz nada
-    if (stanzaId !== jogoForca.idMensagem) return;
+        // Se NÃO for um reply para a mensagem do jogo, o bot IGNORA a mensagem
+        if (stanzaId !== jogoForca.idMensagem) {
+            console.log("Ignorando mensagem: não é um reply para o jogo da forca.");
+            return; 
+        }
 
-    // --- SE CHEGOU AQUI, É UM REPLY VÁLIDO PARA O JOGO ---
-    const letra = text.toLowerCase();
-    
-    // Verifica se já foi tentada
-    // Verifica se já foi tentada
-    if (jogoForca.tentativas.includes(letra)) {
-        return await sock.sendMessage(sender, { 
-            video: { url: 'https://media.tenor.com/D9IyHTfml_gAAAPo/ai-meu-deus-do-ceu-ai-meu-deus.mp4' }, 
-            gifPlayback: true,
-            caption: `⚠️ Você já tentou a letra "${letra.toUpperCase()}". Presta atenção, tenta outra!` 
-        }, { quoted: msg });
-    }
-    
-    jogoForca.tentativas.push(letra);
-
-    if (jogoForca.palavra.includes(letra)) {
-        // Revela a letra
-        for (let i = 0; i < jogoForca.palavra.length; i++) {
-            if (jogoForca.palavra[i] === letra) jogoForca.descobertas[i] = letra;
+        // --- SE CHEGOU AQUI, É UM REPLY VÁLIDO PARA O JOGO ---
+        const letra = text.toLowerCase();
+        
+        if (jogoForca.tentativas.includes(letra)) {
+            return await sock.sendMessage(sender, { 
+                video: { url: 'https://media.tenor.com/D9IyHTfml_gAAAPo/ai-meu-deus-do-ceu-ai-meu-deus.mp4' }, 
+                gifPlayback: true,
+                caption: `⚠️ Você já tentou a letra "${letra.toUpperCase()}". Presta atenção, tenta outra!` 
+            }, { quoted: msg });
         }
         
-        if (!jogoForca.descobertas.includes('_')) {
-            jogoForca.ativo = false;
-            await sock.sendMessage(sender, { text: `🎉 PARABÉNS! Você salvou a alma dele! A palavra era: *${jogoForca.palavra.toUpperCase()}*` }, { quoted: msg });
+        jogoForca.tentativas.push(letra);
+
+        if (jogoForca.palavra.includes(letra)) {
+            for (let i = 0; i < jogoForca.palavra.length; i++) {
+                if (jogoForca.palavra[i] === letra) jogoForca.descobertas[i] = letra;
+            }
+            
+            if (!jogoForca.descobertas.includes('_')) {
+                jogoForca.ativo = false;
+                await sock.sendMessage(sender, { text: `🎉 PARABÉNS! Você salvou a alma dele! A palavra era: *${jogoForca.palavra.toUpperCase()}*` }, { quoted: msg });
+            } else {
+                await sock.sendMessage(sender, { text: `Boa! ${jogoForca.descobertas.join(' ')}` }, { quoted: msg });
+            }
         } else {
-            await sock.sendMessage(sender, { text: `Boa! ${jogoForca.descobertas.join(' ')}` }, { quoted: msg });
+            jogoForca.erros++;
+            if (jogoForca.erros >= jogoForca.maxErros) {
+                jogoForca.ativo = false;
+                await sock.sendMessage(sender, { 
+                    video: { url: 'https://media.tenor.com/HyeG4dSurbwAAAPo/hanging-skeleton-skeleton.mp4' }, 
+                    gifPlayback: true, 
+                    caption: `💀 VOCÊ PERDEU! A palavra era *${jogoForca.palavra.toUpperCase()}*` 
+                }, { quoted: msg });
+            } else {
+                await sock.sendMessage(sender, { text: `❌ Errou! ${jogoForca.maxErros - jogoForca.erros} vidas restando. ${jogoForca.descobertas.join(' ')}` }, { quoted: msg });
+            }
         }
-    } else {
-        jogoForca.erros++;
-        if (jogoForca.erros >= jogoForca.maxErros) {
-            jogoForca.ativo = false;
-            await sock.sendMessage(sender, { 
-                video: { url: 'https://media.tenor.com/HyeG4dSurbwAAAPo/hanging-skeleton-skeleton.mp4' }, 
-                gifPlayback: true, 
-                caption: `💀 VOCÊ PERDEU! A palavra era *${jogoForca.palavra.toUpperCase()}*` 
-            }, { quoted: msg });
-        } else {
-            await sock.sendMessage(sender, { text: `❌ Errou! ${jogoForca.maxErros - jogoForca.erros} vidas restando. ${jogoForca.descobertas.join(' ')}` }, { quoted: msg });
-        }
+        return; // Garante que o bot pare aqui e não execute mais nada do `messages.upsert` para essa mensagem
     }
-}
         // 8. COMANDO CLIMA (COM DIAGNÓSTICO)
         if (text.startsWith('!desmute')) {
             if (!isAdmin) return await sock.sendMessage(sender, { text: "Tentando furar as regras, né?? HAHAHHAHA 👀👀👀\n\nSabe que um ADM está de olho em você agora né?" });
