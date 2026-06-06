@@ -83,7 +83,7 @@ async function connectToWhatsApp() {
             console.log('Conexão fechada, tentando reconectar:', shouldReconnect);
             if (shouldReconnect) {
                 // A DIFERENÇA ESTÁ AQUI: Espera 5 segundos antes de tentar novamente
-                setTimeout(() => connectToWhatsApp(), 5000);
+                setTimeout(() => connectToWhatsApp(), 30000);
             }
         }
     });
