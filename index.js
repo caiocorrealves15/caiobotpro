@@ -20,6 +20,12 @@ if (isRender) {
 // --- CONFIGURAÇÕES E VARIÁVEIS INICIAIS ---
 let brincadeirasAtivas = true;
 
+let jogoEmoji = {
+    ativo: false,
+    resposta: "",
+    idMensagem: "" // O ID único da mensagem do desafio
+};
+
 // Definição dos arquivos de dados
 const ARQUIVO_RANK = './rank.json';
 const ARQUIVO_MUTADOS = './mutados.json';
@@ -144,6 +150,56 @@ async function connectToWhatsApp() {
 
     const lowerText = text.toLowerCase();
 
+    if (text.startsWith('!emoji')) {
+    const desafios = [
+        { emojis: '🕵️‍♂️🔍🏠', resposta: 'sherlock holmes', gif: 'https://media.tenor.com/dR3xtJ5WbFYAAAPo/sherlock-sherlock-holmes.mp4' },
+        { emojis: '🚢🧊💔', resposta: 'titanic', gif: 'https://media.tenor.com/cT1pz8_yZGIAAAPo/titanic.mp4' },
+        { emojis: '🦁👑🌅', resposta: 'rei leão', gif: 'https://media.tenor.com/LgB11V1I0IwAAAPo/simba.mp4' },
+        { emojis: '⚡👓🏰', resposta: 'harry potter', gif: 'https://media.tenor.com/Rg2bz-jI430AAAPo/harry-potter-harry-potter-and-the-halfblood-prince.mp4' },
+        { emojis: '🏎️💨🗼', resposta: 'velozes e furiosos', gif: 'https://media.tenor.com/RaoeC9AmN1QAAAPo/brian-o%27conner-paul-walker.mp4' },
+        { emojis: '🤡🎈⛵', resposta: 'it', gif: 'https://media.tenor.com/GHeNyQYLEPEAAAPo/pennywise-clown.mp4' }
+    ];
+    
+    const sorteado = desafios[Math.floor(Math.random() * desafios.length)];
+    
+    // GIF de entrada
+    const msgDesafio = await sock.sendMessage(sender, { 
+        video: { url: 'https://media.tenor.com/-0sxz-2EfwcAAAPo/batman-thinking.mp4' },
+        gifPlayback: true,
+        caption: `🧩 *ADIVINHE O FILME/SÉRIE:* \n\n${sorteado.emojis}\n\nResponda dando reply (em cima) nesta mensagem!`,
+    }, { quoted: msg });
+
+    jogoEmoji.ativo = true;
+    jogoEmoji.resposta = sorteado.resposta;
+    jogoEmoji.gifResposta = sorteado.gif; // Guarda o GIF do filme
+    jogoEmoji.idMensagem = msgDesafio.key.id;
+}
+
+// Verifica se tem jogo ativo E se a mensagem é um reply à mensagem do desafio
+// Verifica se tem jogo ativo E se a mensagem é um reply à mensagem do desafio
+if (jogoEmoji.ativo && 
+    msg.message?.extendedTextMessage?.contextInfo?.stanzaId === jogoEmoji.idMensagem) {
+    
+    const respostaUsuario = text.toLowerCase().trim();
+
+    if (respostaUsuario === jogoEmoji.resposta) {
+        jogoEmoji.ativo = false; // Fecha o jogo
+        await sock.sendMessage(sender, { 
+            video: { url: jogoEmoji.gifResposta }, 
+            gifPlayback: true,
+            caption: `🎉 PARABÉNS! @${msg.key.participant.split('@')[0]} acertou! A resposta era: *${jogoEmoji.resposta.toUpperCase()}*`, 
+            mentions: [msg.key.participant]
+        }, { quoted: msg });
+    } else {
+        // GIF de erro
+        await sock.sendMessage(sender, { 
+            video: { url: 'https://media.tenor.com/VYsoMg08CSoAAAPo/faustao-silva.mp4' },
+            gifPlayback: true,
+            caption: "❌ Errou! Tente de novo, o jogo continua!" 
+        }, { quoted: msg });
+    }
+}
+
 // 1. Resposta ao mencionar Bot
 if (lowerText.includes('bot')) {
     await sock.sendMessage(sender, { 
@@ -240,7 +296,7 @@ if (text === '!sortear') {
 
     // 9. Comandos extras (ban, tier, matar, rank, adm, socar, beijar, fechar, abrir, musica, desmute, mute, clima)
     // *Dica: Aplique o quoted: msg em todos os sock.sendMessage dentro desses blocos também!*
-    const comandosExistentes = ['!menu', '!rank', '!sortear', '!jogar', '!tier', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute'];
+    const comandosExistentes = ['!menu', '!rank', '!emoji', '!sortear', '!jogar', '!tier', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute'];
     if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd))) {
         await sock.sendMessage(sender, { text: "Aí que você quer demais né, amigo? Olha o menu e digite esse maldito comando direito!!!!!", quoted: msg });
     }
@@ -265,7 +321,7 @@ const horaAtual = new Date(new Date().getTime() - (3 * 60 * 60 * 1000)).toLocale
 ↪ 🔔 DATA: ${dataAtual}
 ↪ ⏰ HORA: ${horaAtual}
 ↪ 👑 DEV: Caio o melhor 😎
-↪ 🤖 ATUALIZAÇÕES: Semanais
+↪ 🤖 ATUALIZAÇÕES DO BOT: Semanais com novos jogos e funções
 
 🔔 MENU DE COMANDOS 🫧
 
@@ -275,6 +331,7 @@ const horaAtual = new Date(new Date().getTime() - (3 * 60 * 60 * 1000)).toLocale
 🩸 🎇 !tier [tema]
 🩸 🎮 !jogar
 🩸 ⚽️ !penalti
+🩸 🎥 !emoji
 
 😂😂 2. INTERAÇÃO E ZUEIRA
 🩸 🤜 !socar @usuario
