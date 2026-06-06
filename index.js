@@ -298,7 +298,7 @@ if (text.startsWith('!jogar')) {
 
     if (escolha === caminhoVencedor) {
         await sock.sendMessage(sender, { 
-            video: { url: 'https://media.tenor.com/J3y8G1y8z6cAAAPo/money-shower.mp4' }, 
+            video: { url: 'https://media.tenor.com/7HPdFKRYFwMAAAPo/thank-you.mp4' }, 
             gifPlayback: true, 
             caption: `🏆 BOA! Você escolheu o caminho ${escolha} e encontrou um tesouro épico!`, 
             quoted: msg 
