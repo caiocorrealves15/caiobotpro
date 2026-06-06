@@ -216,14 +216,8 @@ if (lowerText.includes('bot')) {
     });
 }
 
-    // 8. !MENU
-    if (text === '!menu') {
-        await sock.sendMessage(sender, { video: { url: 'https://media.tenor.com/WV_2tGerThoAAAPo/farming-aura-farming.mp4' }, gifPlayback: true, caption: "MENU DO BOT", quoted: msg });
-    }
-
     // 9. Comandos extras (ban, tier, matar, rank, adm, socar, beijar, fechar, abrir, musica, desmute, mute, clima)
     // *Dica: Aplique o quoted: msg em todos os sock.sendMessage dentro desses blocos também!*
-
     const comandosExistentes = ['!menu', '!rank', '!sortear', '!jogar', '!tier', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute'];
     if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd))) {
         await sock.sendMessage(sender, { text: "Aí que você quer demais né, amigo? Olha o menu e digite esse maldito comando direito!!!!!", quoted: msg });
@@ -238,7 +232,8 @@ if (lowerText.includes('bot')) {
     const senderId = msg.key.participant || msg.key.remoteJid; 
     const nomeUsuario = msg.pushName || 'visitante';
     const dataAtual = new Date().toLocaleDateString('pt-BR');
-    const horaAtual = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+const horaAtual = new Date(new Date().getTime() - (3 * 60 * 60 * 1000)).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
 
     const menuTexto = `
 「 ❍ BONDE DO BRASIL ❍ 」
