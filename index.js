@@ -64,7 +64,7 @@ const textoBoasVindas =
     `🌟 *BEM-VINDO(A) AO BONDE DO BRASIL* 🌟\n\n` +
     `Fala aí, @${userId.split('@')[0]}! 🎉 Você acaba de entrar no grupo mais zueiro e ativo do Zap!\n\n` +
     `🚀 *O QUE ROLA POR AQUI?*\n` +
-    `🎮 Jogos: !jogar (RPG), !penalti e nosso novo *Jogo dos Emojis*!\n` +
+    `🎮 Jogos: !jogar (RPG), !penalti, !forca e nosso novo *Jogo dos Emojis*!\n` +
     `🎶 Música: Use !musica [nome] para achar seu som.\n` +
     `🥊 Interação: !socar, !beijar, !matar e muita resenha.\n` +
     `🏆 Ranking: Seja o mais ativo e chegue ao topo!\n\n` +
@@ -331,7 +331,7 @@ if (text === '!sortear') {
 
     // 9. Comandos extras (ban, tier, matar, rank, adm, socar, beijar, fechar, abrir, musica, desmute, mute, clima)
     // *Dica: Aplique o quoted: msg em todos os sock.sendMessage dentro desses blocos também!*
-    const comandosExistentes = ['!menu', '!rank', '!emoji', '!sortear', '!jogar', '!tier', '!rankingemoji', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute'];
+    const comandosExistentes = ['!menu', '!rank', '!emoji', '!sortear', '!jogar', '!forca', '!tier', '!rankingemoji', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute'];
     if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd))) {
         await sock.sendMessage(sender, { text: "Aí que você quer demais né, amigo? Olha o menu e digite esse maldito comando direito!!!!!", quoted: msg });
     }
@@ -355,7 +355,7 @@ const horaAtual = new Date(new Date().getTime() - (3 * 60 * 60 * 1000)).toLocale
 
 ↪ 🔔 DATA: ${dataAtual}
 ↪ ⏰ HORA: ${horaAtual}
-↪ 👑 DEV: Caio o melhor 😎
+↪ 👑 CRIADOR: Caio o melhor 😎
 ↪ 🤖 ATUALIZAÇÕES DO BOT: Semanais com novos jogos e funções
 
 🔔 MENU DE COMANDOS 🫧
@@ -365,6 +365,7 @@ const horaAtual = new Date(new Date().getTime() - (3 * 60 * 60 * 1000)).toLocale
 🩸 ⌛ !sortear
 🩸 🎇 !tier [tema]
 🩸 🎮 !jogar
+🩸 😵 !forca
 🩸 ⚽️ !penalti
 🩸 🎥 !emoji
 
