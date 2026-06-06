@@ -43,10 +43,6 @@ async function connectToWhatsApp() {
     sock.ev.on('creds.update', saveCreds);
 
     // Boas-vindas (VERSÃO COMPLETA)
-    sock.ev.on('group-participants.update', async (update) => {
-    const { id, participants, action } = update;
-    if (action === 'add') {
-        const userId = participants[0];
         
         // Mensagem de boas-vindas aprimorada
        sock.ev.on('group-participants.update', async (update) => {
@@ -621,5 +617,4 @@ if (text.startsWith('!musica ')) {
         }
     }); // Fecha o messages.upsert
 } // Fecha o connectToWhatsApp
-
 connectToWhatsApp();
