@@ -74,29 +74,31 @@ async function connectToWhatsApp() {
         
         // Mensagem de boas-vindas turbinada
         const textoBoasVindas = 
-            `╔══════════════════════════════════╗\n` +
-            `║       🌟 BONDE DO BRASIL 🌟        ║\n` +
-            `╚══════════════════════════════════╝\n\n` +
-            `Fala aí, @${userId.split('@')[0]}! 🎉 \n` +
-            `Você acaba de entrar no grupo mais zueiro do Zap!\n\n` +
-            `🚀 *O QUE ROLA POR AQUI?*\n` +
-            `🎮 Jogos divertidos e RPGs!\n` +
-            `🎶 Músicas para curtir.\n` +
-            `🥊 Muita interação e resenha.\n` +
-            `🏆 Ranking de membros ativos.\n\n` +
-            `📝 *PARA COMEÇAR BEM:*\n` +
-            `Envie sua *FOTO | CIDADE | IDADE | NOME*.\n\n` +
-            `┌────────── 🚫 REGRAS ──────────┐\n` +
-            `│ • Proibido links e spam.      │\n` +
-            `│ • Proibido vendas.            │\n` +
-            `│ • Proibido invadir PV.        │\n` +
-            `└───────────────────────────────┘\n\n` +
-            `🤖 *DICA:* Digite *!menu* para ver todos os nossos comandos e divirta-se!`;
+    `━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+    `      🌟 BONDE DO BRASIL 🌟      \n` +
+    `━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+    `Fala aí, @${userId.split('@')[0]}! 🎉 \n` +
+    `Você acaba de entrar no grupo mais zueiro do Zap!\n\n` +
+    `🚀 *O QUE ROLA POR AQUI?*\n` +
+    `🎮 Jogos divertidos e RPGs!\n` +
+    `🎶 Músicas para curtir.\n` +
+    `🥊 Muita interação e resenha.\n` +
+    `🏆 Ranking de membros ativos.\n\n` +
+    `📝 *PARA COMEÇAR BEM:*\n` +
+    `Envie sua *FOTO | CIDADE | IDADE | NOME*.\n\n` +
+    `🚫 *REGRAS DE OURO*\n` +
+    `━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+    `• Proibido links e spam.\n` +
+    `• Proibido vendas.\n` +
+    `• Proibido invadir PV.\n` +
+    `━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+    `🤖 *DICA:* Digite *!menu* para ver todos os nossos comandos e divirta-se!`;
 
-        await sock.sendMessage(id, { 
-            text: textoBoasVindas, 
-            mentions: [userId] 
-        });
+await sock.sendMessage(id, { 
+    text: textoBoasVindas, 
+    mentions: [userId] 
+});
+
     } // Fecha o if (action === 'add')
 }); // Fecha o sock.ev.on
 
