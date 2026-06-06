@@ -8,6 +8,8 @@ const { Sticker, StickerTypes } = require('wa-sticker-formatter');
 const ytsr = require('ytsr');
 const qrcode = require('qrcode-terminal');
 const ytdl = require('ytdl-core'); // Requisito movido para o topo
+const ARQUIVO_PLACAR_EMOJI = './placar_emoji.json';
+let placarEmoji = fs.existsSync(ARQUIVO_PLACAR_EMOJI) ? JSON.parse(fs.readFileSync(ARQUIVO_PLACAR_EMOJI)) : {};
 
 const isRender = process.env.RENDER === 'true';
 if (isRender) {
@@ -19,6 +21,7 @@ if (isRender) {
 
 // --- CONFIGURAÇÕES E VARIÁVEIS INICIAIS ---
 let brincadeirasAtivas = true;
+
 
 let jogoEmoji = {
     ativo: false,
@@ -153,12 +156,23 @@ const textoBoasVindas =
 
     if (text.startsWith('!emoji')) {
     const desafios = [
+        // Nível Fácil / Médio (Os que você já tinha)
         { emojis: '🕵️‍♂️🔍🏠', resposta: 'sherlock holmes', gif: 'https://media.tenor.com/dR3xtJ5WbFYAAAPo/sherlock-sherlock-holmes.mp4' },
         { emojis: '🚢🧊💔', resposta: 'titanic', gif: 'https://media.tenor.com/cT1pz8_yZGIAAAPo/titanic.mp4' },
         { emojis: '🦁👑🌅', resposta: 'rei leão', gif: 'https://media.tenor.com/LgB11V1I0IwAAAPo/simba.mp4' },
         { emojis: '⚡👓🏰', resposta: 'harry potter', gif: 'https://media.tenor.com/Rg2bz-jI430AAAPo/harry-potter-harry-potter-and-the-halfblood-prince.mp4' },
         { emojis: '🏎️💨🗼', resposta: 'velozes e furiosos', gif: 'https://media.tenor.com/RaoeC9AmN1QAAAPo/brian-o%27conner-paul-walker.mp4' },
-        { emojis: '🤡🎈⛵', resposta: 'it', gif: 'https://media.tenor.com/GHeNyQYLEPEAAAPo/pennywise-clown.mp4' }
+        { emojis: '🤡🎈⛵', resposta: 'it', gif: 'https://media.tenor.com/GHeNyQYLEPEAAAPo/pennywise-clown.mp4' },
+
+        // Nível Difícil / Ninja (Novos)
+        { emojis: '👨‍🚀⏳🌌🌽', resposta: 'interestelar', gif: 'https://media.tenor.com/8wane_Lo91UAAAPo/no-no.mp4' },
+        { emojis: '🧼👊🏢🏠', resposta: 'clube da luta', gif: 'https://media.tenor.com/NCis2CAc2akAAAPo/%D1%82%D0%B0%D0%B9%D0%BB%D0%BE%D1%80.mp4' },
+        { emojis: '📺🌊🏙️🤥', resposta: 'o show de truman', gif: 'https://media.tenor.com/yMmkrRze98AAAAPo/jim-carrey-jim-carrey-snapchat.mp4' },
+        { emojis: '👴💍🌋👁️', resposta: 'senhor dos aneis', gif: 'https://media.tenor.com/H2GZj21Q91YAAAPo/gandalf-lord-of-the-rings.mp4' },
+        { emojis: '💊🐇🕶️🏢', resposta: 'matrix', gif: 'https://media.tenor.com/gw1yNsaFmlMAAAPo/matrix-neo.mp4' },
+        { emojis: '👨‍👩‍👧‍👦🏠🔪😱', resposta: 'pânico', gif: 'https://media.tenor.com/Abk4lKtoJ3sAAAPo/omw-ghostface.mp4' },
+        { emojis: '🦈🏖️🩸🌊', resposta: 'tubarão', gif: 'https://media.tenor.com/Y2mOLAczQo0AAAPo/insainment-mind-space-apocalypse.mp4' },
+        { emojis: '🚀👩‍🚀👽🩸', resposta: 'alien', gif: 'https://media.tenor.com/8ybNfbAsL5YAAAPo/alien-creepy.mp4' }
     ];
     
     const sorteado = desafios[Math.floor(Math.random() * desafios.length)];
@@ -178,6 +192,7 @@ const textoBoasVindas =
 
 // Verifica se tem jogo ativo E se a mensagem é um reply à mensagem do desafio
 // Verifica se tem jogo ativo E se a mensagem é um reply à mensagem do desafio
+// Verifica se tem jogo ativo E se a mensagem é um reply à mensagem do desafio
 if (jogoEmoji.ativo && 
     msg.message?.extendedTextMessage?.contextInfo?.stanzaId === jogoEmoji.idMensagem) {
     
@@ -185,11 +200,17 @@ if (jogoEmoji.ativo &&
 
     if (respostaUsuario === jogoEmoji.resposta) {
         jogoEmoji.ativo = false; // Fecha o jogo
+        
+        // --- ATUALIZAÇÃO DO PLACAR ---
+        const pId = msg.key.participant;
+        placarEmoji[pId] = (placarEmoji[pId] || 0) + 1;
+        fs.writeFileSync(ARQUIVO_PLACAR_EMOJI, JSON.stringify(placarEmoji, null, 2));
+
         await sock.sendMessage(sender, { 
             video: { url: jogoEmoji.gifResposta }, 
             gifPlayback: true,
-            caption: `🎉 PARABÉNS! @${msg.key.participant.split('@')[0]} acertou! A resposta era: *${jogoEmoji.resposta.toUpperCase()}*`, 
-            mentions: [msg.key.participant]
+            caption: `🎉 PARABÉNS! @${pId.split('@')[0]} acertou! A resposta era: *${jogoEmoji.resposta.toUpperCase()}*\n\nVocê agora tem ${placarEmoji[pId]} ponto(s) no ranking de emojis!`, 
+            mentions: [pId]
         }, { quoted: msg });
     } else {
         // GIF de erro
@@ -199,6 +220,19 @@ if (jogoEmoji.ativo &&
             caption: "❌ Errou! Tente de novo, o jogo continua!" 
         }, { quoted: msg });
     }
+}
+
+if (text === '!rankingemoji') {
+    const ranking = Object.entries(placarEmoji)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10);
+
+    let res = `🏆 *TOP 10 - MESTRES DOS EMOJIS*\n\n`;
+    ranking.forEach((entry, i) => {
+        res += `${i + 1}. @${entry[0].split('@')[0]} - ${entry[1]} pontos\n`;
+    });
+
+    await sock.sendMessage(sender, { text: res, mentions: ranking.map(e => e[0]) }, { quoted: msg });
 }
 
 // 1. Resposta ao mencionar Bot
@@ -297,7 +331,7 @@ if (text === '!sortear') {
 
     // 9. Comandos extras (ban, tier, matar, rank, adm, socar, beijar, fechar, abrir, musica, desmute, mute, clima)
     // *Dica: Aplique o quoted: msg em todos os sock.sendMessage dentro desses blocos também!*
-    const comandosExistentes = ['!menu', '!rank', '!emoji', '!sortear', '!jogar', '!tier', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute'];
+    const comandosExistentes = ['!menu', '!rank', '!emoji', '!sortear', '!jogar', '!tier', '!rankingemoji', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute'];
     if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd))) {
         await sock.sendMessage(sender, { text: "Aí que você quer demais né, amigo? Olha o menu e digite esse maldito comando direito!!!!!", quoted: msg });
     }
