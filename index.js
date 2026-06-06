@@ -49,7 +49,7 @@ async function connectToWhatsApp() {
         const userId = participants[0];
         
         // Mensagem de boas-vindas aprimorada
-        sock.ev.on('group-participants.update', async (update) => {
+       sock.ev.on('group-participants.update', async (update) => {
     const { id, participants, action } = update;
     if (action === 'add') {
         const userId = participants[0];
@@ -68,13 +68,13 @@ async function connectToWhatsApp() {
             `🤖 *DICA:* O bot está disponível para uso, mas evite abusar dos comandos.\n\n` +
             `❓ *Dúvidas?* Marque um administrador no grupo ou chame-o no privado.`;
 
-        // Alterado para enviar apenas o texto
         await sock.sendMessage(id, { 
             text: textoBoasVindas, 
             mentions: [userId] 
         });
     }
 });
+
 
 
     sock.ev.on('connection.update', async (update) => {
