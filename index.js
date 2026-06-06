@@ -343,7 +343,7 @@ if (text === '!sortear') {
 
     // 9. Comandos extras (ban, tier, matar, rank, adm, socar, beijar, fechar, abrir, musica, desmute, mute, clima)
     // *Dica: Aplique o quoted: msg em todos os sock.sendMessage dentro desses blocos também!*
-    const comandosExistentes = ['!menu', '!rank', '!emoji', '!sortear', '!jogar', '!forca', '!tier', '!rankingemoji', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute'];
+    const comandosExistentes = ['!menu', '!rank', '!avisoadm', '!emoji', '!sortear', '!jogar', '!forca', '!tier', '!rankingemoji', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute'];
 
 if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd))) {
     const autor = msg.key.participant || msg.key.remoteJid;
@@ -656,7 +656,45 @@ if (text.startsWith('!beijar')) {
         // Adicione lá no topo do arquivo (junto com os outros 'require')
 
 // Dentro de sock.ev.on('messages.upsert', ...), substitua o seu bloco !musica atual por este:
-// 7. Música e Figurinha
+// 7. Música e Figurinha// Altere para um nome que não conflite com o seu !adm atual
+if (text === '!avisoadm') { 
+    if (!msg.key.remoteJid.endsWith('@g.us')) {
+        return await sock.sendMessage(sender, { text: 'Este comando só funciona em grupos!' }, { quoted: msg });
+    }
+
+    try {
+        const metadata = await sock.groupMetadata(msg.key.remoteJid);
+        const participantes = metadata.participants;
+        
+        // 1. Identifica quem enviou a mensagem
+        const autorId = msg.key.participant || msg.key.remoteJid;
+        const autorDados = participantes.find(p => p.id === autorId);
+
+        // 2. Verifica se o autor é administrador
+        const ehAdmin = autorDados && autorDados.admin !== null;
+
+        if (!ehAdmin) {
+            return await sock.sendMessage(sender, { text: '❌ Sai pra lá, apenas administradores podem usar este comando.' }, { quoted: msg });
+        }
+
+        // 3. Prossegue com a busca dos ADMs para notificar
+        const admins = participantes.filter(p => p.admin !== null).map(p => p.id);
+
+        if (admins.length === 0) {
+            return await sock.sendMessage(sender, { text: 'Não encontrei administradores neste grupo.' }, { quoted: msg });
+        }
+
+        const mençãoAdm = `📢 *ATENÇÃO ADMS!* \n\nPrecisamos de uma reunião ou verificação urgente. \n\n${admins.map(adm => `@${adm.split('@')[0]}`).join(' ')}`;
+
+        await sock.sendMessage(sender, { 
+            text: mençãoAdm, 
+            mentions: admins 
+        }, { quoted: msg });
+
+    } catch (error) {
+        console.error('Erro ao chamar ADMs:', error);
+    }
+}
         // Substitua seu bloco !musica por este:
 if (text.startsWith('!musica ')) {
     const busca = text.replace('!musica ', '');
