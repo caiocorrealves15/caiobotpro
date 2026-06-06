@@ -83,7 +83,7 @@ async function connectToWhatsApp() {
             console.log('Conexão fechada, tentando reconectar:', shouldReconnect);
             if (shouldReconnect) {
                 // A DIFERENÇA ESTÁ AQUI: Espera 5 segundos antes de tentar novamente
-                setTimeout(() => connectToWhatsApp(), 5000);
+                setTimeout(() => connectToWhatsApp(), 30000);
             }
         }
     });
@@ -143,10 +143,10 @@ async function connectToWhatsApp() {
 
     const lowerText = text.toLowerCase();
 
-    // 1. Resposta ao mencionar Bot
-    if (lowerText.includes('bot')) {
-        await sock.sendMessage(sender, { text: `Fala aí @${participant.split('@')[0]}, tá falando de mim, por que? Quer morrer?`, mentions: [participant], quoted: msg });
-    }
+// 1. Resposta ao mencionar Bot
+if (lowerText.includes('bot')) {
+    await sock.sendMessage(sender, { text: `Fala aí @${participant.split('@')[0]}, tá falando de mim, por que? Quer morrer?S`, mentions: [participant] });
+}
 
     // 2. Dinheiro
     if (lowerText.includes('dinheiro') || lowerText.includes('grana') || lowerText.includes('cash')) {
@@ -211,8 +211,7 @@ async function connectToWhatsApp() {
 
         // 2. !MENU
         // 2. !MENU (ESTILO PERSONALIZADO BASEADO NA IMAGEM)
-        // 2. !MENU (ESTILO PERSONALIZADO BASEADO NA IMAGEM)
-if (text === '!menu') {
+        if (text === '!menu') {
     const nomeUsuario = m.pushName || 'visitante';
     const dataAtual = new Date().toLocaleDateString('pt-BR');
     const horaAtual = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -220,9 +219,8 @@ if (text === '!menu') {
     const menuTexto = `
 「 ❍ BONDE DO BRASIL ❍ 」
 
-✨ BOAS-VINDAS, ${nomeUsuario}! 🔔✨
+✨ BOAS-VINDAS, @${participant.split('@')[0]}! 🔔✨
 
-↪ 🫧 NICK: ${nomeUsuario}
 ↪ 🔔 DATA: ${dataAtual}
 ↪ ⏰ HORA: ${horaAtual}
 ↪ 👑 DEV: Caio o melhor 😎
@@ -251,14 +249,16 @@ if (text === '!menu') {
 🩸 🌤️ !clima [cidade]
     `.trim();
 
+    // 3. Envio com menção apenas para o usuário que chamou
     await sock.sendMessage(sender, { 
         video: { url: 'https://media.tenor.com/WV_2tGerThoAAAPo/farming-aura-farming.mp4' },
         gifPlayback: true, 
         caption: menuTexto,
-        mentions: [sender],
-        quoted: msg // <--- Adicionado aqui!
+        mentions: [sender]
     });
 }
+
+
 
         // 3. !BAN
         if (text.startsWith('!ban')) {
