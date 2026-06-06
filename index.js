@@ -665,6 +665,76 @@ if (text.startsWith('!musica ')) {
 }
         // Comando !clima
         // 8. COMANDO CLIMA (AJUSTADO)
+        let jogoForca = {
+    ativo: false,
+    palavra: "",
+    descobertas: [],
+    erros: 0,
+    maxErros: 6
+};
+
+// Comando para iniciar
+if (text.startsWith('!forca')) {
+    const palavrasDificeis = ['abstrato', 'efemeridade', 'paradoxo', 'onisciente', 'idiossincrasia', 'inexoravel'];
+    jogoForca.palavra = palavrasDificeis[Math.floor(Math.random() * palavrasDificeis.length)];
+    jogoForca.descobertas = Array(jogoForca.palavra.length).fill('_');
+    jogoForca.tentativas = [];
+    jogoForca.ativo = true;
+    jogoForca.erros = 0;
+    jogoForca.maxErros = 6;
+
+    // GIF de entrada para o Jogo da Forca
+    await sock.sendMessage(sender, { 
+        video: { url: 'https://media.tenor.com/7HUogy7rXs4AAAPo/feel-me-think-about-it.mp4' }, 
+        gifPlayback: true,
+        caption: `💀 *JOGO DA FORCA (NÍVEL HARD)*\n\nPalavra: ${jogoForca.descobertas.join(' ')}\n\nResponda dando reply (em cima) com uma letra para tentar!` 
+    }, { quoted: msg });
+    
+    jogoForca.idMensagem = msg.key.id; // Salva o ID da própria mensagem de início
+}
+
+// Lógica de adivinhação
+// Verifica se tem jogo ativo E se é um reply para a mensagem da forca
+if (jogoForca.ativo && 
+    text.length === 1 && 
+    !text.startsWith('!') && 
+    msg.message?.extendedTextMessage?.contextInfo?.stanzaId === jogoForca.idMensagem) {
+    
+    const letra = text.toLowerCase();
+    
+    // Verifica se já foi tentada
+    if (jogoForca.tentativas.includes(letra)) {
+        return await sock.sendMessage(sender, { text: `⚠️ Você já tentou a letra "${letra.toUpperCase()}". Tente outra!` }, { quoted: msg });
+    }
+    
+    jogoForca.tentativas.push(letra);
+
+    if (jogoForca.palavra.includes(letra)) {
+        // Revela a letra
+        for (let i = 0; i < jogoForca.palavra.length; i++) {
+            if (jogoForca.palavra[i] === letra) jogoForca.descobertas[i] = letra;
+        }
+        
+        if (!jogoForca.descobertas.includes('_')) {
+            jogoForca.ativo = false;
+            await sock.sendMessage(sender, { text: `🎉 PARABÉNS! Você salvou a alma dele! A palavra era: *${jogoForca.palavra.toUpperCase()}*` }, { quoted: msg });
+        } else {
+            await sock.sendMessage(sender, { text: `Boa! ${jogoForca.descobertas.join(' ')}` }, { quoted: msg });
+        }
+    } else {
+        jogoForca.erros++;
+        if (jogoForca.erros >= jogoForca.maxErros) {
+            jogoForca.ativo = false;
+            await sock.sendMessage(sender, { 
+                video: { url: 'https://media.tenor.com/HyeG4dSurbwAAAPo/hanging-skeleton-skeleton.mp4' }, 
+                gifPlayback: true, 
+                caption: `💀 VOCÊ PERDEU! A palavra era *${jogoForca.palavra.toUpperCase()}*` 
+            }, { quoted: msg });
+        } else {
+            await sock.sendMessage(sender, { text: `❌ Errou! ${jogoForca.maxErros - jogoForca.erros} vidas restando. ${jogoForca.descobertas.join(' ')}` }, { quoted: msg });
+        }
+    }
+}
         // 8. COMANDO CLIMA (COM DIAGNÓSTICO)
         if (text.startsWith('!desmute')) {
             if (!isAdmin) return await sock.sendMessage(sender, { text: "Tentando furar as regras, né?? HAHAHHAHA 👀👀👀\n\nSabe que um ADM está de olho em você agora né?" });
