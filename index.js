@@ -434,34 +434,34 @@ if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd)
     const meuId = '5527992997083@s.whatsapp.net'; 
 
     const menuTexto = `
-╭━━━ 🌟 BONDE DO BRASIL 🌟 ━━━╮
+╭━━ 🌟 BONDE DO BRASIL 🌟 ━━╮
 │
-│  Fala, @${senderId.split('@')[0]}! Bem-vindo!
-│  📅 ${dataAtual} | ⏰ ${horaAtual}
-│  👑 Criador: @5527992997083
+│ Fala, @${senderId.split('@')[0]}!
+│ 📅 ${dataAtual} | ⏰ ${horaAtual}
+│ 👑 Criador: @5527992997083
 │
-├──── 🎮 JOGOS & DIVERSÃO ────
-│ 🔰 !rank     | ⌛ !sortear
-│ 🎇 !tier     | 🎮 !jogar
-│ 😵 !forca    | ⚽ !penalti
+├──── 🎮 JOGOS ────
+│ 🔰 !rank   | ⌛ !sortear
+│ 🎇 !tier   | 🎮 !jogar
+│ 😵 !forca  | ⚽ !penalti
 │ 🎥 !emoji
 │
-├──── 😂 ZUEIRA & INTERAÇÃO ────
-│ 🤜 !socar    | 😘 !beijar
-│ 🗡️ !matar    | 🤳 !f
+├──── 😂 ZUEIRA ────
+│ 🤜 !socar  | 😘 !beijar
+│ 🗡️ !matar  | 🤳 !f
 │
-├──── 🚨 ADMINISTRAÇÃO ────
-│ ❌ !ban      | ❇️ !adm
-│ 🚫 !fechar   | 🔓 !abrir
+├──── 🚨 ADMIN ────
+│ ❌ !ban    | ❇️ !adm
+│ 🚫 !fechar | 🔓 !abrir
 │
-├──── ⚙️ UTILIDADES ────
-│ 📛 !menu     | 🌤️ !clima [cidade]
+├──── ⚙️ UTIL ────
+│ 📛 !menu   | 🌤️ !clima
 │
 ├──── 🛠️ SUPORTE ────
-│ Problemas no BOT? 
-│ É só falar com @5527992997083 no privado!
-╰━━━━━━━━━━━━━━━━━━━━━━╯
-  🤖 *Bot em constante evolução! Toda semana tem novas funções e jogos.*`.trim();
+│ Problemas no BOT?
+│ Chame @5527992997083
+╰━━━━━━━━━━━━━━━╯
+🤖 *Bot em evolução!Toda semana tem novas funções e jogos.*`.trim();
 
     await sock.sendMessage(sender, { 
         video: { url: 'https://media.tenor.com/WV_2tGerThoAAAPo/farming-aura-farming.mp4' },
