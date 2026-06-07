@@ -366,6 +366,23 @@ if (text === '!rankingemoji') {
     await sock.sendMessage(sender, { text: res, mentions: ranking.map(e => e[0]) }, { quoted: msg });
 }
 
+// --- COMANDO !link ---
+if (lowerText === '!link') {
+    // 1º Ação: Reação na mensagem de quem pediu
+    await sock.sendMessage(sender, { 
+        react: { text: '🔗', key: msg.key } 
+    });
+
+    // Substitua pelo link real do seu grupo
+    const linkDoGrupo = "https://chat.whatsapp.com/GcOAxFxsA3cGVya2n6NbSr?mode=gi_t"; 
+    
+    // 2º Ação: Envia a resposta com o link
+    await sock.sendMessage(sender, { 
+        text: `🔗 *LINK DO BONDE DO BRASIL*\n\nAqui está o link para convidar a galera:\n${linkDoGrupo}\n\n*Regra:* Não convide gringos, hein! 😂`, 
+    }, { quoted: msg });
+}
+// --- FIM DO COMANDO !link ---
+
 // 1. Resposta ao mencionar Bot (Versão Aleatória - Revisada e Garantida)
 if (lowerText.includes('bot')) {
     const frasesBot = [
