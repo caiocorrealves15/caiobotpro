@@ -430,7 +430,7 @@ if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd)
     const dataAtual = new Date().toLocaleDateString('pt-BR');
     const horaAtual = new Date(new Date().getTime() - (3 * 60 * 60 * 1000)).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
-    // Coloque seu número aqui no formato: 5527999999999@s.whatsapp.net
+    // ID completo com o formato correto do seu número
     const meuId = '5527992997083@s.whatsapp.net'; 
 
     const menuTexto = `
@@ -438,7 +438,7 @@ if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd)
 │
 │  Fala, @${senderId.split('@')[0]}! Bem-vindo!
 │  📅 ${dataAtual} | ⏰ ${horaAtual}
-│  👑 Criador: @Caio
+│  👑 Criador: @5527992997083
 │
 ├──── 🎮 JOGOS & DIVERSÃO ────
 │ 🔰 !rank     | ⌛ !sortear
@@ -459,15 +459,15 @@ if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd)
 │
 ├──── 🛠️ SUPORTE ────
 │ Problemas no BOT? 
-│ É só falar com @Caio no privado!
+│ É só falar com @5527992997083 no privado!
 ╰━━━━━━━━━━━━━━━━━━━━━━╯
-  🤖 *Bot em constante evolução!*`.trim();
+  🤖 *Bot em constante evolução! Toda semana tem novas funções e jogos.*`.trim();
 
     await sock.sendMessage(sender, { 
         video: { url: 'https://media.tenor.com/WV_2tGerThoAAAPo/farming-aura-farming.mp4' },
         gifPlayback: true, 
         caption: menuTexto,
-        // O WhatsApp entenderá que os dois @Caio no texto referem-se ao mesmo 'meuId'
+        // O WhatsApp vai substituir o número @5527992997083 pelo seu nome de perfil: Caio SRN🔴⚫
         mentions: [senderId, meuId] 
     }, { quoted: msg });
 }
