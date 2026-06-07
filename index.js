@@ -66,44 +66,46 @@ async function connectToWhatsApp() {
 
     // Boas-vindas (VERSÃO COMPLETA)
         
-        // Mensagem de boas-vindas aprimorada
-       sock.ev.on('group-participants.update', async (update) => {
+        sock.ev.on('group-participants.update', async (update) => {
     const { id, participants, action } = update;
     
     if (action === 'add') {
         const userId = typeof participants[0] === 'string' ? participants[0] : participants[0].id;
         
-        // Usando crases (template literals) para o layout ficar exatamente como você vê aqui
         const textoBoasVindas = 
 `━━━━━━━━━━━━━━━━━━━━━━━━━━
-       🌟 BONDE DO BRASIL 🌟       
+        🌟 BONDE DO BRASIL 🌟        
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Fala aí, @${userId.split('@')[0]}! 🎉 
 Você acaba de entrar no grupo mais zueiro do Zap!
 
 🚀 *O QUE ROLA POR AQUI?*
-🎮 *JOGOS:* Temos Jogo do Emoji, RPG, Forca, Rank e muito mais no nosso bot!
-🎶 Músicas para curtir.
+🎮 *JOGOS:* Emoji, RPG, Forca, Ranking de mensagens, Pênalti e mais!
+🎶 Músicas via comando !musica.
 🥊 Muita interação e resenha.
 🏆 Ranking de membros ativos.
 
 👑 *DONO DO GRUPO:* Caio
-Dúvidas ou problemas? Procure um dos nossos ADMs no privado.
+Dúvidas? Procure um dos nossos ADMs no privado.
 
 📝 *PARA COMEÇAR BEM:*
 Envie sua *FOTO | CIDADE | IDADE | NOME*.
 
-🚫 *REGRAS DE OURO*
+🚫 *REGRAS DE OURO E SEGURANÇA*
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
-• Proibido links, spam, correntes ou qualquer tipo de venda.
-• Proibido invadir PV de membros sem permissão.
-• Proibido brigas, ofensas ou qualquer tipo de preconceito.
-• Proibido conteúdo adulto ou explícito.
-• Mantenha o bom senso e o clima de zoeira saudável!
+• Proibido brigas, ofensas ou preconceito.
+• Proibido invadir PV sem permissão.
+• Proibido conteúdo adulto.
+
+🚨 *SISTEMA DE PROTEÇÃO ATIVO 24H:*
+O bot monitora automaticamente:
+• *Links:* Proibido (Ban automático na insistência).
+• *Travas:* Proibido (Ban imediato).
+• *Spam/Flood:* Proibido (Mute automático).
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🤖 *DICA:* Digite *!menu* para ver todos os nossos comandos e divirta-se!`;
+🤖 *DICA:* Digite *!menu* para ver todos os comandos e divirta-se!`;
 
         await sock.sendMessage(id, { 
             text: textoBoasVindas, 
@@ -111,9 +113,6 @@ Envie sua *FOTO | CIDADE | IDADE | NOME*.
         });
     } 
 });
-
-
-
 
 
     sock.ev.on('connection.update', async (update) => {
