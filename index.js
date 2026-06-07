@@ -442,20 +442,20 @@ if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd)
 │
 ├──── 🎮 JOGOS & DIVERSÃO ────
 │ 🔰 !rank     | ⌛ !sortear
-│ 🎇 !tier    | 🎮 !jogar
-│ 😵 !forca   | ⚽ !penalti
+│ 🎇 !tier     | 🎮 !jogar
+│ 😵 !forca    | ⚽ !penalti
 │ 🎥 !emoji
 │
 ├──── 😂 ZUEIRA & INTERAÇÃO ────
-│ 🤜 !socar   | 😘 !beijar
-│ 🗡️ !matar   | 🤳 !f
+│ 🤜 !socar    | 😘 !beijar
+│ 🗡️ !matar    | 🤳 !f
 │
 ├──── 🚨 ADMINISTRAÇÃO ────
-│ ❌ !ban     | ❇️ !adm
-│ 🚫 !fechar  | 🔓 !abrir
+│ ❌ !ban      | ❇️ !adm
+│ 🚫 !fechar   | 🔓 !abrir
 │
 ├──── ⚙️ UTILIDADES ────
-│ 📛 !menu    | 🌤️ !clima [cidade]
+│ 📛 !menu     | 🌤️ !clima [cidade]
 │
 ├──── 🛠️ SUPORTE ────
 │ Problemas no BOT? 
