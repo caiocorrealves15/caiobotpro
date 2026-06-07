@@ -460,8 +460,9 @@ if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd)
 ├──── 🛠️ SUPORTE ────
 │ Problemas no BOT?
 │ Chame @5527992997083
+│ Ou um dos ADMs           
 ╰━━━━━━━━━━━━━━━╯
-🤖 *Bot em evolução!Toda semana tem novas funções e jogos.*`.trim();
+🤖 *Bot em evolução! Toda semana tem novas funções e jogos.*`.trim();
 
     await sock.sendMessage(sender, { 
         video: { url: 'https://media.tenor.com/WV_2tGerThoAAAPo/farming-aura-farming.mp4' },
