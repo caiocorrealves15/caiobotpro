@@ -426,59 +426,51 @@ if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd)
         // 2. !MENU
         // 2. !MENU (ESTILO PERSONALIZADO BASEADO NA IMAGEM)
         if (text === '!menu') {
-    // Definimos quem enviou a mensagem (o participante real)
     const senderId = msg.key.participant || msg.key.remoteJid; 
-    const nomeUsuario = msg.pushName || 'visitante';
     const dataAtual = new Date().toLocaleDateString('pt-BR');
-const horaAtual = new Date(new Date().getTime() - (3 * 60 * 60 * 1000)).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const horaAtual = new Date(new Date().getTime() - (3 * 60 * 60 * 1000)).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
+    // Coloque seu número aqui no formato: 5527999999999@s.whatsapp.net
+    const meuId = '5527992997083@s.whatsapp.net'; 
 
     const menuTexto = `
-「 ❍ BONDE DO BRASIL ❍ 」
+╭━━━ 🌟 BONDE DO BRASIL 🌟 ━━━╮
+│
+│  Fala, @${senderId.split('@')[0]}! Bem-vindo!
+│  📅 ${dataAtual} | ⏰ ${horaAtual}
+│  👑 Criador: @Caio
+│
+├──── 🎮 JOGOS & DIVERSÃO ────
+│ 🔰 !rank     | ⌛ !sortear
+│ 🎇 !tier    | 🎮 !jogar
+│ 😵 !forca   | ⚽ !penalti
+│ 🎥 !emoji
+│
+├──── 😂 ZUEIRA & INTERAÇÃO ────
+│ 🤜 !socar   | 😘 !beijar
+│ 🗡️ !matar   | 🤳 !f
+│
+├──── 🚨 ADMINISTRAÇÃO ────
+│ ❌ !ban     | ❇️ !adm
+│ 🚫 !fechar  | 🔓 !abrir
+│
+├──── ⚙️ UTILIDADES ────
+│ 📛 !menu    | 🌤️ !clima [cidade]
+│
+├──── 🛠️ SUPORTE ────
+│ Problemas no BOT? 
+│ É só falar com @Caio no privado!
+╰━━━━━━━━━━━━━━━━━━━━━━╯
+  🤖 *Bot em constante evolução!*`.trim();
 
-✨ BOAS-VINDAS, @${senderId.split('@')[0]}! 🔔✨
-
-↪ 🔔 DATA: ${dataAtual}
-↪ ⏰ HORA: ${horaAtual}
-↪ 👑 CRIADOR: Caio o melhor 😎
-↪ 🤖 ATUALIZAÇÕES DO BOT: Semanais com novos jogos e funções
-
-🔔 MENU DE COMANDOS 🫧
-
-⚽ 1. JOGOS E ORGANIZAÇÃO
-🩸 🔰 !rank
-🩸 ⌛ !sortear
-🩸 🎇 !tier [tema]
-🩸 🎮 !jogar
-🩸 😵 !forca
-🩸 ⚽️ !penalti
-🩸 🎥 !emoji
-
-😂😂 2. INTERAÇÃO E ZUEIRA
-🩸 🤜 !socar @usuario
-🩸 😘 !beijar @usuario
-🩸 🗡️ !matar @usuario
-🩸 🤳 !f
-
-🚨 3. MODERAÇÃO (ADMINS)
-🩸 ❌ !ban @usuario
-🩸 ❇️ !adm @usuario
-🩸 🚫 !fechar / !abrir
-
-⚙️ 4. UTILIDADES
-🩸 📛 !menu
-🩸 🌤️ !clima [cidade]
-    `.trim();
-
-    // 3. Envio com menção correta ao senderId
     await sock.sendMessage(sender, { 
         video: { url: 'https://media.tenor.com/WV_2tGerThoAAAPo/farming-aura-farming.mp4' },
         gifPlayback: true, 
         caption: menuTexto,
-        mentions: [senderId] // Garantimos que o ID está na lista de menções
-    }, { quoted: msg }); // Adicionei o quoted para responder sua mensagem!
+        // O WhatsApp entenderá que os dois @Caio no texto referem-se ao mesmo 'meuId'
+        mentions: [senderId, meuId] 
+    }, { quoted: msg });
 }
-
 // Adicione !jogar na sua lista de comandosExistentes
 if (text.startsWith('!jogar')) {
     // Reação de videogame
