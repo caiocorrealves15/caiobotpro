@@ -236,12 +236,10 @@ O bot monitora automaticamente:
     }
 
     // --- INÍCIO DO NOVO ANTI-SPAM (4 mensagens em 1 segundo = MUTE) ---
+        // --- NOVO ANTI-SPAM COM AVISO PARA ADM ---
     const agora = Date.now();
     
-    // Inicializa a contagem se não existir
     if (!contagemFlood[participant]) contagemFlood[participant] = [];
-
-    // Limpa registros mais velhos que 1 segundo
     contagemFlood[participant] = contagemFlood[participant].filter(t => agora - t < 1000);
     contagemFlood[participant].push(agora);
 
@@ -250,32 +248,29 @@ O bot monitora automaticamente:
         const isAdmin = await getIsAdmin();
         
         if (!isAdmin) {
-            // REAÇÃO DE PARAR PARA MEMBRO
+            // Punição para Membro
             await sock.sendMessage(sender, { react: { text: '🛑', key: msg.key } });
-            
-            // Muta por 1 minuto
             mutados[participant] = Date.now() + 60000; 
             fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
-
             await sock.sendMessage(sender, { 
-                text: `🚫 @${participant.split('@')[0]}, você está floodando demais! Você foi mutado por 1 minuto para acalmar os ânimos.`, 
+                text: `🚫 @${participant.split('@')[0]}, spam detectado! Mutado por 1 minuto.`, 
+                mentions: [participant] 
+            }, { quoted: msg });
+            contagemFlood[participant] = [];
+            return; 
+        } else {
+            // AVISO/REAÇÃO PARA ADM
+            await sock.sendMessage(sender, { react: { text: '⚠️', key: msg.key } });
+            await sock.sendMessage(sender, { 
+                text: `⚠️ Calma aí, Chefe! @${participant.split('@')[0]}, você está mandando mensagem rápido demais! Deu sorte que é meu chefe. 😂`, 
                 mentions: [participant] 
             }, { quoted: msg });
             
-            contagemFlood[participant] = []; // Zera a contagem após punir
-            return; 
-        } else {
-            // REAÇÃO DE RISO PARA ADM (já que não vamos mutar ele)
-            await sock.sendMessage(sender, { react: { text: '😨', key: msg.key } });
-            
-            await sock.sendMessage(sender, { 
-                text: `Calma chefe, não precisa ser tão rápido! 😂`, 
-            }, { quoted: msg });
-            
-            contagemFlood[participant] = []; // Zera para o ADM não ficar sendo avisado toda hora
+            contagemFlood[participant] = []; // Limpa para não ficar avisando toda hora
         }
     }
     // --- FIM DO NOVO ANTI-SPAM ---
+
 
     // --- COMANDO !f (FIGURINHA INTEGRADO) ---
     if (lowerText.startsWith('!f') && isMedia) {
