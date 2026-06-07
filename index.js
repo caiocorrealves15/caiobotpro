@@ -72,35 +72,44 @@ async function connectToWhatsApp() {
     if (action === 'add') {
         const userId = typeof participants[0] === 'string' ? participants[0] : participants[0].id;
         
-        // Mensagem de boas-vindas turbinada
+        // Usando crases (template literals) para o layout ficar exatamente como você vê aqui
         const textoBoasVindas = 
-    `━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
-    `      🌟 BONDE DO BRASIL 🌟      \n` +
-    `━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
-    `Fala aí, @${userId.split('@')[0]}! 🎉 \n` +
-    `Você acaba de entrar no grupo mais zueiro do Zap!\n\n` +
-    `🚀 *O QUE ROLA POR AQUI?*\n` +
-    `🎮 Jogos divertidos e RPGs!\n` +
-    `🎶 Músicas para curtir.\n` +
-    `🥊 Muita interação e resenha.\n` +
-    `🏆 Ranking de membros ativos.\n\n` +
-    `📝 *PARA COMEÇAR BEM:*\n` +
-    `Envie sua *FOTO | CIDADE | IDADE | NOME*.\n\n` +
-    `🚫 *REGRAS DE OURO*\n` +
-    `━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
-    `• Proibido links e spam.\n` +
-    `• Proibido vendas.\n` +
-    `• Proibido invadir PV.\n` +
-    `━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
-    `🤖 *DICA:* Digite *!menu* para ver todos os nossos comandos e divirta-se!`;
+`━━━━━━━━━━━━━━━━━━━━━━━━━━
+       🌟 BONDE DO BRASIL 🌟       
+━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-await sock.sendMessage(id, { 
-    text: textoBoasVindas, 
-    mentions: [userId] 
+Fala aí, @${userId.split('@')[0]}! 🎉 
+Você acaba de entrar no grupo mais zueiro do Zap!
+
+🚀 *O QUE ROLA POR AQUI?*
+🎮 *JOGOS:* Temos Jogo do Emoji, RPG, Forca, Rank e muito mais no nosso bot!
+🎶 Músicas para curtir.
+🥊 Muita interação e resenha.
+🏆 Ranking de membros ativos.
+
+👑 *DONO DO GRUPO:* Caio
+Dúvidas ou problemas? Procure um dos nossos ADMs no privado.
+
+📝 *PARA COMEÇAR BEM:*
+Envie sua *FOTO | CIDADE | IDADE | NOME*.
+
+🚫 *REGRAS DE OURO*
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Proibido links, spam, correntes ou qualquer tipo de venda.
+• Proibido invadir PV de membros sem permissão.
+• Proibido brigas, ofensas ou qualquer tipo de preconceito.
+• Proibido conteúdo adulto ou explícito.
+• Mantenha o bom senso e o clima de zoeira saudável!
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🤖 *DICA:* Digite *!menu* para ver todos os nossos comandos e divirta-se!`;
+
+        await sock.sendMessage(id, { 
+            text: textoBoasVindas, 
+            mentions: [userId] 
+        });
+    } 
 });
-
-    } // Fecha o if (action === 'add')
-}); // Fecha o sock.ev.on
 
 
 
@@ -260,20 +269,36 @@ if (text === '!rankingemoji') {
 
 // 1. Resposta ao mencionar Bot
 if (lowerText.includes('bot')) {
+    // Adiciona a reação primeiro
     await sock.sendMessage(sender, { 
-        text: `Fala aí @${participant.split('@')[0]}, tá falando de mim, por que? Quer morrer?🔫👀`, 
+        react: { text: '🔫', key: msg.key } 
+    });
+
+    // Depois envia a mensagem citando o usuário
+    await sock.sendMessage(sender, { 
+        text: `Fala aí @${participant.split('@')[0]}, tá falando de mim, por que? Quer morrer? 🔫👀`, 
         mentions: [participant] 
-    }, { quoted: msg }); // Ajustado para responder em cima
+    }, { quoted: msg });
 }
 
 // 2. Dinheiro
 if (lowerText.includes('dinheiro') || lowerText.includes('grana') || lowerText.includes('cash')) {
+    const opcoes = [
+        { frase: 'Opa, falou em dinheiro? Tá sobrando ou tá faltando, meu parceiro? 💸👀', url: 'https://media.tenor.com/cLjA_QYEHesAAAPo/grana.mp4' },
+        { frase: 'Dinheiro não traz felicidade, mas ajuda a financiar a busca por ela! 💰🚀', url: 'https://media.tenor.com/yEFkhHoLd2MAAAPo/money.mp4' },
+        { frase: 'Meu dinheiro entra na conta e sai na velocidade da luz, nem dá pra fazer amizade. 🏃‍♂️💨', url: 'https://media.tenor.com/OVynAhvE120AAAPo/money.mp4' },
+        { frase: 'Se alguém aí estiver com dinheiro sobrando, aceito doações via Pix para o projeto do meu bot! 🤖💸', url: 'https://media.tenor.com/f8acChNvdVMAAAPo/poor.mp4' }
+    ];
+    
+    // Sorteia um dos objetos da lista de opções
+    const sorteio = opcoes[Math.floor(Math.random() * opcoes.length)];
+
     await sock.sendMessage(sender, { react: { text: '💸', key: msg.key } });
     await sock.sendMessage(sender, { 
-        video: { url: 'https://media.tenor.com/cLjA_QYEHesAAAPo/grana.mp4' }, 
+        video: { url: sorteio.url }, 
         gifPlayback: true, 
-        caption: 'Opa, falou em dinheiro? Tá sobrando ou tá faltando, meu parceiro? 💸👀' 
-    }, { quoted: msg }); // Ajustado para responder em cima
+        caption: `🤖 *${sorteio.frase}*` 
+    }, { quoted: msg });
 }
 
 // 3. !SORTEAR
@@ -339,34 +364,44 @@ if (text === '!sortear') {
 }
 
         // 5. Sextou
-    if (lowerText.includes('sextou')) {
-        await sock.sendMessage(sender, { react: { text: '🥳', key: msg.key } });
-        await sock.sendMessage(sender, { 
-            video: { url: 'https://media.tenor.com/IuZs76jQrG4AAAPo/sextou-familia.mp4' }, 
-            gifPlayback: true, 
-            caption: 'Sextou! Corpo no trabalho, mente no primeiro gole de cerveja.🍺😜' 
-        }, { quoted: msg });
-    }
+    // 5. Sextou
+if (lowerText.includes('sextou')) {
+    const opcoes = [
+        { frase: 'Sextou! Corpo no trabalho, mente no primeiro gole de cerveja. 🍺😜', url: 'https://media.tenor.com/IuZs76jQrG4AAAPo/sextou-familia.mp4' },
+        { frase: 'Sextou! Se não for pra sair e não lembrar de nada, eu nem vou. 🥳', url: 'https://media.tenor.com/pcnxt7DCraEAAAPo/beer-time.mp4' },
+        { frase: 'Sextou! O juízo foi embora, só sobrou a vontade de ser feliz. 🍹', url: 'https://media.tenor.com/M6l-hGumk70AAAPo/sexta-feira-bacano-bacano.mp4' }
+    ];
+    const sorteio = opcoes[Math.floor(Math.random() * opcoes.length)];
 
-    // 6. Trabalho
-    if (lowerText.includes('trabalhar') || lowerText.includes('trabalho')) {
-        await sock.sendMessage(sender, { react: { text: '😰', key: msg.key } });
-        await sock.sendMessage(sender, { 
-            video: { url: 'https://media.tenor.com/ONR_In8tDa8AAAPo/meme-funny-funny-meme.mp4' }, 
-            gifPlayback: true, 
-            caption: 'Se trabalho desse dinheiro, o dono da empresa não estaria milionário enquanto eu tomo café morno.😪☕️' 
-        }, { quoted: msg });
-    }
+    await sock.sendMessage(sender, { react: { text: '🥳', key: msg.key } });
+    await sock.sendMessage(sender, { video: { url: sorteio.url }, gifPlayback: true, caption: `🤖 *${sorteio.frase}*` }, { quoted: msg });
+}
 
-    // 7. Bebida
-    if (lowerText.includes('bebida') || lowerText.includes('cerveja') || lowerText.includes('vodka') || lowerText.includes('whisky')) {
-        await sock.sendMessage(sender, { react: { text: '🍻', key: msg.key } });
-        await sock.sendMessage(sender, { 
-            video: { url: 'https://media.tenor.com/6ZIClIzEuGwAAAPo/drink-dog.mp4' }, 
-            gifPlayback: true, 
-            caption: 'Opa, falou em bebida???? 👀👀👀👀' 
-        }, { quoted: msg });
-    }
+// 6. Trabalho
+if (lowerText.includes('trabalhar') || lowerText.includes('trabalho')) {
+    const opcoes = [
+        { frase: 'Se trabalho desse dinheiro, o dono da empresa não estaria milionário enquanto eu tomo café morno. 😪☕️', url: 'https://media.tenor.com/VYVw1CNLUcAAAAPo/xarutinho-xarutinhorp.mp4' },
+        { frase: 'Trabalhar é bom, mas você já tentou ganhar na loteria? Recomendo muito! 💸', url: 'https://media.tenor.com/Mrc7_H7ikhEAAAPo/spongebob-tired.mp4' },
+        { frase: 'O trabalho dignifica o homem, mas o salário é o que mantém a dignidade em dia. 🤡', url: 'https://media.tenor.com/Q5pvPnsEVVUAAAPo/kid-baby.mp4' }
+    ];
+    const sorteio = opcoes[Math.floor(Math.random() * opcoes.length)];
+
+    await sock.sendMessage(sender, { react: { text: '😰', key: msg.key } });
+    await sock.sendMessage(sender, { video: { url: sorteio.url }, gifPlayback: true, caption: `🤖 *${sorteio.frase}*` }, { quoted: msg });
+}
+
+// 7. Bebida
+if (lowerText.includes('bebida') || lowerText.includes('cerveja') || lowerText.includes('vodka') || lowerText.includes('whisky')) {
+    const opcoes = [
+        { frase: 'Opa, falou em bebida???? 👀👀👀👀', url: 'https://media.tenor.com/6ZIClIzEuGwAAAPo/drink-dog.mp4' },
+        { frase: 'Bebida é o combustível que a alma pede e o fígado chora. 🍻', url: 'https://media.tenor.com/fiZF0zR-nU0AAAPo/xwf-harvey.mp4' },
+        { frase: 'Eu não bebo, eu apenas faço degustação alcoólica intensiva! 🥂', url: 'https://media.tenor.com/hLj93cc8UJEAAAPo/monkey-sipping-straw-monkey.mp4' }
+    ];
+    const sorteio = opcoes[Math.floor(Math.random() * opcoes.length)];
+
+    await sock.sendMessage(sender, { react: { text: '🍻', key: msg.key } });
+    await sock.sendMessage(sender, { video: { url: sorteio.url }, gifPlayback: true, caption: `🤖 *${sorteio.frase}*` }, { quoted: msg });
+}
 
 
     // 9. Comandos extras (ban, tier, matar, rank, adm, socar, beijar, fechar, abrir, musica, desmute, mute, clima)
