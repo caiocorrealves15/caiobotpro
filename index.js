@@ -242,7 +242,7 @@ O bot monitora automaticamente:
     }
     // --- INÍCIO DO ANTI-SPAM ---
     const agora = Date.now();
-    const tempoMinimo = 2000; // 2 segundos
+    const tempoMinimo = 1000; // 2 segundos
 
     if (ultimaMensagem[participant] && (agora - ultimaMensagem[participant] < tempoMinimo)) {
         
