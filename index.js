@@ -9,6 +9,7 @@ const ytsr = require('ytsr');
 const qrcode = require('qrcode-terminal');
 const ytdl = require('ytdl-core'); // Requisito movido para o topo
 const ARQUIVO_PLACAR_EMOJI = './placar_emoji.json';
+const infrações = {};
 
 let placarEmoji = fs.existsSync(ARQUIVO_PLACAR_EMOJI) ? JSON.parse(fs.readFileSync(ARQUIVO_PLACAR_EMOJI)) : {};
 
@@ -169,14 +170,112 @@ Envie sua *FOTO | CIDADE | IDADE | NOME*.
     if (!msg.message || msg.key.fromMe) return;
     
     const participant = msg.key.participant || msg.key.remoteJid;
+    const sender = msg.key.remoteJid;
+    const text = (msg.message.conversation || msg.message.extendedTextMessage?.text || "").toLowerCase();
 
+    // Verificação de Mutados
     if (mutados[participant] && Date.now() < mutados[participant]) {
-        await sock.sendMessage(msg.key.remoteJid, { delete: msg.key });
+        await sock.sendMessage(sender, { delete: msg.key });
         return; 
     }
 
-    const sender = msg.key.remoteJid;
-    const text = (msg.message.conversation || msg.message.extendedTextMessage?.text || "").toLowerCase();
+    // --- LÓGICA DO ANTI-LINK COM AUTO BAN ---
+    // --- INÍCIO DO ANTI-LINK COM AUTO BAN ---
+    const isLink = /https?:\/\/[^\s]+/.test(text);
+    if (isLink) {
+        const getIsAdmin = async () => { if (!sender.endsWith('@g.us')) return false; try { const metadata = await sock.groupMetadata(sender); return metadata.participants.find(p => p.id === participant)?.admin !== null; } catch { return false; } };
+        const isAdmin = await getIsAdmin();
+        
+        if (!isAdmin) {
+            infrações[participant] = (infrações[participant] || 0) + 1;
+            const limite = 3; 
+            const restam = limite - infrações[participant];
+
+            if (infrações[participant] >= limite) {
+                await sock.sendMessage(sender, { text: `🚫 @${participant.split('@')[0]} foi banido por insistir em mandar links!`, mentions: [participant] }, { quoted: msg });
+                await sock.groupParticipantsUpdate(sender, [participant], "remove");
+                delete infrações[participant];
+            } else {
+                await sock.sendMessage(sender, { 
+                    video: { url: 'https://media.tenor.com/q4GIdsYVSXcAAAPo/no-nooo.mp4' },
+                    gifPlayback: true,
+                    caption: `🚫 OPA, @${participant.split('@')[0]}! Aqui não pode link. Você tem ${restam} chance(s) antes do ban!`,
+                    mentions: [participant]
+                }, { quoted: msg });
+                await sock.sendMessage(sender, { delete: msg.key });
+            }
+            return; 
+        } else {
+            await sock.sendMessage(sender, { react: { text: '👀', key: msg.key } });
+            await sock.sendMessage(sender, { text: `😎 Link?? Você se salvou porque é ADM, filho, se não eu ia bloquear na HORAA!!!!!!! 😎😎😎😎` }, { quoted: msg });
+        }
+    }
+    // --- FIM DO ANTI-LINK ---
+
+   // --- INÍCIO DO ANTI-TRAVA ---
+    if (text.length > 5000) {
+        const getIsAdmin = async () => { if (!sender.endsWith('@g.us')) return false; try { const metadata = await sock.groupMetadata(sender); return metadata.participants.find(p => p.id === participant)?.admin !== null; } catch { return false; } };
+        const isAdmin = await getIsAdmin();
+
+        if (!isAdmin) {
+            // BUSCA OS ADMS PARA MARCAR NO ALERTA
+            const metadata = await sock.groupMetadata(sender);
+            const admins = metadata.participants.filter(p => p.admin !== null).map(p => p.id);
+            const mentions = [participant, ...admins];
+
+            // AÇÃO: Deleta e manda o alerta chamando os ADMs
+            await sock.sendMessage(sender, { delete: msg.key });
+            
+            await sock.sendMessage(sender, { 
+                text: `🚨 *ALERTA DE SEGURANÇA!* 🚨\n\nO membro @${participant.split('@')[0]} tentou enviar uma trava pesada e o sistema bloqueou!\n\n${admins.map(adm => `@${adm.split('@')[0]}`).join(' ')} -> *Fiquem de olho neste membro!*`, 
+                mentions: mentions
+            }, { quoted: msg });
+            
+            return; // Interrompe para não contar no rank
+        } else {
+            // AÇÃO PARA ADMS (Reage e faz a graça)
+            await sock.sendMessage(sender, { react: { text: '😂', key: msg.key } });
+            await sock.sendMessage(sender, { 
+                text: `Chefe, precisa falar tanto assim? Se for assim escreve um novo testamento logo 😂😂😂`,
+            }, { quoted: msg });
+        }
+    }
+    // --- INÍCIO DO ANTI-SPAM ---
+    const agora = Date.now();
+    const tempoMinimo = 2000; // 2 segundos
+
+    if (ultimaMensagem[participant] && (agora - ultimaMensagem[participant] < tempoMinimo)) {
+        
+        const getIsAdmin = async () => { if (!sender.endsWith('@g.us')) return false; try { const metadata = await sock.groupMetadata(sender); return metadata.participants.find(p => p.id === participant)?.admin !== null; } catch { return false; } };
+        const isAdmin = await getIsAdmin();
+        
+        if (!isAdmin) {
+            // REAÇÃO DE PARAR PARA MEMBRO
+            await sock.sendMessage(sender, { react: { text: '🛑', key: msg.key } });
+            
+            // Muta por 1 minuto
+            mutados[participant] = Date.now() + 60000; 
+            fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
+
+            await sock.sendMessage(sender, { 
+                text: `🚫 @${participant.split('@')[0]}, você está floodando demais! Você foi mutado por 1 minuto para acalmar os ânimos.`, 
+                mentions: [participant] 
+            }, { quoted: msg });
+            return; 
+        } else {
+            // REAÇÃO DE RISO PARA ADM (já que não vamos mutar ele)
+            await sock.sendMessage(sender, { react: { text: '😨', key: msg.key } });
+            
+            await sock.sendMessage(sender, { 
+                text: `Calma chefe, não precisa ser tão rápido! 😂`, 
+            }, { quoted: msg });
+        }
+    }
+    ultimaMensagem[participant] = agora;
+    // --- FIM DO ANTI-SPAM ---
+    // ... daqui pra baixo continua o seu código normal (contagemMensagens, etc)
+    
+   
     
     contagemMensagens[participant] = (contagemMensagens[participant] || 0) + 1;
     fs.writeFileSync(ARQUIVO_RANK, JSON.stringify(contagemMensagens));
@@ -267,16 +366,36 @@ if (text === '!rankingemoji') {
     await sock.sendMessage(sender, { text: res, mentions: ranking.map(e => e[0]) }, { quoted: msg });
 }
 
-// 1. Resposta ao mencionar Bot
+// 1. Resposta ao mencionar Bot (Versão Aleatória - Revisada e Garantida)
 if (lowerText.includes('bot')) {
-    // Adiciona a reação primeiro
+    const frasesBot = [
+        { frase: 'Fala aí @{user}, tá falando de mim, por que? Quer morrer? 🔫👀', reacao: '🔫' },
+        { frase: 'Chamou o bot? Espero que não seja pra pedir dinheiro, porque eu sou pobre igual a você @{user}! 😂', reacao: '💸' },
+        { frase: 'Diga @{user}, o que você quer? Estou ocupado processando códigos e ignorando sua existência... Mentira, fala aí! 😎', reacao: '🤖' },
+        { frase: 'Quem invocou o @{user} para me chamar? Fala logo antes que eu te mute! 🤐', reacao: '⚠️' },
+        { frase: 'Tô aqui, @{user}! Se for pra mandar link de grupo de venda, nem precisa terminar a frase. 😠', reacao: '🚫' },
+        { frase: 'Estou sentindo cheiro de alguém precisando de ajuda... ou é só o @{user} mesmo? 🤔', reacao: '🕵️‍♂️' }
+    ];
+
+    // Sorteia o índice (para garantir que usamos o mesmo para frase e reação)
+    const indice = Math.floor(Math.random() * frasesBot.length);
+    const sorteio = frasesBot[indice];
+    
+    // Substitui o placeholder {user} pelo nome do usuário
+    const nomeUsuario = participant.split('@')[0];
+    const mensagemFinal = sorteio.frase.replace('{user}', nomeUsuario);
+
+    // 1º Ação: Reação (O emoji que você quer que apareça no balão da mensagem do usuário)
     await sock.sendMessage(sender, { 
-        react: { text: '🔫', key: msg.key } 
+        react: { text: sorteio.reacao, key: msg.key } 
     });
 
-    // Depois envia a mensagem citando o usuário
+    // Pequena pausa para o WhatsApp processar a reação (opcional, mas ajuda)
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    // 2º Ação: A resposta do bot
     await sock.sendMessage(sender, { 
-        text: `Fala aí @${participant.split('@')[0]}, tá falando de mim, por que? Quer morrer? 🔫👀`, 
+        text: `🤖 *${mensagemFinal}*`, 
         mentions: [participant] 
     }, { quoted: msg });
 }
@@ -603,8 +722,6 @@ if (text.startsWith('!matar')) {
         await sock.sendMessage(sender, { text: "❌ Mencione alguém para eliminar!" });
     }
 }
-
-        // 5.3 !ADM
         // 1. !RANK (ORGANIZADO)
         if (text === '!rank') {
             // Ordena os usuários pelo número de mensagens (do maior para o menor)
