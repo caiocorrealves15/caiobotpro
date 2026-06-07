@@ -10,6 +10,7 @@ const qrcode = require('qrcode-terminal');
 const ytdl = require('ytdl-core'); // Requisito movido para o topo
 const ARQUIVO_PLACAR_EMOJI = './placar_emoji.json';
 const infrações = {};
+const ultimaMensagem = {};
 
 let placarEmoji = fs.existsSync(ARQUIVO_PLACAR_EMOJI) ? JSON.parse(fs.readFileSync(ARQUIVO_PLACAR_EMOJI)) : {};
 
