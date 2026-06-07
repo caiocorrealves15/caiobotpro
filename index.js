@@ -262,7 +262,7 @@ O bot monitora automaticamente:
             // AVISO/REAÇÃO PARA ADM
             await sock.sendMessage(sender, { react: { text: '⚠️', key: msg.key } });
             await sock.sendMessage(sender, { 
-                text: `⚠️ Calma aí, Chefe! @${participant.split('@')[0]}, você está mandando mensagem rápido demais! Deu sorte que é meu chefe. 😂`, 
+                text: `⚠️ Calma aí, meu rei! @${participant.split('@')[0]}, você está mandando mensagem rápido demais! Deu sorte que é meu chefe. 😂`, 
                 mentions: [participant] 
             }, { quoted: msg });
             
