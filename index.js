@@ -297,29 +297,46 @@ if (text === '!sortear') {
     // 4. Saudações
     // 4. Saudações
     if (lowerText.includes('bom dia') || lowerText.includes('boa tarde') || lowerText.includes('boa noite')) {
-        let emoji = '☀️';
-        let urlGif = 'https://media.tenor.com/7HPdFKRYFwMAAAPo/thank-you.mp4';
-        let frase = 'Bom dia! Dormi igual a um anjo, acordei igual a um boleto vencido.😂😂 ';
-        
-        if (lowerText.includes('boa tarde')) { 
-            emoji = '🌤️'; 
-            urlGif = 'https://media.tenor.com/C78aGUgwTEYAAAPo/good-afternoon-rollygifs.mp4'; 
-            frase = 'Boa tarde! Que a força do café esteja comigo, porque a minha já acabou.💔😂'; 
-        } else if (lowerText.includes('boa noite')) { 
-            emoji = '🌙'; 
-            urlGif = 'https://media.tenor.com/0RCfPxdUCs8AAAPo/dvfedvr.mp4'; 
-            frase = 'Boa noite! Que o seu sono seja tão profundo quanto o saldo negativo da minha conta.🥱😵‍💫'; 
-        }
+    let emoji = '☀️';
+    let opcoes = [];
 
-        await sock.sendMessage(sender, { react: { text: emoji, key: msg.key } });
-        
-        // Ajuste aqui: o quoted agora aponta para a chave da mensagem original
-        await sock.sendMessage(sender, { 
-            video: { url: urlGif }, 
-            gifPlayback: true, 
-            caption: `🤖 *${frase}*` 
-        }, { quoted: msg }); 
+    if (lowerText.includes('bom dia')) {
+        emoji = '☀️';
+        opcoes = [
+            { frase: 'Bom dia! Dormi igual a um anjo, acordei igual a um boleto vencido. 😂', url: 'https://media.tenor.com/7HPdFKRYFwMAAAPo/thank-you.mp4' },
+            { frase: 'Bom dia, gente! Acordar cedo é uma decisão que tomo todos os dias, mas me arrependo em todas elas. ☕', url: 'https://media.tenor.com/3uHpirQd8qgAAAPo/max1-maxz.mp4' },
+            { frase: 'Bom dia! Se a vida te der limões, faça uma limonada... ou venda e compre café. 🍋', url: 'https://media.tenor.com/8LQ_HOzhCbUAAAPo/ni%CC%87che-frui%CC%87t-lemon-eati%CC%87ng-ni%CC%87che.mp4' },
+            { frase: 'Bom dia! Que a preguiça nos visite, mas que o trabalho não nos veja. 😴', url: 'https://media.tenor.com/0RCfPxdUCs8AAAPo/dvfedvr.mp4' }
+        ];
+    } else if (lowerText.includes('boa tarde')) {
+        emoji = '🌤️';
+        opcoes = [
+            { frase: 'Boa tarde! Que a força do café esteja comigo, porque a minha já acabou. 💔', url: 'https://media.tenor.com/C78aGUgwTEYAAAPo/good-afternoon-rollygifs.mp4' },
+            { frase: 'Boa tarde! O dia tá passando mais rápido que meu salário na mão. 💸', url: 'https://media.tenor.com/Atn_x9ecziUAAAPo/cat-dance-on-door-glass-door-window-jump.mp4' },
+            { frase: 'Boa tarde! Se alguém precisar de mim, estarei ali na esquina... ou em lugar nenhum. 😎', url: 'https://media.tenor.com/0kRkOqvKwBgAAAPo/mr-bean-middle-finger.mp4' },
+            { frase: 'Boa tarde! Trabalhando muito ou trabalhando pouco? O importante é que tá acabando. ⏳', url: 'https://media.tenor.com/5gOeuHmLaLoAAAPo/spongebob-wipe.mp4' }
+        ];
+    } else if (lowerText.includes('boa noite')) {
+        emoji = '🌙';
+        opcoes = [
+            { frase: 'Boa noite! Que o seu sono seja tão profundo quanto o saldo negativo da minha conta. 🥱', url: 'https://media.tenor.com/p4y_zlIm1MMAAAPo/donald-duck-sleep.mp4' },
+            { frase: 'Boa noite! Fechando os olhos e rezando pra não lembrar de nenhum email que esqueci de enviar. 😵‍💫', url: 'https://media.tenor.com/Ptpt40WGI_cAAAPo/boa-noite-valtatui-good-night.mp4' },
+            { frase: 'Boa noite! Hora de sonhar com o feriado que nunca chega. 💤', url: 'https://media.tenor.com/R3mUg2FCAPIAAAPo/cute-sleepy.mp4' },
+            { frase: 'Boa noite! Durmam bem, porque amanhã a luta recomeça e a gente nem teve folga hoje. 🌙', url: 'https://media.tenor.com/VYO7Ra0DP5wAAAPo/good-night-my-love.mp4' }
+        ];
     }
+
+    // Sorteia um dos objetos da lista de opções
+    const sorteio = opcoes[Math.floor(Math.random() * opcoes.length)];
+
+    await sock.sendMessage(sender, { react: { text: emoji, key: msg.key } });
+
+    await sock.sendMessage(sender, { 
+        video: { url: sorteio.url }, 
+        gifPlayback: true, 
+        caption: `🤖 *${sorteio.frase}*` 
+    }, { quoted: msg }); 
+}
 
         // 5. Sextou
     if (lowerText.includes('sextou')) {
