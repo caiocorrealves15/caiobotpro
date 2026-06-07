@@ -542,7 +542,7 @@ if (lowerText.includes('bebida') || lowerText.includes('cerveja') || lowerText.i
 
     // 9. Comandos extras (ban, tier, matar, rank, adm, socar, beijar, fechar, abrir, musica, desmute, mute, clima)
     // *Dica: Aplique o quoted: msg em todos os sock.sendMessage dentro desses blocos também!*
-    const comandosExistentes = ['!menu', '!rank', '!avisoadm', '!emoji', '!sortear', '!jogar', '!forca', '!tier', '!rankingemoji', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute'];
+    const comandosExistentes = ['!menu', '!rank', '!avisoadm', '!emoji', '!sortear', '!jogar', '!forca', '!link', '!tier', '!rankingemoji', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute'];
 
 if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd))) {
     const autor = msg.key.participant || msg.key.remoteJid;
