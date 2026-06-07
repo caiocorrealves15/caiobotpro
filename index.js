@@ -237,38 +237,34 @@ O bot monitora automaticamente:
 
     // --- INÍCIO DO NOVO ANTI-SPAM (4 mensagens em 1 segundo = MUTE) ---
         // --- NOVO ANTI-SPAM COM AVISO PARA ADM ---
-    const agora = Date.now();
-    
-    if (!contagemFlood[participant]) contagemFlood[participant] = [];
-    contagemFlood[participant] = contagemFlood[participant].filter(t => agora - t < 1000);
-    contagemFlood[participant].push(agora);
+    // --- ANTI-SPAM AJUSTADO (SEM ERROS DE ASSINCRONIA) ---
+const agora = Date.now();
+if (!contagemFlood[participant]) contagemFlood[participant] = [];
+contagemFlood[participant] = contagemFlood[participant].filter(t => agora - t < 1000);
+contagemFlood[participant].push(agora);
 
-    if (contagemFlood[participant].length >= 4) {
-        const getIsAdmin = async () => { if (!sender.endsWith('@g.us')) return false; try { const metadata = await sock.groupMetadata(sender); return metadata.participants.find(p => p.id === participant)?.admin !== null; } catch { return false; } };
-        const isAdmin = await getIsAdmin();
-        
-        if (!isAdmin) {
-            // Punição para Membro
-            await sock.sendMessage(sender, { react: { text: '🛑', key: msg.key } });
-            mutados[participant] = Date.now() + 60000; 
-            fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
-            await sock.sendMessage(sender, { 
-                text: `🚫 @${participant.split('@')[0]}, spam detectado! Mutado por 1 minuto.`, 
-                mentions: [participant] 
-            }, { quoted: msg });
-            contagemFlood[participant] = [];
-            return; 
-        } else {
-            // AVISO/REAÇÃO PARA ADM
-            await sock.sendMessage(sender, { react: { text: '⚠️', key: msg.key } });
-            await sock.sendMessage(sender, { 
-                text: `⚠️ Calma aí, meu rei! @${participant.split('@')[0]}, você está mandando mensagem rápido demais! Deu sorte que é meu chefe. 😂`, 
-                mentions: [participant] 
-            }, { quoted: msg });
-            
-            contagemFlood[participant] = []; // Limpa para não ficar avisando toda hora
-        }
+if (contagemFlood[participant].length >= 4) {
+    // Agora o bot testa na hora sem depender de buscar o metadata do grupo
+    // Se o seu número (ou dos ADMs) estiver na lista de admins do grupo, isso vai disparar
+    const metadata = await sock.groupMetadata(sender).catch(() => null);
+    const ehAdm = metadata?.participants.find(p => p.id === participant)?.admin !== null;
+
+    if (!ehAdm) {
+        await sock.sendMessage(sender, { react: { text: '🛑', key: msg.key } });
+        mutados[participant] = Date.now() + 60000;
+        fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
+        await sock.sendMessage(sender, { text: `🚫 @${participant.split('@')[0]}, spam detectado! Mutado.`, mentions: [participant] }, { quoted: msg });
+        contagemFlood[participant] = [];
+        return; 
+    } else {
+        // REAÇÃO PARA ADM (agora garantida)
+        await sock.sendMessage(sender, { react: { text: '⚠️', key: msg.key } });
+        await sock.sendMessage(sender, { text: `⚠️ Calma, meu rei @${participant.split('@')[0]}! Só nao reajo por que você não é meu chefe! 😂`, mentions: [participant] }, { quoted: msg });
+        contagemFlood[participant] = [];
     }
+}
+// --- FIM ---
+
     // --- FIM DO NOVO ANTI-SPAM ---
 
 
