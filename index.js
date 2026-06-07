@@ -434,7 +434,7 @@ if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd)
     const meuId = '5527992997083@s.whatsapp.net'; 
 
     const menuTexto = `
-╭━━ 🌟 BONDE DO BRASIL 🌟 ━━╮
+╭━━ 🇧🇷 BONDE DO BRASIL 🇧🇷
 │
 │ Fala, @${senderId.split('@')[0]}!
 │ 📅 ${dataAtual} | ⏰ ${horaAtual}
@@ -442,7 +442,7 @@ if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd)
 │
 ├──── 🎮 JOGOS ────
 │ 🔰 !rank   | ⌛ !sortear
-│ 🎇 !tier   | 🎮 !jogar
+│ 🎇 !tier    | 🎮 !jogar
 │ 😵 !forca  | ⚽ !penalti
 │ 🎥 !emoji
 │
@@ -451,7 +451,7 @@ if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd)
 │ 🗡️ !matar  | 🤳 !f
 │
 ├──── 🚨 ADMIN ────
-│ ❌ !ban    | ❇️ !adm
+│ ❌ !ban     | ❇️ !adm
 │ 🚫 !fechar | 🔓 !abrir
 │
 ├──── ⚙️ UTIL ────
