@@ -852,21 +852,26 @@ if (text.startsWith('!descasar')) {
 }
 
 if (text === '!casais') {
-    // Recarrega do arquivo antes de mostrar para garantir que está atualizado
+  
     if (fs.existsSync('./casais.json')) {
         listaCasais = JSON.parse(fs.readFileSync('./casais.json'));
     }
 
     if (listaCasais.length === 0) {
-        await sock.sendMessage(sender, { react: { text: '🤡', key: msg.key } });
-        return await sock.sendMessage(sender, { text: "❌ Ninguém casou ainda! Estão todos encalhados.", quoted: msg });
+        return await sock.sendMessage(sender, { text: "❌ Ninguém casou ainda, pessoal!", quoted: msg });
     }
 
     let texto = "🏆 *RANKING DE CASAMENTOS* 🏆\n\n";
-    listaCasais.forEach((c, i) => texto += `${i + 1}. @${c.p1} ❤️ @${c.p2}\n`);
+    
+    // A mágica acontece aqui: usamos @ seguido do número. 
+    // O WhatsApp de quem ler vai converter o número automaticamente para o nome da pessoa na agenda dele!
+    listaCasais.forEach((c, i) => {
+        texto += `${i + 1}. @${c.p1} ❤️ @${c.p2}\n`;
+    });
+    
     texto += "\n🤡 Quem será o próximo?";
 
-    await sock.sendMessage(sender, { react: { text: '🏆', key: msg.key } });
+    
     await sock.sendMessage(sender, { 
         text: texto, 
         mentions: listaCasais.flatMap(c => [c.p1 + "@s.whatsapp.net", c.p2 + "@s.whatsapp.net"]),
