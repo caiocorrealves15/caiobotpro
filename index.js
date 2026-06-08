@@ -803,35 +803,34 @@ if (text.startsWith('!adm')) {
 
 
 // 5.3 !CASAIS (Versão com Reply Forçado)
-if (text.startsWith('!casar')) {
-   
-    const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
-    if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione alguém para casar!", quoted: msg });
+if (text === '!casais') {
+    // Recarrega do arquivo
+    if (fs.existsSync('./casais.json')) {
+        listaCasais = JSON.parse(fs.readFileSync('./casais.json'));
+    }
 
-    const p1 = participant.split('@')[0];
-    const p2 = mention.split('@')[0];
+    if (listaCasais.length === 0) {
+        await sock.sendMessage(sender, { react: { text: '🤡', key: msg.key } });
+        return await sock.sendMessage(sender, { text: "❌ Ninguém casou ainda! Estão todos encalhados.", quoted: msg });
+    }
 
-    // Verifica se já não estão casados
-    const jaCasado = listaCasais.find(c => (c.p1 === p1 && c.p2 === p2) || (c.p1 === p2 && c.p2 === p1));
-    if (jaCasado) return await sock.sendMessage(sender, { text: "❌ Vocês já são casados, pombinhos!", quoted: msg });
+    let texto = "🏆 *RANKING DE CASAMENTOS* 🏆\n\n";
+    
+    listaCasais.forEach((c, i) => {
+        // Usa o nome salvo se existir, senão usa o @número
+        const nomeExibicao1 = c.nome1 ? c.nome1 : `@${c.p1}`;
+        const nomeExibicao2 = c.nome2 ? c.nome2 : `@${c.p2}`;
+        texto += `${i + 1}. ${nomeExibicao1} ❤️ ${nomeExibicao2}\n`;
+    });
+    
+    texto += "\n🤡 Quem será o próximo?";
 
-    listaCasais.push({ p1, p2, nome1: msg.pushName || p1, nome2: p2 });
-    salvarCasais(); // Salva no arquivo
-
-    const frases = [
-        `💍 O @${p1} pediu o @${p2} em casamento! Já avisou que vai ser no cartório pra economizar? 😂`,
-        `💒 Alerta de união duvidosa! @${p1} resolveu juntar os panos com @${p2}. O divórcio sai em quanto tempo? 🤡`,
-        `💍 O @${p1} e o @${p2} decidiram casar! É oficial: o amor é cego e a gente que lute pra aguentar esse casal! 💘`
-    ];
-    const msgFinal = frases[Math.floor(Math.random() * frases.length)];
-
-    await sock.sendMessage(sender, { react: { text: '💍', key: msg.key } });
+    await sock.sendMessage(sender, { react: { text: '🏆', key: msg.key } });
     await sock.sendMessage(sender, { 
-        video: { url: "https://media.tenor.com/h981yJykAXYAAAPo/la-haut-dessin-anime.mp4" }, 
-        gifPlayback: true,
-        caption: msgFinal, 
-        mentions: [participant, mention] 
-    }, { quoted: msg });
+        text: texto, 
+        mentions: listaCasais.flatMap(c => [c.p1 + "@s.whatsapp.net", c.p2 + "@s.whatsapp.net"]),
+        quoted: msg 
+    });
 }
 
 if (text.startsWith('!descasar')) {
@@ -871,7 +870,7 @@ if (text === '!casais') {
     
     texto += "\n🤡 Quem será o próximo?";
 
-    
+
     await sock.sendMessage(sender, { 
         text: texto, 
         mentions: listaCasais.flatMap(c => [c.p1 + "@s.whatsapp.net", c.p2 + "@s.whatsapp.net"]),
