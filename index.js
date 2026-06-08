@@ -804,33 +804,47 @@ if (text.startsWith('!adm')) {
 
 // 5.3 !CASAIS (Versão com Reply Forçado)
 if (text === '!casais') {
-    // Recarrega do arquivo
+    // 1. Recarrega do arquivo
     if (fs.existsSync('./casais.json')) {
-        listaCasais = JSON.parse(fs.readFileSync('./casais.json'));
+        try {
+            listaCasais = JSON.parse(fs.readFileSync('./casais.json'));
+        } catch (e) {
+            listaCasais = [];
+        }
     }
 
+    // 2. Verifica se está vazio
     if (listaCasais.length === 0) {
         await sock.sendMessage(sender, { react: { text: '🤡', key: msg.key } });
         return await sock.sendMessage(sender, { text: "❌ Ninguém casou ainda! Estão todos encalhados.", quoted: msg });
     }
 
-    let texto = "🏆 *RANKING DE CASAMENTOS* 🏆\n\n";
-    
+    // 3. Monta frases variadas para o topo do ranking
+    const frasesTopo = [
+        "🏆 *RANKING DOS APAIXONADOS (OU LOUCOS)* 🏆",
+        "🔥 *OS POMBINHOS DO GRUPO (SÓ O FILÉ):* 🔥",
+        "💒 *LISTA DE QUEM JÁ PERDEU A LIBERDADE:* 💒",
+        "🤡 *CARTÓRIO DO CAOS - CASAIS DO MOMENTO:* 🤡",
+        "💖 *ALERTA DE ROMANCE (OU MICO):* 💖"
+    ];
+    let texto = frasesTopo[Math.floor(Math.random() * frasesTopo.length)] + "\n\n";
+
+    // 4. Monta o corpo com nomes ou IDs
     listaCasais.forEach((c, i) => {
-        // Usa o nome salvo se existir, senão usa o @número
         const nomeExibicao1 = c.nome1 ? c.nome1 : `@${c.p1}`;
         const nomeExibicao2 = c.nome2 ? c.nome2 : `@${c.p2}`;
         texto += `${i + 1}. ${nomeExibicao1} ❤️ ${nomeExibicao2}\n`;
     });
     
-    texto += "\n🤡 Quem será o próximo?";
+    texto += "\n🤡 Quem será o próximo a cair na armadilha? HAHAHAHA";
 
+    // 5. Envio com reação e resposta (quoted)
     await sock.sendMessage(sender, { react: { text: '🏆', key: msg.key } });
+    
     await sock.sendMessage(sender, { 
         text: texto, 
-        mentions: listaCasais.flatMap(c => [c.p1 + "@s.whatsapp.net", c.p2 + "@s.whatsapp.net"]),
-        quoted: msg 
-    });
+        mentions: listaCasais.flatMap(c => [c.p1 + "@s.whatsapp.net", c.p2 + "@s.whatsapp.net"])
+    }, { quoted: msg }); 
 }
 
 if (text.startsWith('!descasar')) {
