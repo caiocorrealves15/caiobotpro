@@ -838,13 +838,18 @@ if (text.startsWith('!casar')) {
 
 // 5.3 !CASAIS (Ranking com Reação, Reply e frases zoadas)
 // 5.3 !CASAIS (Versão com Reply Forçado)
+// 5.3 !CASAIS (Versão com Proteção para não quebrar o bot)
 if (text === '!casais') {
-   
- if (listaCasais.length === 0) {
+    // PROTEÇÃO: Se a variável não existir, cria ela agora mesmo
+    if (typeof listaCasais === 'undefined') {
+        var listaCasais = [];
+    }
+
+    if (listaCasais.length === 0) {
         await sock.sendMessage(sender, { react: { text: '🤡', key: msg.key } });
         return await sock.sendMessage(sender, { text: "❌ Ainda não temos casais aqui. O pessoal tá muito encalhado ou ninguém quer assumir a B.O.! 😂", quoted: msg });
     }
-
+    
     const frasesRanking = [
         "🏆 *RANKING DOS APAIXONADOS (OU LOUCOS)* 🏆\n\n",
         "🔥 *OS POMBINHOS DO GRUPO (SÓ O FILÉ):* 🔥\n\n",
