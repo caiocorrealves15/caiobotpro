@@ -801,126 +801,75 @@ if (text.startsWith('!adm')) {
             }
         }
 
-        // 5.2 !CASAR (Com Reply, Reação de Aliança e Frases)
-// 5.2 !CASAR (Com Reply, Reação de Aliança e Frases Potencializadas)
-// 5.2 !CASAR (Com Reply, Reação de Aliança e Ranking)
+
+// 5.3 !CASAIS (Versão com Reply Forçado)
 if (text.startsWith('!casar')) {
-    // Garante a existência da variável de ranking caso o bot tenha reiniciado
-    if (typeof listaCasais === 'undefined') { var listaCasais = []; }
-
+   
     const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
-    if (mention) {
-        const quemCasa = msg.pushName || participant.split('@')[0];
-        const quemRecebe = mention.split('@')[0];
-        
-        const frasesCasamento = [
-            `💍 O @${quemCasa} pediu o @${quemRecebe} em casamento! Já avisou que vai ser no cartório pra economizar? 😂`,
-            `💒 Alerta de união duvidosa! @${quemCasa} resolveu juntar os panos com @${quemRecebe}. O divórcio sai em quanto tempo? 🤡`,
-            `👰🤵 O @${quemCasa} perdeu a noção e o @${quemRecebe} aceitou! Agora preparem o fígado pra festa, porque vai ter pinga! 🥃`,
-            `💍 O @${quemCasa} e o @${quemRecebe} decidiram casar! É oficial: o amor é cego e a gente que lute pra aguentar esse casal! 💘`,
-            `💒 É oficial! @${quemCasa} casou com @${quemRecebe}. O buffet vai ser pão com ovo e muita sofrência, aceitem! 🍞`,
-            `💍 @${quemCasa} e @${quemRecebe} casaram! Alguém avisa pro @${quemRecebe} que ele ainda pode fugir enquanto é tempo! 🏃‍♂️💨`
-        ];
-        const sorteioCasamento = frasesCasamento[Math.floor(Math.random() * frasesCasamento.length)];
+    if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione alguém para casar!", quoted: msg });
 
-        // Reação de aliança na mensagem de quem pediu
-        await sock.sendMessage(sender, { react: { text: '💍', key: msg.key } });
+    const p1 = participant.split('@')[0];
+    const p2 = mention.split('@')[0];
 
-        // ... dentro do seu if(text.startsWith('!casar')) ...
-    listaCasais.push({ p1: quemCasa, p2: quemRecebe, data: new Date().toLocaleDateString() });
-    salvarCasais(); // Adicione esta linha!
+    // Verifica se já não estão casados
+    const jaCasado = listaCasais.find(c => (c.p1 === p1 && c.p2 === p2) || (c.p1 === p2 && c.p2 === p1));
+    if (jaCasado) return await sock.sendMessage(sender, { text: "❌ Vocês já são casados, pombinhos!", quoted: msg });
 
+    listaCasais.push({ p1, p2, nome1: msg.pushName || p1, nome2: p2 });
+    salvarCasais(); // Salva no arquivo
 
-        await sock.sendMessage(sender, { 
-            video: { url: "https://media.tenor.com/h981yJykAXYAAAPo/la-haut-dessin-anime.mp4" }, 
-            gifPlayback: true,
-            caption: sorteioCasamento, 
-            mentions: [participant, mention] 
-        }, { quoted: msg }); // Reply garantido
-    } else {
-        await sock.sendMessage(sender, { text: "❌ Mencione alguém para casar!", quoted: msg });
-    }
+    const frases = [
+        `💍 O @${p1} pediu o @${p2} em casamento! Já avisou que vai ser no cartório pra economizar? 😂`,
+        `💒 Alerta de união duvidosa! @${p1} resolveu juntar os panos com @${p2}. O divórcio sai em quanto tempo? 🤡`,
+        `💍 O @${p1} e o @${p2} decidiram casar! É oficial: o amor é cego e a gente que lute pra aguentar esse casal! 💘`
+    ];
+    const msgFinal = frases[Math.floor(Math.random() * frases.length)];
+
+    await sock.sendMessage(sender, { react: { text: '💍', key: msg.key } });
+    await sock.sendMessage(sender, { 
+        video: { url: "https://media.tenor.com/h981yJykAXYAAAPo/la-haut-dessin-anime.mp4" }, 
+        gifPlayback: true,
+        caption: msgFinal, 
+        mentions: [participant, mention] 
+    }, { quoted: msg });
 }
 
-// 5.3 !CASAIS (Ranking com Reação, Reply e frases zoadas)
-// 5.3 !CASAIS (Versão com Reply Forçado)
-// 5.3 !CASAIS (Versão com Proteção para não quebrar o bot)
+if (text.startsWith('!descasar')) {
+    const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+    if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione o seu ex-amor para divorciar!", quoted: msg });
+
+    const p1 = participant.split('@')[0];
+    const p2 = mention.split('@')[0];
+
+    const index = listaCasais.findIndex(c => (c.p1 === p1 && c.p2 === p2) || (c.p1 === p2 && c.p2 === p1));
+    if (index === -1) return await sock.sendMessage(sender, { text: "❌ Vocês nem casados estão! 😂", quoted: msg });
+
+    listaCasais.splice(index, 1);
+    salvarCasais(); // Salva a remoção no arquivo
+
+    await sock.sendMessage(sender, { react: { text: '💔', key: msg.key } });
+    await sock.sendMessage(sender, { text: `💔 O divórcio saiu! @${p1} e @${p2} não estão mais juntos. Cada um pro seu lado! 🥂`, mentions: [participant, mention], quoted: msg });
+}
+
 if (text === '!casais') {
-    // PROTEÇÃO: Se a variável não existir, cria ela agora mesmo
-    if (typeof listaCasais === 'undefined') {
-        var listaCasais = [];
+    // Recarrega do arquivo antes de mostrar para garantir que está atualizado
+    if (fs.existsSync('./casais.json')) {
+        listaCasais = JSON.parse(fs.readFileSync('./casais.json'));
     }
 
     if (listaCasais.length === 0) {
         await sock.sendMessage(sender, { react: { text: '🤡', key: msg.key } });
-        return await sock.sendMessage(sender, { text: "❌ Ainda não temos casais aqui. O pessoal tá muito encalhado ou ninguém quer assumir a B.O.! 😂", quoted: msg });
+        return await sock.sendMessage(sender, { text: "❌ Ninguém casou ainda! Estão todos encalhados.", quoted: msg });
     }
-    
-    const frasesRanking = [
-        "🏆 *RANKING DOS APAIXONADOS (OU LOUCOS)* 🏆\n\n",
-        "🔥 *OS POMBINHOS DO GRUPO (SÓ O FILÉ):* 🔥\n\n",
-        "💒 *LISTA DE QUEM JÁ PERDEU A LIBERDADE:* 💒\n\n"
-    ];
-    let textoRanking = frasesRanking[Math.floor(Math.random() * frasesRanking.length)];
 
-    listaCasais.forEach((casal, index) => {
-        const nome1 = casal.nome1 || casal.p1;
-        const nome2 = casal.nome2 || casal.p2;
-        textoRanking += `${index + 1}. @${casal.p1} ❤️ @${casal.p2}\n`;
-    });
-    
-    textoRanking += "\n\nQuem será o próximo a cair na armadilha? HAHAHAHA 🤡";
+    let texto = "🏆 *RANKING DE CASAMENTOS* 🏆\n\n";
+    listaCasais.forEach((c, i) => texto += `${i + 1}. @${c.p1} ❤️ @${c.p2}\n`);
+    texto += "\n🤡 Quem será o próximo?";
 
-    // 1. Reação
     await sock.sendMessage(sender, { react: { text: '🏆', key: msg.key } });
-
-    // 2. Preparar os mentions corretamente
-    const participantes = listaCasais.flatMap(c => [c.p1 + "@s.whatsapp.net", c.p2 + "@s.whatsapp.net"]);
-
-    // 3. Enviar com o quoted explícito
     await sock.sendMessage(sender, { 
-        text: textoRanking, 
-        mentions: participantes
-    }, { quoted: msg }); 
-}
-
-// 5.4 !DESCASAR (O comando do Divórcio)
-if (text.startsWith('!descasar')) {
-    const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
-    if (!mention) {
-        return await sock.sendMessage(sender, { text: "❌ Mencione o seu ex-amor para pedir o divórcio!", quoted: msg });
-    }
-
-    const autor = participant.split('@')[0];
-    const alvo = mention.split('@')[0];
-
-    // Tenta encontrar o casal (considerando que pode ser o autor pedindo ou o alvo)
-    const index = listaCasais.findIndex(c => 
-        (c.p1 === autor && c.p2 === alvo) || (c.p1 === alvo && c.p2 === autor)
-    );
-
-    if (index === -1) {
-        await sock.sendMessage(sender, { react: { text: '🤔', key: msg.key } });
-        return await sock.sendMessage(sender, { text: "❌ Vocês nem casados estão! Tá querendo divorciar de quem nunca existiu? 😂", quoted: msg });
-    }
-
-listaCasais.splice(index, 1);
-salvarCasais(); // Adicione esta linha!
-
-    const frasesDivorcio = [
-        `💔 O divórcio saiu! @${autor} finalmente se livrou do peso morto chamado @${alvo}. Parabéns pela liberdade! 🥂`,
-        `📉 O amor acabou! @${autor} e @${alvo} não aguentaram a pressão. Agora é cada um por si e Deus por todos! 😂`,
-        `🧹 A faxina foi feita! @${autor} deu um chute na bunda do @${alvo}. Fim de papo! 💥`,
-        `🤡 O casamento de mentira acabou! @${autor} pediu o divórcio e o @${alvo} ficou chupando dedo! ✌️`
-    ];
-    const sorteioDivorcio = frasesDivorcio[Math.floor(Math.random() * frasesDivorcio.length)];
-
-    // Reação de luto/divórcio
-    await sock.sendMessage(sender, { react: { text: '💔', key: msg.key } });
-
-    await sock.sendMessage(sender, { 
-        text: sorteioDivorcio, 
-        mentions: [participant, mention],
+        text: texto, 
+        mentions: listaCasais.flatMap(c => [c.p1 + "@s.whatsapp.net", c.p2 + "@s.whatsapp.net"]),
         quoted: msg 
     });
 }
