@@ -287,32 +287,32 @@ O bot monitora automaticamente:
 
     if (text.startsWith('!emoji')) {
     const desafios = [
-        // Nível Fácil / Médio (Os que você já tinha)
-        { emojis: '🕵️‍♂️🔍🏠', resposta: 'sherlock holmes', gif: 'https://media.tenor.com/dR3xtJ5WbFYAAAPo/sherlock-sherlock-holmes.mp4' },
-        { emojis: '🚢🧊💔', resposta: 'titanic', gif: 'https://media.tenor.com/cT1pz8_yZGIAAAPo/titanic.mp4' },
-        { emojis: '🦁👑🌅', resposta: 'rei leão', gif: 'https://media.tenor.com/LgB11V1I0IwAAAPo/simba.mp4' },
-        { emojis: '⚡👓🏰', resposta: 'harry potter', gif: 'https://media.tenor.com/Rg2bz-jI430AAAPo/harry-potter-harry-potter-and-the-halfblood-prince.mp4' },
-        { emojis: '🏎️💨🗼', resposta: 'velozes e furiosos', gif: 'https://media.tenor.com/RaoeC9AmN1QAAAPo/brian-o%27conner-paul-walker.mp4' },
-        { emojis: '🤡🎈⛵', resposta: 'it', gif: 'https://media.tenor.com/GHeNyQYLEPEAAAPo/pennywise-clown.mp4' },
-
-        // Nível Difícil / Ninja (Novos)
-        { emojis: '👨‍🚀⏳🌌🌽', resposta: 'interestelar', gif: 'https://media.tenor.com/8wane_Lo91UAAAPo/no-no.mp4' },
-        { emojis: '🧼👊🏢🏠', resposta: 'clube da luta', gif: 'https://media.tenor.com/NCis2CAc2akAAAPo/%D1%82%D0%B0%D0%B9%D0%BB%D0%BE%D1%80.mp4' },
-        { emojis: '📺🌊🏙️🤥', resposta: 'o show de truman', gif: 'https://media.tenor.com/yMmkrRze98AAAAPo/jim-carrey-jim-carrey-snapchat.mp4' },
-        { emojis: '👴💍🌋👁️', resposta: 'senhor dos aneis', gif: 'https://media.tenor.com/H2GZj21Q91YAAAPo/gandalf-lord-of-the-rings.mp4' },
-        { emojis: '💊🐇🕶️🏢', resposta: 'matrix', gif: 'https://media.tenor.com/gw1yNsaFmlMAAAPo/matrix-neo.mp4' },
-        { emojis: '👨‍👩‍👧‍👦🏠🔪😱', resposta: 'pânico', gif: 'https://media.tenor.com/Abk4lKtoJ3sAAAPo/omw-ghostface.mp4' },
-        { emojis: '🦈🏖️🩸🌊', resposta: 'tubarão', gif: 'https://media.tenor.com/Y2mOLAczQo0AAAPo/insainment-mind-space-apocalypse.mp4' },
-        { emojis: '🚀👩‍🚀👽🩸', resposta: 'alien', gif: 'https://media.tenor.com/8ybNfbAsL5YAAAPo/alien-creepy.mp4' }
+        // NÍVEL HARDCORE / QUASE IMPOSSÍVEL
+        { emojis: '⏳🏜️🪰🕶️', resposta: 'duna', gif: 'https://tenor.com/pt-BR/view/mike-dune-mike-paul-dune-mikes-book-reviews-dune-mikes-book-reviews-paul-mike-atreides-gif-22418379' },
+        { emojis: '🏢🧩💀📼', resposta: 'jogos mortais', gif: 'https://media.tenor.com/_VCUIiAYnQUAAAPo/jigsaw-saw.mp4' },
+        { emojis: '🥃👽🌑🎷', resposta: 'o quinto elemento', gif: 'https://media.tenor.com/nr1ihysLytYAAAPo/fifth-element-friday.mp4' },
+        { emojis: '🏨❄️🪓👨‍👩‍👦', resposta: 'o iluminado', gif: 'https://media.tenor.com/sU7qOfCln0cAAAPo/resplandor-shining.mp4' },
+        { emojis: '🤖🧠🕶️🌆', resposta: 'blade runner', gif: 'https://media.tenor.com/OLN4EbHbw0MAAAPo/ryan-gosling.mp4' },
+        { emojis: '👨‍🦱💊🃏🏙️', resposta: 'coringa', gif: 'https://media.tenor.com/YA5eTXsPOGQAAAPo/%E1%83%AF%E1%83%9D%E1%83%99%E1%83%94%E1%83%A0%E1%83%98-joker.mp4' },
+        { emojis: '🏰🗝️🦁🏹', resposta: 'narnia', gif: 'https://media.tenor.com/L3uIXGs50TMAAAPo/narnia-mrtumnus.mp4' },
+        { emojis: '🦖🌴🧬🧪', resposta: 'jurassic park', gif: 'https://media.tenor.com/xvxsUY2gWtgAAAPo/t-rex.mp4' },
+        { emojis: '👤🔥🌌🕰️', resposta: 'donnie darko', gif: 'https://media.tenor.com/bZgc0s9WzgQAAAPo/donniedarko-bunny.mp4' },
+        { emojis: '🛶💍👹🌋', resposta: 'o hobbit', gif: 'https://media.tenor.com/ofMWBWlpN4IAAAPo/hasanshabbir-blaaah.mp4' },
+        { emojis: '👩‍🏫📓🤫💅', resposta: 'meninas malvadas', gif: 'https://media.tenor.com/9DP0qd04vvsAAAPo/mean-girls-looking-around.mp4' },
+        { emojis: '🕵️‍♂️♟️🎩🔪', resposta: 'o grande truque', gif: 'https://media.tenor.com/CvDyQw6dUBQAAAPo/prestige-movie-hugh-jackman.mp4' },
+        { emojis: '👨‍🔬🧪🚐💰', resposta: 'breaking bad', gif: 'https://media.tenor.com/XyAE6nJKCIUAAAPo/breaking-bad.mp4' },
+        { emojis: '👨‍🚀🌌🌑🚪', resposta: '2001 uma odisseia no espaço', gif: 'https://media.tenor.com/wP-HjXYA6HgAAAPo/dave-bowman-david-bowman.mp4' },
+        { emojis: '👺🎭🎹🎼', resposta: 'o fantasma da ópera', gif: 'https://media.tenor.com/jvxE-RQjbaIAAAPo/phantom-of-the-opera-gerard-butler.mp4' },
+        { emojis: '🥊🏢🛌💤', resposta: 'origem', gif: 'https://media.tenor.com/yaRszZthE04AAAPo/cillian-murphy-inception.mp4' }
     ];
     
     const sorteado = desafios[Math.floor(Math.random() * desafios.length)];
     
     // GIF de entrada
     const msgDesafio = await sock.sendMessage(sender, { 
-        video: { url: 'https://media.tenor.com/-0sxz-2EfwcAAAPo/batman-thinking.mp4' },
+        video: { url: 'https://media.tenor.com/oJKQsEPQrYIAAAPo/spongebob-spongebob-squarepants.mp4' },
         gifPlayback: true,
-        caption: `🧩 *ADIVINHE O FILME/SÉRIE:* \n\n${sorteado.emojis}\n\nResponda dando reply (em cima) nesta mensagem!`,
+        caption: `🧩 *ADIVINHE O FILME/SÉRIE:* \n\n${sorteado.emojis}\n\nResponda em cima nesta mensagem, hein!`,
     }, { quoted: msg });
 
     jogoEmoji.ativo = true;
@@ -384,57 +384,57 @@ if (lowerText === '!link') {
 // --- FIM DO COMANDO !link ---
 
 // 1. Resposta ao mencionar Bot (Versão Aleatória - Revisada e Garantida)
+// 1. Resposta ao mencionar Bot (Reage com múltiplas e responde apenas no Reply)
 if (lowerText.includes('bot')) {
-    const frasesBot = [
-        { frase: 'Fala aí @{user}, tá falando de mim, por que? Quer morrer? 🔫👀', reacao: '🔫' },
-        { frase: 'Chamou o bot? Espero que não seja pra pedir dinheiro, porque eu sou pobre igual a você @{user}! 😂', reacao: '💸' },
-        { frase: 'Diga @{user}, o que você quer? Estou ocupado processando códigos e ignorando sua existência... Mentira, fala aí! 😎', reacao: '🤖' },
-        { frase: 'Quem invocou o @{user} para me chamar? Fala logo antes que eu te mute! 🤐', reacao: '⚠️' },
-        { frase: 'Tô aqui, @{user}! Se for pra mandar link de grupo de venda, nem precisa terminar a frase. 😠', reacao: '🚫' },
-        { frase: 'Estou sentindo cheiro de alguém precisando de ajuda... ou é só o @{user} mesmo? 🤔', reacao: '🕵️‍♂️' }
-    ];
+    // --- LÓGICA DE MÚLTIPLAS REAÇÕES ---
+    const reacoesPossiveis = ['🤖', '🔥', '👀', '🤙', '😎', '💥', '👻'];
+    // Sorteia 3 emojis diferentes para reagir
+    const reacoesEscolhidas = reacoesPossiveis.sort(() => 0.5 - Math.random()).slice(0, 3);
 
-    // Sorteia o índice (para garantir que usamos o mesmo para frase e reação)
-    const indice = Math.floor(Math.random() * frasesBot.length);
-    const sorteio = frasesBot[indice];
-    
-    // Substitui o placeholder {user} pelo nome do usuário
-    const nomeUsuario = participant.split('@')[0];
-    const mensagemFinal = sorteio.frase.replace('{user}', nomeUsuario);
+    // Envia as reações em sequência
+    for (const emoji of reacoesEscolhidas) {
+        await sock.sendMessage(sender, { react: { text: emoji, key: msg.key } });
+        await new Promise(resolve => setTimeout(resolve, 300)); // Pequeno delay entre reações
+    }
 
-    // 1º Ação: Reação (O emoji que você quer que apareça no balão da mensagem do usuário)
-    await sock.sendMessage(sender, { 
-        react: { text: sorteio.reacao, key: msg.key } 
-    });
+    // --- LÓGICA DE RESPOSTA APENAS NO REPLY ---
+    // Verifica se a mensagem é um REPLY e se a mensagem original foi enviada pelo próprio BOT
+    const isReply = msg.message.extendedTextMessage?.contextInfo?.participant !== undefined;
+    const replyFromBot = msg.message.extendedTextMessage?.contextInfo?.fromMe === true;
 
-    // Pequena pausa para o WhatsApp processar a reação (opcional, mas ajuda)
-    await new Promise(resolve => setTimeout(resolve, 500));
+    if (isReply && replyFromBot) {
+        const frasesBot = [
+            'Fala aí, o que você quer? Dinheiro eu não tenho',
+            'Tô te ouvindo, diga...',
+            'Pode falar, o que manda?',
+            'Chamou? Estou aqui, processando!',
+            'Diga, @{user}, estou ouvindo!'
+        ];
+        
+        const respostaSorteada = frasesBot[Math.floor(Math.random() * frasesBot.length)];
+        const nomeUsuario = participant.split('@')[0];
+        const mensagemFinal = respostaSorteada.replace('{user}', nomeUsuario);
+        
+        // Pequena pausa antes de responder
+        await new Promise(resolve => setTimeout(resolve, 800));
 
-    // 2º Ação: A resposta do bot
-    await sock.sendMessage(sender, { 
-        text: `🤖 *${mensagemFinal}*`, 
-        mentions: [participant] 
-    }, { quoted: msg });
+        await sock.sendMessage(sender, { 
+            text: `🤖 *${mensagemFinal}*`, 
+            mentions: [participant] 
+        }, { quoted: msg });
+    }
 }
 
-// 2. Dinheiro
+// 2. Dinheiro (Apenas reage)
 if (lowerText.includes('dinheiro') || lowerText.includes('grana') || lowerText.includes('cash')) {
-    const opcoes = [
-        { frase: 'Opa, falou em dinheiro? Tá sobrando ou tá faltando, meu parceiro? 💸👀', url: 'https://media.tenor.com/cLjA_QYEHesAAAPo/grana.mp4' },
-        { frase: 'Dinheiro não traz felicidade, mas ajuda a financiar a busca por ela! 💰🚀', url: 'https://media.tenor.com/yEFkhHoLd2MAAAPo/money.mp4' },
-        { frase: 'Meu dinheiro entra na conta e sai na velocidade da luz, nem dá pra fazer amizade. 🏃‍♂️💨', url: 'https://media.tenor.com/OVynAhvE120AAAPo/money.mp4' },
-        { frase: 'Se alguém aí estiver com dinheiro sobrando, aceito doações via Pix para o projeto do meu bot! 🤖💸', url: 'https://media.tenor.com/f8acChNvdVMAAAPo/poor.mp4' }
-    ];
-    
-    // Sorteia um dos objetos da lista de opções
-    const sorteio = opcoes[Math.floor(Math.random() * opcoes.length)];
+    // Sorteia um dos emojis para a reação
+    const reacoes = ['💸', '💰', '🤑', '👀'];
+    const emojiSorteado = reacoes[Math.floor(Math.random() * reacoes.length)];
 
-    await sock.sendMessage(sender, { react: { text: '💸', key: msg.key } });
+    // Apenas reage à mensagem original
     await sock.sendMessage(sender, { 
-        video: { url: sorteio.url }, 
-        gifPlayback: true, 
-        caption: `🤖 *${sorteio.frase}*` 
-    }, { quoted: msg });
+        react: { text: emojiSorteado, key: msg.key } 
+    });
 }
 
 // 3. !SORTEAR
@@ -500,43 +500,25 @@ if (text === '!sortear') {
 }
 
         // 5. Sextou
-    // 5. Sextou
+ // 5. Sextou (Apenas reações aleatórias)
 if (lowerText.includes('sextou')) {
-    const opcoes = [
-        { frase: 'Sextou! Corpo no trabalho, mente no primeiro gole de cerveja. 🍺😜', url: 'https://media.tenor.com/IuZs76jQrG4AAAPo/sextou-familia.mp4' },
-        { frase: 'Sextou! Se não for pra sair e não lembrar de nada, eu nem vou. 🥳', url: 'https://media.tenor.com/pcnxt7DCraEAAAPo/beer-time.mp4' },
-        { frase: 'Sextou! O juízo foi embora, só sobrou a vontade de ser feliz. 🍹', url: 'https://media.tenor.com/M6l-hGumk70AAAPo/sexta-feira-bacano-bacano.mp4' }
-    ];
-    const sorteio = opcoes[Math.floor(Math.random() * opcoes.length)];
-
-    await sock.sendMessage(sender, { react: { text: '🥳', key: msg.key } });
-    await sock.sendMessage(sender, { video: { url: sorteio.url }, gifPlayback: true, caption: `🤖 *${sorteio.frase}*` }, { quoted: msg });
+    const reacoes = ['🥳', '🍺', '🔥', '🍹', '😜'];
+    const emojiSorteado = reacoes[Math.floor(Math.random() * reacoes.length)];
+    await sock.sendMessage(sender, { react: { text: emojiSorteado, key: msg.key } });
 }
 
-// 6. Trabalho
+// 6. Trabalho (Apenas reações aleatórias)
 if (lowerText.includes('trabalhar') || lowerText.includes('trabalho')) {
-    const opcoes = [
-        { frase: 'Se trabalho desse dinheiro, o dono da empresa não estaria milionário enquanto eu tomo café morno. 😪☕️', url: 'https://media.tenor.com/VYVw1CNLUcAAAAPo/xarutinho-xarutinhorp.mp4' },
-        { frase: 'Trabalhar é bom, mas você já tentou ganhar na loteria? Recomendo muito! 💸', url: 'https://media.tenor.com/Mrc7_H7ikhEAAAPo/spongebob-tired.mp4' },
-        { frase: 'O trabalho dignifica o homem, mas o salário é o que mantém a dignidade em dia. 🤡', url: 'https://media.tenor.com/Q5pvPnsEVVUAAAPo/kid-baby.mp4' }
-    ];
-    const sorteio = opcoes[Math.floor(Math.random() * opcoes.length)];
-
-    await sock.sendMessage(sender, { react: { text: '😰', key: msg.key } });
-    await sock.sendMessage(sender, { video: { url: sorteio.url }, gifPlayback: true, caption: `🤖 *${sorteio.frase}*` }, { quoted: msg });
+    const reacoes = ['😰', '🤡', '☕', '😪', '💀'];
+    const emojiSorteado = reacoes[Math.floor(Math.random() * reacoes.length)];
+    await sock.sendMessage(sender, { react: { text: emojiSorteado, key: msg.key } });
 }
 
-// 7. Bebida
+// 7. Bebida (Apenas reações aleatórias)
 if (lowerText.includes('bebida') || lowerText.includes('cerveja') || lowerText.includes('vodka') || lowerText.includes('whisky')) {
-    const opcoes = [
-        { frase: 'Opa, falou em bebida???? 👀👀👀👀', url: 'https://media.tenor.com/6ZIClIzEuGwAAAPo/drink-dog.mp4' },
-        { frase: 'Bebida é o combustível que a alma pede e o fígado chora. 🍻', url: 'https://media.tenor.com/fiZF0zR-nU0AAAPo/xwf-harvey.mp4' },
-        { frase: 'Eu não bebo, eu apenas faço degustação alcoólica intensiva! 🥂', url: 'https://media.tenor.com/hLj93cc8UJEAAAPo/monkey-sipping-straw-monkey.mp4' }
-    ];
-    const sorteio = opcoes[Math.floor(Math.random() * opcoes.length)];
-
-    await sock.sendMessage(sender, { react: { text: '🍻', key: msg.key } });
-    await sock.sendMessage(sender, { video: { url: sorteio.url }, gifPlayback: true, caption: `🤖 *${sorteio.frase}*` }, { quoted: msg });
+    const reacoes = ['🍻', '🥂', '🥃', '👀', '🥴'];
+    const emojiSorteado = reacoes[Math.floor(Math.random() * reacoes.length)];
+    await sock.sendMessage(sender, { react: { text: emojiSorteado, key: msg.key } });
 }
 
 
@@ -935,8 +917,7 @@ if (text.startsWith('!musica ')) {
         return; // Sai após iniciar
     }
 
-    // 2. Lógica de Adivinhação
-    // 2. Lógica de Adivinhação
+
     // 2. Lógica de Adivinhação
     if (jogoForca.ativo && !jogoForca.processando) {
         const contextInfo = msg.message?.extendedTextMessage?.contextInfo || 
