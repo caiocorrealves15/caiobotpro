@@ -18,31 +18,33 @@ async function buscarETocar(nomeMusica) {
     const key = '2b70843e46msh714109c6e6c48d3p1b34e5jsn51f85b76c0c6';
 
     try {
-        // Vamos forçar a montagem da URL completa na mão para não ter erro
-        const urlBusca = `https://${host}/search?query=${encodeURIComponent(nomeMusica)}`;
-        console.log("DEBUG URL:", urlBusca); // Para você ver no terminal
-
-        const resBusca = await axios.get(urlBusca, {
+        // 1. Busca: vamos usar o parâmetro 'query' exatamente como a documentação da API pede
+        const resBusca = await axios.get(`https://${host}/search`, {
             headers: { 
                 'x-rapidapi-key': key, 
                 'x-rapidapi-host': host 
+            },
+            params: {
+                query: nomeMusica // A API usa 'query' para o termo de busca
             }
         });
 
-        // DEBUG: Imprime o que recebemos
         console.log("DEBUG API BUSCA:", JSON.stringify(resBusca.data, null, 2));
 
-        // Acessa o primeiro vídeo da lista 'videos'
+        // Acessa o primeiro vídeo dentro do array 'videos' que vimos no seu JSON
+        if (!resBusca.data.videos || resBusca.data.videos.length === 0) {
+            throw new Error("Nenhum vídeo encontrado");
+        }
         const videoId = resBusca.data.videos[0].id;
         
-        if (!videoId) throw new Error("ID não encontrado");
-
-        // 2. Download - Também montando na mão
-        const urlDownload = `https://${host}/mp3?id=${videoId}`;
-        const resDownload = await axios.get(urlDownload, {
+        // 2. Download: usando o ID que acabamos de pegar
+        const resDownload = await axios.get(`https://${host}/mp3`, {
             headers: { 
                 'x-rapidapi-key': key, 
                 'x-rapidapi-host': host 
+            },
+            params: {
+                id: videoId
             }
         });
 
