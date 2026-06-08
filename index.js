@@ -832,35 +832,36 @@ if (text.startsWith('!descasar')) {
 }
 
 if (text.startsWith('!casar')) {
-    // 1. Garante leitura atualizada antes de checar
-    if (fs.existsSync('./casais.json')) {
-        try { listaCasais = JSON.parse(fs.readFileSync('./casais.json', 'utf8')); } catch (e) { listaCasais = []; }
-    }
-
     const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
-    if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione alguém para casar!", quoted: msg });
+    if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione alguém!", quoted: msg });
 
     const p1 = participant.split('@')[0];
     const p2 = mention.split('@')[0];
-    const nome1 = msg.pushName || p1;
+    
+    // Aqui pegamos o nome da pessoa que está casando
+    const nome1 = msg.pushName || "Alguém"; 
+    // Como não temos o pushName do mencionado fácil, vamos salvar o ID ou um placeholder
+    const nome2 = "Mencionado"; 
 
-    // 2. Verifica se já não estão casados
     const jaCasado = listaCasais.find(c => (c.p1 === p1 && c.p2 === p2) || (c.p1 === p2 && c.p2 === p1));
     if (jaCasado) return await sock.sendMessage(sender, { text: "❌ Vocês já são casados!", quoted: msg });
 
-    // 3. Salva
-    listaCasais.push({ p1, p2, nome1, nome2: "Mencionado" });
-    fs.writeFileSync('./casais.json', JSON.stringify(listaCasais, null, 2));
+    // SALVANDO O NOME NO JSON
+    listaCasais.push({ p1, p2, nome1, nome2 });
+    salvarCasais(); 
 
     const frases = [
-        `💍 O @${p1} pediu o @${p2} em casamento! Já avisou que vai ser no cartório pra economizar? 😂`,
-        `💒 Alerta de união duvidosa! @${p1} resolveu juntar os panos com @${p2}.`,
-        `👰🤵 O @${p1} perdeu a noção e o @${p2} aceitou!`,
-        `💍 O @${p1} e o @${p2} decidiram casar! É oficial!`
+        `💍 O @${p1} casou com @${p2}!`,
+        `💒 Alerta de união duvidosa! @${p1} e @${p2} casaram.`,
+        `💘 O amor venceu! @${p1} e @${p2} agora formam o casal mais improvável do grupo! 😂`,
+        `🥂 A vida de solteiro acabou para o @${p1}! @${p2}, prepara o divórcio que a gente já vai começar a contar o tempo! 🤡`,
+        `💍 O @${p1} cansou da vida de solteiro e fisgou o @${p2}! Agora é oficial, bora pro churrasco de comemoração! 🥩`,
+        `🤵👰 Alguém avisa o cartório que o @${p1} e o @${p2} perderam o juízo e casaram! 💒`,
+        `🔥 O @${p1} não aguentou a pressão e pediu o @${p2} em casamento. O mico é grande, mas a união é sagrada! 🤣`,
+        `💖 É oficial: @${p1} e @${p2} decidiram dividir a conta de luz (e a paciência)! Casaram! ⚡`
     ];
     
     await sock.sendMessage(sender, { react: { text: '💍', key: msg.key } });
-   
     await sock.sendMessage(sender, { 
         video: { url: "https://media.tenor.com/h981yJykAXYAAAPo/la-haut-dessin-anime.mp4" }, 
         gifPlayback: true,
@@ -875,13 +876,11 @@ if (text === '!casais') {
     if (fs.existsSync('./casais.json')) {
         try {
             listaCasais = JSON.parse(fs.readFileSync('./casais.json', 'utf8'));
-        } catch (e) {
-            listaCasais = [];
-        }
+        } catch (e) { listaCasais = []; }
     }
 
     if (!listaCasais || listaCasais.length === 0) {
-        return await sock.sendMessage(sender, { text: "❌ Ninguém casou ainda! Estão todos encalhados (e continuará assim).", quoted: msg });
+        return await sock.sendMessage(sender, { text: "❌ Ninguém casou ainda! Estão todos encalhados.", quoted: msg });
     }
 
     // 2. Frases zueiras para o cabeçalho
@@ -891,21 +890,27 @@ if (text === '!casais') {
         "💒 *LISTA DE QUEM PERDEU A LIBERDADE (E A DIGNIDADE)* 💒",
         "🤡 *REDE GLOBO DE CASAMENTOS DUVIDOSOS* 🤡",
         "💖 *ALERTA DE ROMANCE: CUIDADO, CONTÉM EXCESSO DE MICO!* 💖",
-        "💀 *UNIDADES DE CUIDADOS INTENSIVOS (CASAL)* 💀"
+        "💀 *UNIDADES DE CUIDADOS INTENSIVOS (CASAL)* 💀",
+        "💍 *OS QUE ACHARAM QUE O AMOR NÃO ACABA (COITADOS)* 💍",
+        "📉 *RANKING DE QUEM VAI TER QUE DIVIDIR O PIX* 📉",
+        "🧨 *CASAMENTOS COM PRAZO DE VALIDADE CURTO* 🧨"
     ];
     let texto = frasesZueiras[Math.floor(Math.random() * frasesZueiras.length)] + "\n\n";
 
     let listaMentions = [];
 
     listaCasais.forEach((c, i) => {
-        texto += `${i + 1}. @${c.p1} ❤️ @${c.p2}\n`;
+        // Se existir nome1 no arquivo, usa ele, senão usa o @ID
+        const n1 = c.nome1 ? c.nome1 : `@${c.p1}`;
+        texto += `${i + 1}. ${n1} ❤️ @${c.p2}\n`;
+        
         listaMentions.push(c.p1 + "@s.whatsapp.net");
         listaMentions.push(c.p2 + "@s.whatsapp.net");
     });
     
-    texto += "\n🤡 Quem será o próximo trouxa a se declarar? Digite !casar @alguém";
+    texto += "\n🤡 Quem será o próximo trouxa a cair na armadilha? Digite !casar @alguém";
 
-    // 3. Envio com a zueira garantida
+    // 3. Envio com a lista tratada
     await sock.sendMessage(sender, { 
         text: texto, 
         mentions: listaMentions,
