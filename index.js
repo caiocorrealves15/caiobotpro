@@ -881,79 +881,71 @@ if (text.startsWith('!descasar')) {
     await sock.sendMessage(sender, { text: `💔 O divórcio saiu! @${p1} e @${p2} não estão mais juntos. Cada um pro seu lado! 🥂`, mentions: [participant, mention], quoted: msg });
 }
 
-// --- COMANDO !CASAR ---
 if (text.startsWith('!casar')) {
-    // 1. Verifica se a menção existe
-    const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
-    if (!mention) {
-        return await sock.sendMessage(sender, { text: "❌ Mencione alguém para casar!", quoted: msg });
+    // 1. Garante leitura atualizada antes de checar
+    if (fs.existsSync('./casais.json')) {
+        try { listaCasais = JSON.parse(fs.readFileSync('./casais.json', 'utf8')); } catch (e) { listaCasais = []; }
     }
 
-    // 2. Garante que a variável listaCasais existe
-    if (typeof listaCasais === 'undefined') { var listaCasais = []; }
+    const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+    if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione alguém para casar!", quoted: msg });
 
     const p1 = participant.split('@')[0];
     const p2 = mention.split('@')[0];
     const nome1 = msg.pushName || p1;
-    const nome2 = "Mencionado"; 
 
-    // 3. Verifica se já não estão casados
+    // 2. Verifica se já não estão casados
     const jaCasado = listaCasais.find(c => (c.p1 === p1 && c.p2 === p2) || (c.p1 === p2 && c.p2 === p1));
-    if (jaCasado) {
-        return await sock.sendMessage(sender, { text: "❌ Vocês já são casados, pombinhos!", quoted: msg });
-    }
+    if (jaCasado) return await sock.sendMessage(sender, { text: "❌ Vocês já são casados!", quoted: msg });
 
-    // 4. Salva no array e no arquivo JSON
-    listaCasais.push({ p1, p2, nome1, nome2 });
-    salvarCasais(); 
+    // 3. Salva
+    listaCasais.push({ p1, p2, nome1, nome2: "Mencionado" });
+    fs.writeFileSync('./casais.json', JSON.stringify(listaCasais, null, 2));
 
-    // 5. Frases de efeito
-    const frasesCasamento = [
+    const frases = [
         `💍 O @${p1} pediu o @${p2} em casamento! Já avisou que vai ser no cartório pra economizar? 😂`,
-        `💒 Alerta de união duvidosa! @${p1} resolveu juntar os panos com @${p2}. O divórcio sai em quanto tempo? 🤡`,
-        `👰🤵 O @${p1} perdeu a noção e o @${p2} aceitou! Agora preparem o fígado pra festa, porque vai ter pinga! 🥃`,
-        `💍 O @${p1} e o @${p2} decidiram casar! É oficial: o amor é cego e a gente que lute pra aguentar esse casal! 💘`
+        `💒 Alerta de união duvidosa! @${p1} resolveu juntar os panos com @${p2}.`,
+        `👰🤵 O @${p1} perdeu a noção e o @${p2} aceitou!`,
+        `💍 O @${p1} e o @${p2} decidiram casar! É oficial!`
     ];
-    const sorteioCasamento = frasesCasamento[Math.floor(Math.random() * frasesCasamento.length)];
-
-    // 6. ENVIO FORÇADO (Reação + GIF + Mensagem respondida)
+    
     await sock.sendMessage(sender, { react: { text: '💍', key: msg.key } });
-
+   
     await sock.sendMessage(sender, { 
         video: { url: "https://media.tenor.com/h981yJykAXYAAAPo/la-haut-dessin-anime.mp4" }, 
         gifPlayback: true,
-        caption: sorteioCasamento, 
+        caption: frases[Math.floor(Math.random() * frases.length)], 
         mentions: [participant, mention] 
     }, { quoted: msg });
 }
 
-// --- COMANDO !CASAIS ---
+
 if (text === '!casais') {
-    // 1. Recarrega do arquivo para garantir que pegamos os dados mais recentes
+    // 1. LEITURA OBRIGATÓRIA ANTES DE VERIFICAR
     if (fs.existsSync('./casais.json')) {
         try {
-            listaCasais = JSON.parse(fs.readFileSync('./casais.json'));
+            listaCasais = JSON.parse(fs.readFileSync('./casais.json', 'utf8'));
         } catch (e) {
             listaCasais = [];
         }
+    } else {
+        listaCasais = [];
     }
 
-    // 2. Verifica se a lista está vazia
+
     if (!listaCasais || listaCasais.length === 0) {
         return await sock.sendMessage(sender, { text: "❌ Ninguém casou ainda, pessoal!", quoted: msg });
     }
 
-    // 3. Monta o ranking
+  
     let texto = "🏆 *RANKING DE CASAMENTOS* 🏆\n\n";
-   
-    
     listaCasais.forEach((c, i) => {
         texto += `${i + 1}. @${c.p1} ❤️ @${c.p2}\n`;
     });
-    
+ 
     texto += "\n🤡 Quem será o próximo?";
 
-    // 4. Envio com as menções corretas para o WhatsApp identificar os nomes
+  
     await sock.sendMessage(sender, { 
         text: texto, 
         mentions: listaCasais.flatMap(c => [c.p1 + "@s.whatsapp.net", c.p2 + "@s.whatsapp.net"]),
