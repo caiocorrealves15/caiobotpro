@@ -12,7 +12,26 @@ const ARQUIVO_PLACAR_EMOJI = './placar_emoji.json';
 const infrações = {};
 const ultimaMensagem = {};
 const contagemFlood = {};
-// ... (seus outros requires)
+const axios = require('axios');
+async function buscarETocar(nomeMusica) {
+    const host = 'yt-search-and-download-mp3.p.rapidapi.com';
+    const key = '2b70843e46msh714109c6e6c48d3p1b34e5jsn51f85b76c0c6'; // SUA CHAVE AQUI
+
+    // 1. Busca o ID da música
+    const resBusca = await axios.get(`https://${host}/search?query=${encodeURIComponent(nomeMusica)}`, {
+        headers: { 'x-rapidapi-key': key, 'x-rapidapi-host': host }
+    });
+    
+console.log("DEBUG API:", resBusca.data); // Isso vai aparecer no seu terminal
+const videoId = resBusca.data[0]?.id; // O "?" evita que o bot trave se o ID não existir 
+
+    // 2. Pega o link do MP3
+    const resDownload = await axios.get(`https://${host}/mp3?id=${videoId}`, {
+        headers: { 'x-rapidapi-key': key, 'x-rapidapi-host': host }
+    });
+
+    return resDownload.data.link; // O link direto do MP3
+}
 let listaCasais = [];
 
 // Função de salvamento (mantenha como está)
@@ -104,7 +123,7 @@ Você acaba de entrar no grupo mais zueiro do Zap!
 
 🚀 *O QUE ROLA POR AQUI?*
 🎮 *JOGOS:* Emoji, RPG, Forca, Ranking de mensagens, Pênalti e mais!
-🎶 Músicas via comando !musica.
+🎶 Músicas via comando !tocar.
 🥊 Muita interação e resenha.
 🏆 Ranking de membros ativos.
 
@@ -556,7 +575,7 @@ if (lowerText.includes('bebida') || lowerText.includes('cerveja') || lowerText.i
 
     // 9. Comandos extras (ban, tier, matar, rank, adm, socar, beijar, fechar, abrir, musica, desmute, mute, clima)
     // *Dica: Aplique o quoted: msg em todos os sock.sendMessage dentro desses blocos também!*
-    const comandosExistentes = ['!menu', '!rank', '!casar', '!casais', '!avisoadm', '!descasar', '!emoji', '!sortear', '!jogar', '!forca', '!link', '!tier', '!rankingemoji', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute'];
+    const comandosExistentes = ['!menu', '!rank', '!casar', '!casais', '!avisoadm', '!descasar', '!emoji', '!sortear', '!jogar', '!forca', '!link', '!tier', '!rankingemoji', '!penalti', '!tocar', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute'];
 
 if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd))) {
     const autor = msg.key.participant || msg.key.remoteJid;
@@ -1152,29 +1171,25 @@ if (text === '!avisoadm') {
 }
         // Substitua seu bloco !musica por este:
 // Você precisará instalar: npm install ytsr (para buscar) e usar uma API que entregue o stream direto
-// Como o YouTube é a fonte de quase tudo, vou manter a busca, mas forçar o envio como ÁUDIO.
-if (text.startsWith('!musica ')) {
-    const busca = text.replace('!musica ', '');
+if (text.startsWith('!tocar')) {
+    const nome = text.replace('!tocar', '').trim();
+    if (!nome) return await sock.sendMessage(sender, { text: "❌ Qual música, meu rei?" }, { quoted: msg });
+
+    await sock.sendMessage(sender, { react: { text: '🔍', key: msg.key } });
+
     try {
-        await sock.sendMessage(sender, { text: "Calma aí apressado, 🔍 Buscando sua música..." });
-        
-
-        const searchResults = await ytsr(busca, { limit: 1 });
-        const video = searchResults.items[0];
-        
-        if (!video) return await sock.sendMessage(sender, { text: "❌ Não encontrado." });
-
-        // Enviamos apenas o link. É seguro, não bloqueia o bot e não exige processamento pesado do Render.
-        const mensagem = `🎵 *Música Encontrada!*\n\n` +
-                         `🎤 *Título:* ${video.title}\n` +
-                         `🔗 *Link:* ${video.url}\n\n` +
-                         `🤖 *Dica:* Como o YouTube bloqueia tentativas de extrair áudio direto, estou te mandando o link para você ouvir com tranquilidade!`;
-
-        await sock.sendMessage(sender, { text: mensagem }, { quoted: msg });
-
+        const linkMp3 = await buscarETocar(nome);
+        if (linkMp3) {
+            await sock.sendMessage(sender, { 
+                audio: { url: linkMp3 }, 
+                mimetype: 'audio/mp4',
+                ptt: false 
+            }, { quoted: msg });
+        } else {
+            throw new Error();
+        }
     } catch (e) {
-        console.error(e);
-        await sock.sendMessage(sender, { text: "❌ O YouTube está protegendo demais o conteúdo agora. Tente novamente mais tarde." });
+        await sock.sendMessage(sender, { text: "❌ Deu erro! Não achei essa música." }, { quoted: msg });
     }
 }
        
