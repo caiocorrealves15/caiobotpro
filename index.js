@@ -12,13 +12,7 @@ const ARQUIVO_PLACAR_EMOJI = './placar_emoji.json';
 const infrações = {};
 const ultimaMensagem = {};
 const contagemFlood = {};
-listaCasais.push({ 
-    p1: quemCasa, 
-    p2: quemRecebe, 
-    nome1: msg.pushName || quemCasa, // Pega o nome do perfil de quem mandou
-    nome2: quemRecebe,               // O nome de quem recebeu é o número mesmo, o WhatsApp não entrega o nome do mencionado
-    data: new Date().toLocaleDateString() 
-});
+let listaCasais = [];
 
 
 let placarEmoji = fs.existsSync(ARQUIVO_PLACAR_EMOJI) ? JSON.parse(fs.readFileSync(ARQUIVO_PLACAR_EMOJI)) : {};
@@ -801,7 +795,11 @@ if (text.startsWith('!adm')) {
 
         // 5.2 !CASAR (Com Reply, Reação de Aliança e Frases)
 // 5.2 !CASAR (Com Reply, Reação de Aliança e Frases Potencializadas)
+// 5.2 !CASAR (Com Reply, Reação de Aliança e Ranking)
 if (text.startsWith('!casar')) {
+    // Garante a existência da variável de ranking caso o bot tenha reiniciado
+    if (typeof listaCasais === 'undefined') { var listaCasais = []; }
+
     const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
     if (mention) {
         const quemCasa = msg.pushName || participant.split('@')[0];
@@ -821,7 +819,11 @@ if (text.startsWith('!casar')) {
         await sock.sendMessage(sender, { react: { text: '💍', key: msg.key } });
 
         // Salva o casal no ranking antes de enviar a mensagem
-        listaCasais.push({ p1: quemCasa, p2: quemRecebe, data: new Date().toLocaleDateString() });
+        listaCasais.push({ 
+            p1: quemCasa, 
+            p2: quemRecebe, 
+            data: new Date().toLocaleDateString() 
+        });
 
         await sock.sendMessage(sender, { 
             video: { url: "https://media.tenor.com/h981yJykAXYAAAPo/la-haut-dessin-anime.mp4" }, 
