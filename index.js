@@ -12,20 +12,24 @@ const ARQUIVO_PLACAR_EMOJI = './placar_emoji.json';
 const infrações = {};
 const ultimaMensagem = {};
 const contagemFlood = {};
+// ... (seus outros requires)
 let listaCasais = [];
+
+// Função de salvamento (mantenha como está)
 const salvarCasais = () => {
-    fs.writeFileSync('./casais.json', JSON.stringify(listaCasais, null, 2)); // Adicionei o 'null, 2' para ficar legível
+    fs.writeFileSync('./casais.json', JSON.stringify(listaCasais, null, 2));
 };
 
-// Carrega o arquivo ao iniciar o bot
-if (fs.existsSync('./casais.json')) {
-    try {
-        const dados = fs.readFileSync('./casais.json');
+// CARREGAMENTO SEGURO
+try {
+    if (fs.existsSync('./casais.json')) {
+        const dados = fs.readFileSync('./casais.json', 'utf8');
         listaCasais = JSON.parse(dados);
-    } catch (e) {
-        console.log("Erro ao ler casais.json, iniciando vazio.");
-        listaCasais = [];
+        console.log("✅ Lista de casais carregada com sucesso.");
     }
+} catch (e) {
+    console.error("❌ Erro ao ler casais.json, iniciando vazio:", e);
+    listaCasais = [];
 }
 
 
@@ -877,6 +881,7 @@ if (text.startsWith('!descasar')) {
     await sock.sendMessage(sender, { text: `💔 O divórcio saiu! @${p1} e @${p2} não estão mais juntos. Cada um pro seu lado! 🥂`, mentions: [participant, mention], quoted: msg });
 }
 
+// --- COMANDO !CASAR ---
 if (text.startsWith('!casar')) {
     // 1. Verifica se a menção existe
     const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
@@ -890,9 +895,9 @@ if (text.startsWith('!casar')) {
     const p1 = participant.split('@')[0];
     const p2 = mention.split('@')[0];
     const nome1 = msg.pushName || p1;
-    const nome2 = "Mencionado"; // O WhatsApp enviará o nome corretamente via mention
+    const nome2 = "Mencionado"; 
 
-    // 3. Verifica se já não estão casados (opcional, mas recomendado)
+    // 3. Verifica se já não estão casados
     const jaCasado = listaCasais.find(c => (c.p1 === p1 && c.p2 === p2) || (c.p1 === p2 && c.p2 === p1));
     if (jaCasado) {
         return await sock.sendMessage(sender, { text: "❌ Vocês já são casados, pombinhos!", quoted: msg });
@@ -919,30 +924,36 @@ if (text.startsWith('!casar')) {
         gifPlayback: true,
         caption: sorteioCasamento, 
         mentions: [participant, mention] 
-    }, { quoted: msg }); // O balãozinho acontece aqui!
+    }, { quoted: msg });
 }
 
+// --- COMANDO !CASAIS ---
 if (text === '!casais') {
-  
+    // 1. Recarrega do arquivo para garantir que pegamos os dados mais recentes
     if (fs.existsSync('./casais.json')) {
-        listaCasais = JSON.parse(fs.readFileSync('./casais.json'));
+        try {
+            listaCasais = JSON.parse(fs.readFileSync('./casais.json'));
+        } catch (e) {
+            listaCasais = [];
+        }
     }
 
-    if (listaCasais.length === 0) {
+    // 2. Verifica se a lista está vazia
+    if (!listaCasais || listaCasais.length === 0) {
         return await sock.sendMessage(sender, { text: "❌ Ninguém casou ainda, pessoal!", quoted: msg });
     }
 
+    // 3. Monta o ranking
     let texto = "🏆 *RANKING DE CASAMENTOS* 🏆\n\n";
+   
     
-    // A mágica acontece aqui: usamos @ seguido do número. 
-    // O WhatsApp de quem ler vai converter o número automaticamente para o nome da pessoa na agenda dele!
     listaCasais.forEach((c, i) => {
         texto += `${i + 1}. @${c.p1} ❤️ @${c.p2}\n`;
     });
     
     texto += "\n🤡 Quem será o próximo?";
 
-
+    // 4. Envio com as menções corretas para o WhatsApp identificar os nomes
     await sock.sendMessage(sender, { 
         text: texto, 
         mentions: listaCasais.flatMap(c => [c.p1 + "@s.whatsapp.net", c.p2 + "@s.whatsapp.net"]),
