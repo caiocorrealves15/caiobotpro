@@ -15,22 +15,32 @@ const contagemFlood = {};
 const axios = require('axios');
 async function buscarETocar(nomeMusica) {
     const host = 'yt-search-and-download-mp3.p.rapidapi.com';
-    const key = '2b70843e46msh714109c6e6c48d3p1b34e5jsn51f85b76c0c6'; // SUA CHAVE AQUI
+    const key = '2b70843e46msh714109c6e6c48d3p1b34e5jsn51f85b76c0c6';
 
-    // 1. Busca o ID da música
-    const resBusca = await axios.get(`https://${host}/search?query=${encodeURIComponent(nomeMusica)}`, {
-        headers: { 'x-rapidapi-key': key, 'x-rapidapi-host': host }
-    });
-    
-console.log("DEBUG API:", resBusca.data); // Isso vai aparecer no seu terminal
-const videoId = resBusca.data[0]?.id; // O "?" evita que o bot trave se o ID não existir 
+    try {
+        // 1. Busca
+        const resBusca = await axios.get(`https://${host}/search?query=${encodeURIComponent(nomeMusica)}`, {
+            headers: { 'x-rapidapi-key': key, 'x-rapidapi-host': host }
+        });
 
-    // 2. Pega o link do MP3
-    const resDownload = await axios.get(`https://${host}/mp3?id=${videoId}`, {
-        headers: { 'x-rapidapi-key': key, 'x-rapidapi-host': host }
-    });
+        // DEBUG: Veja no terminal se o ID está aqui
+        console.log("DEBUG API BUSCA:", JSON.stringify(resBusca.data, null, 2));
 
-    return resDownload.data.link; // O link direto do MP3
+        // Tenta pegar o ID de várias formas possíveis que as APIs costumam usar
+        const videoId = resBusca.data.id || (resBusca.data[0] ? resBusca.data[0].id : null) || (resBusca.data.videos ? resBusca.data.videos[0].id : null);
+        
+        if (!videoId) throw new Error("ID não encontrado na resposta");
+
+        // 2. Download
+        const resDownload = await axios.get(`https://${host}/mp3?id=${videoId}`, {
+            headers: { 'x-rapidapi-key': key, 'x-rapidapi-host': host }
+        });
+
+        return resDownload.data.link;
+    } catch (e) {
+        console.error("ERRO NA BUSCA/DOWNLOAD:", e.message);
+        return null;
+    }
 }
 let listaCasais = [];
 
