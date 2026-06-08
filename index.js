@@ -11,6 +11,8 @@ const ytdl = require('ytdl-core'); // Requisito movido para o topo
 const ARQUIVO_PLACAR_EMOJI = './placar_emoji.json';
 const infrações = {};
 const ultimaMensagem = {};
+const contagemFlood = {};
+
 
 let placarEmoji = fs.existsSync(ARQUIVO_PLACAR_EMOJI) ? JSON.parse(fs.readFileSync(ARQUIVO_PLACAR_EMOJI)) : {};
 
@@ -165,13 +167,15 @@ O bot monitora automaticamente:
         }
     }
 
-    sock.ev.on('messages.upsert', async (m) => {
+   sock.ev.on('messages.upsert', async (m) => {
     const msg = m.messages[0];
     if (!msg.message || msg.key.fromMe) return;
     
+    const isMedia = (msg.message.imageMessage || msg.message.videoMessage || msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage || msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage);
+    const text = msg.message.conversation || msg.message.extendedTextMessage?.text || msg.message.imageMessage?.caption || msg.message.videoMessage?.caption || msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage?.caption || "";
+    const lowerText = text.toLowerCase();
     const participant = msg.key.participant || msg.key.remoteJid;
     const sender = msg.key.remoteJid;
-    const text = (msg.message.conversation || msg.message.extendedTextMessage?.text || "").toLowerCase();
 
     // Verificação de Mutados
     if (mutados[participant] && Date.now() < mutados[participant]) {
@@ -180,7 +184,6 @@ O bot monitora automaticamente:
     }
 
     // --- LÓGICA DO ANTI-LINK COM AUTO BAN ---
-    // --- INÍCIO DO ANTI-LINK COM AUTO BAN ---
     const isLink = /https?:\/\/[^\s]+/.test(text);
     if (isLink) {
         const getIsAdmin = async () => { if (!sender.endsWith('@g.us')) return false; try { const metadata = await sock.groupMetadata(sender); return metadata.participants.find(p => p.id === participant)?.admin !== null; } catch { return false; } };
@@ -210,80 +213,76 @@ O bot monitora automaticamente:
             await sock.sendMessage(sender, { text: `😎 Link?? Você se salvou porque é ADM, filho, se não eu ia bloquear na HORAA!!!!!!! 😎😎😎😎` }, { quoted: msg });
         }
     }
-    // --- FIM DO ANTI-LINK ---
 
-   // --- INÍCIO DO ANTI-TRAVA ---
+    // --- INÍCIO DO ANTI-TRAVA ---
     if (text.length > 5000) {
         const getIsAdmin = async () => { if (!sender.endsWith('@g.us')) return false; try { const metadata = await sock.groupMetadata(sender); return metadata.participants.find(p => p.id === participant)?.admin !== null; } catch { return false; } };
         const isAdmin = await getIsAdmin();
 
         if (!isAdmin) {
-            // BUSCA OS ADMS PARA MARCAR NO ALERTA
             const metadata = await sock.groupMetadata(sender);
             const admins = metadata.participants.filter(p => p.admin !== null).map(p => p.id);
             const mentions = [participant, ...admins];
-
-            // AÇÃO: Deleta e manda o alerta chamando os ADMs
             await sock.sendMessage(sender, { delete: msg.key });
-            
             await sock.sendMessage(sender, { 
                 text: `🚨 *ALERTA DE SEGURANÇA!* 🚨\n\nO membro @${participant.split('@')[0]} tentou enviar uma trava pesada e o sistema bloqueou!\n\n${admins.map(adm => `@${adm.split('@')[0]}`).join(' ')} -> *Fiquem de olho neste membro!*`, 
                 mentions: mentions
             }, { quoted: msg });
-            
-            return; // Interrompe para não contar no rank
+            return;
         } else {
-            // AÇÃO PARA ADMS (Reage e faz a graça)
             await sock.sendMessage(sender, { react: { text: '😂', key: msg.key } });
-            await sock.sendMessage(sender, { 
-                text: `Chefe, precisa falar tanto assim? Se for assim escreve um novo testamento logo 😂😂😂`,
-            }, { quoted: msg });
+            await sock.sendMessage(sender, { text: `Chefe, precisa falar tanto assim? Se for assim escreve um novo testamento logo 😂😂😂`, }, { quoted: msg });
         }
     }
-    // --- INÍCIO DO ANTI-SPAM ---
-    const agora = Date.now();
-    const tempoMinimo = 1000; // 2 segundos
 
-    if (ultimaMensagem[participant] && (agora - ultimaMensagem[participant] < tempoMinimo)) {
-        
-        const getIsAdmin = async () => { if (!sender.endsWith('@g.us')) return false; try { const metadata = await sock.groupMetadata(sender); return metadata.participants.find(p => p.id === participant)?.admin !== null; } catch { return false; } };
-        const isAdmin = await getIsAdmin();
-        
-        if (!isAdmin) {
-            // REAÇÃO DE PARAR PARA MEMBRO
-            await sock.sendMessage(sender, { react: { text: '🛑', key: msg.key } });
-            
-            // Muta por 1 minuto
-            mutados[participant] = Date.now() + 60000; 
-            fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
+    // --- INÍCIO DO NOVO ANTI-SPAM (4 mensagens em 1 segundo = MUTE) ---
+        // --- NOVO ANTI-SPAM COM AVISO PARA ADM ---
+    // --- ANTI-SPAM AJUSTADO (SEM ERROS DE ASSINCRONIA) ---
+const agora = Date.now();
+if (!contagemFlood[participant]) contagemFlood[participant] = [];
+contagemFlood[participant] = contagemFlood[participant].filter(t => agora - t < 1000);
+contagemFlood[participant].push(agora);
 
-            await sock.sendMessage(sender, { 
-                text: `🚫 @${participant.split('@')[0]}, você está floodando demais! Você foi mutado por 1 minuto para acalmar os ânimos.`, 
-                mentions: [participant] 
-            }, { quoted: msg });
-            return; 
-        } else {
-            // REAÇÃO DE RISO PARA ADM (já que não vamos mutar ele)
-            await sock.sendMessage(sender, { react: { text: '😨', key: msg.key } });
-            
-            await sock.sendMessage(sender, { 
-                text: `Calma chefe, não precisa ser tão rápido! 😂`, 
-            }, { quoted: msg });
-        }
+if (contagemFlood[participant].length >= 4) {
+    // Agora o bot testa na hora sem depender de buscar o metadata do grupo
+    // Se o seu número (ou dos ADMs) estiver na lista de admins do grupo, isso vai disparar
+    const metadata = await sock.groupMetadata(sender).catch(() => null);
+    const ehAdm = metadata?.participants.find(p => p.id === participant)?.admin !== null;
+
+    if (!ehAdm) {
+        await sock.sendMessage(sender, { react: { text: '🛑', key: msg.key } });
+        mutados[participant] = Date.now() + 60000;
+        fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
+        await sock.sendMessage(sender, { text: `🚫 @${participant.split('@')[0]}, spam detectado! Mutado.`, mentions: [participant] }, { quoted: msg });
+        contagemFlood[participant] = [];
+        return; 
+    } else {
+        // REAÇÃO PARA ADM (agora garantida)
+        await sock.sendMessage(sender, { react: { text: '⚠️', key: msg.key } });
+        await sock.sendMessage(sender, { text: `⚠️ Calma, meu rei @${participant.split('@')[0]}! Só nao reajo por que você não é meu chefe! 😂`, mentions: [participant] }, { quoted: msg });
+        contagemFlood[participant] = [];
     }
-    ultimaMensagem[participant] = agora;
-    // --- FIM DO ANTI-SPAM ---
-    // ... daqui pra baixo continua o seu código normal (contagemMensagens, etc)
-    
-   
+}
+// --- FIM ---
+
+    // --- FIM DO NOVO ANTI-SPAM ---
+
+
+    // --- COMANDO !f (FIGURINHA INTEGRADO) ---
+    if (lowerText.startsWith('!f') && isMedia) {
+        const media = msg.message.imageMessage || msg.message.videoMessage || msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage || msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage;
+        const type = (msg.message.imageMessage || msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage) ? 'imageMessage' : 'videoMessage';
+        await criarFigurinha(media, sock, sender, type);
+        return;
+    }
+    // ... daqui pra baixo continua o seu código normal (contagemMensagens, etc
+  
     
     contagemMensagens[participant] = (contagemMensagens[participant] || 0) + 1;
     fs.writeFileSync(ARQUIVO_RANK, JSON.stringify(contagemMensagens));
     
     const getIsAdmin = async () => { if (!sender.endsWith('@g.us')) return false; try { const metadata = await sock.groupMetadata(sender); return metadata.participants.find(p => p.id === participant)?.admin !== null; } catch { return false; } };
     const isAdmin = await getIsAdmin();
-
-    const lowerText = text.toLowerCase();
 
     if (text.startsWith('!emoji')) {
     const desafios = [
