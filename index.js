@@ -12,6 +12,7 @@ const ARQUIVO_PLACAR_EMOJI = './placar_emoji.json';
 const infrações = {};
 const ultimaMensagem = {};
 const contagemFlood = {};
+let listaCasais = [];
 
 
 let placarEmoji = fs.existsSync(ARQUIVO_PLACAR_EMOJI) ? JSON.parse(fs.readFileSync(ARQUIVO_PLACAR_EMOJI)) : {};
@@ -526,7 +527,7 @@ if (lowerText.includes('bebida') || lowerText.includes('cerveja') || lowerText.i
 
     // 9. Comandos extras (ban, tier, matar, rank, adm, socar, beijar, fechar, abrir, musica, desmute, mute, clima)
     // *Dica: Aplique o quoted: msg em todos os sock.sendMessage dentro desses blocos também!*
-    const comandosExistentes = ['!menu', '!rank', '!casar', '!avisoadm', '!emoji', '!sortear', '!jogar', '!forca', '!link', '!tier', '!rankingemoji', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute'];
+    const comandosExistentes = ['!menu', '!rank', '!casar', '!casais', '!avisoadm', '!emoji', '!sortear', '!jogar', '!forca', '!link', '!tier', '!rankingemoji', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute'];
 
 if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd))) {
     const autor = msg.key.participant || msg.key.remoteJid;
@@ -793,6 +794,7 @@ if (text.startsWith('!adm')) {
         }
 
         // 5.2 !CASAR (Com Reply, Reação de Aliança e Frases)
+// 5.2 !CASAR (Com Reply, Reação de Aliança e Frases Potencializadas)
 if (text.startsWith('!casar')) {
     const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
     if (mention) {
@@ -800,19 +802,23 @@ if (text.startsWith('!casar')) {
         const quemRecebe = mention.split('@')[0];
         
         const frasesCasamento = [
-            `O @${quemCasa} pediu o @${quemRecebe} em casamento! Agora é só aguentar a sogra! 💍`,
-            `Socorro! @${quemCasa} e @${quemRecebe} decidiram casar. O buffet vai ser pão com ovo? 😂`,
-            `Alguém chame o padre! @${quemCasa} oficializou o romance com @${quemRecebe}! 💒`,
-            `O @${quemCasa} perdeu a liberdade e casou com o @${quemRecebe}! Meus pêsames... digo, parabéns! 💍`,
-            `Direto para o altar! @${quemCasa} e @${quemRecebe} formam o novo casal do pedaço. Quem paga o divórcio? 👰🤵`
+            `💍 O @${quemCasa} pediu o @${quemRecebe} em casamento! Já avisou que vai ser no cartório pra economizar? 😂`,
+            `💒 Alerta de união duvidosa! @${quemCasa} resolveu juntar os panos com @${quemRecebe}. O divórcio sai em quanto tempo? 🤡`,
+            `👰🤵 O @${quemCasa} perdeu a noção e o @${quemRecebe} aceitou! Agora preparem o fígado pra festa, porque vai ter pinga! 🥃`,
+            `💍 O @${quemCasa} e o @${quemRecebe} decidiram casar! É oficial: o amor é cego e a gente que lute pra aguentar esse casal! 💘`,
+            `💒 É oficial! @${quemCasa} casou com @${quemRecebe}. O buffet vai ser pão com ovo e muita sofrência, aceitem! 🍞`,
+            `💍 @${quemCasa} e @${quemRecebe} casaram! Alguém avisa pro @${quemRecebe} que ele ainda pode fugir enquanto é tempo! 🏃‍♂️💨`
         ];
         const sorteioCasamento = frasesCasamento[Math.floor(Math.random() * frasesCasamento.length)];
 
         // Reação de aliança na mensagem de quem pediu
         await sock.sendMessage(sender, { react: { text: '💍', key: msg.key } });
 
+        // Salva o casal no ranking antes de enviar a mensagem
+        listaCasais.push({ p1: quemCasa, p2: quemRecebe, data: new Date().toLocaleDateString() });
+
         await sock.sendMessage(sender, { 
-            video: { url: "https://media.tenor.com/h981yJykAXYAAAPo/la-haut-dessin-anime.mp4" }, // Link de exemplo de casamento
+            video: { url: "https://media.tenor.com/h981yJykAXYAAAPo/la-haut-dessin-anime.mp4" }, 
             gifPlayback: true,
             caption: sorteioCasamento, 
             mentions: [participant, mention] 
@@ -820,6 +826,37 @@ if (text.startsWith('!casar')) {
     } else {
         await sock.sendMessage(sender, { text: "❌ Mencione alguém para casar!", quoted: msg });
     }
+}
+
+// 5.3 !CASAIS (Ranking com Reação, Reply e frases zoadas)
+if (text === '!casais') {
+    if (listaCasais.length === 0) {
+        // Reação de deboche se não tiver ninguém
+        await sock.sendMessage(sender, { react: { text: '🤡', key: msg.key } });
+        return await sock.sendMessage(sender, { text: "❌ Ainda não temos casais aqui. O pessoal tá muito encalhado ou ninguém quer assumir a B.O.! 😂", quoted: msg });
+    }
+
+    const frasesRanking = [
+        "🏆 *RANKING DOS APAIXONADOS (OU LOUCOS)* 🏆\n\n",
+        "🔥 *OS POMBINHOS DO GRUPO (SÓ O FILÉ):* 🔥\n\n",
+        "💒 *LISTA DE QUEM JÁ PERDEU A LIBERDADE:* 💒\n\n"
+    ];
+    let textoRanking = frasesRanking[Math.floor(Math.random() * frasesRanking.length)];
+
+    listaCasais.forEach((casal, index) => {
+        textoRanking += `${index + 1}. @${casal.p1} ❤️ @${casal.p2}\n`;
+    });
+    
+    textoRanking += "\n\nQuem será o próximo a cair na armadilha? HAHAHAHA 🤡";
+
+    // Reação de troféu quando alguém chama o comando
+    await sock.sendMessage(sender, { react: { text: '🏆', key: msg.key } });
+
+    await sock.sendMessage(sender, { 
+        text: textoRanking, 
+        mentions: listaCasais.flatMap(c => [c.p1 + "@s.whatsapp.net", c.p2 + "@s.whatsapp.net"]),
+        quoted: msg 
+    });
 }
 
         // 5.1 !BEIJAR (Com Reply e Frases Aleatórias)
