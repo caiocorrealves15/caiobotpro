@@ -168,7 +168,7 @@ O bot monitora automaticamente:
             fs.writeFileSync(tempPath, buffer);
 
             if (type === 'videoMessage') {
-                execSync(`ffmpeg -i "${tempPath}" -t 6 -vf "scale=512:512:force_original_aspect_ratio=increase,crop=512:512" -c:v libwebp -lossless 0 -compression_level 6 -q:v 50 -loop 0 -an "${finalPath}"`);
+                execSync(`ffmpeg -i "${tempPath}" -t 6 -vf "scale=512:512:force_original_aspect_ratio=increase,crop=512:512,fps=10" -c:v libwebp -lossless 0 -compression_level 6 -q:v 30 -loop 0 -an -vcodec libwebp -fs 900K "${finalPath}"`);
                 await sock.sendMessage(sender, { sticker: fs.readFileSync(finalPath) });
                 fs.unlinkSync(finalPath);
             } else {
