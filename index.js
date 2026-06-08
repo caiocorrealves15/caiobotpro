@@ -526,7 +526,7 @@ if (lowerText.includes('bebida') || lowerText.includes('cerveja') || lowerText.i
 
     // 9. Comandos extras (ban, tier, matar, rank, adm, socar, beijar, fechar, abrir, musica, desmute, mute, clima)
     // *Dica: Aplique o quoted: msg em todos os sock.sendMessage dentro desses blocos também!*
-    const comandosExistentes = ['!menu', '!rank', '!avisoadm', '!emoji', '!sortear', '!jogar', '!forca', '!link', '!tier', '!rankingemoji', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute'];
+    const comandosExistentes = ['!menu', '!rank', '!casar', '!avisoadm', '!emoji', '!sortear', '!jogar', '!forca', '!link', '!tier', '!rankingemoji', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute'];
 
 if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd))) {
     const autor = msg.key.participant || msg.key.remoteJid;
@@ -791,6 +791,36 @@ if (text.startsWith('!adm')) {
                 await sock.sendMessage(sender, { text: "❌ Mencione alguém!", quoted: msg });
             }
         }
+
+        // 5.2 !CASAR (Com Reply, Reação de Aliança e Frases)
+if (text.startsWith('!casar')) {
+    const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+    if (mention) {
+        const quemCasa = participant.split('@')[0];
+        const quemRecebe = mention.split('@')[0];
+        
+        const frasesCasamento = [
+            `O @${quemCasa} pediu o @${quemRecebe} em casamento! Agora é só aguentar a sogra! 💍`,
+            `Socorro! @${quemCasa} e @${quemRecebe} decidiram casar. O buffet vai ser pão com ovo? 😂`,
+            `Alguém chame o padre! @${quemCasa} oficializou o romance com @${quemRecebe}! 💒`,
+            `O @${quemCasa} perdeu a liberdade e casou com o @${quemRecebe}! Meus pêsames... digo, parabéns! 💍`,
+            `Direto para o altar! @${quemCasa} e @${quemRecebe} formam o novo casal do pedaço. Quem paga o divórcio? 👰🤵`
+        ];
+        const sorteioCasamento = frasesCasamento[Math.floor(Math.random() * frasesCasamento.length)];
+
+        // Reação de aliança na mensagem de quem pediu
+        await sock.sendMessage(sender, { react: { text: '💍', key: msg.key } });
+
+        await sock.sendMessage(sender, { 
+            video: { url: "https://media.tenor.com/h981yJykAXYAAAPo/la-haut-dessin-anime.mp4" }, // Link de exemplo de casamento
+            gifPlayback: true,
+            caption: sorteioCasamento, 
+            mentions: [participant, mention] 
+        }, { quoted: msg }); // Reply garantido
+    } else {
+        await sock.sendMessage(sender, { text: "❌ Mencione alguém para casar!", quoted: msg });
+    }
+}
 
         // 5.1 !BEIJAR (Com Reply e Frases Aleatórias)
         if (text.startsWith('!beijar')) {
