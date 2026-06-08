@@ -204,6 +204,7 @@ O bot monitora automaticamente:
 
     // --- LÓGICA DO ANTI-LINK COM AUTO BAN ---
     // --- LÓGICA DO ANTI-LINK COM AUTO BAN ---
+// --- LÓGICA DO ANTI-LINK COM AUTO BAN ---
 const isLink = /https?:\/\/[^\s]+/.test(text);
 if (isLink) {
     const getIsAdmin = async () => { if (!sender.endsWith('@g.us')) return false; try { const metadata = await sock.groupMetadata(sender); return metadata.participants.find(p => p.id === participant)?.admin !== null; } catch { return false; } };
@@ -219,7 +220,7 @@ if (isLink) {
             await sock.groupParticipantsUpdate(sender, [participant], "remove");
             delete infrações[participant];
         } else {
-            // Frases aleatórias para o aviso
+            // Frases aleatórias para o aviso (apenas para membros)
             const frasesAviso = [
                 `🚫 OPA, @${participant.split('@')[0]}! Aqui não pode link. Você tem ${restam} chance(s) antes do ban!`,
                 `⚠️ @${participant.split('@')[0]}, soltou o link? O sistema não perdoa! Faltam ${restam} chances.`,
@@ -238,17 +239,8 @@ if (isLink) {
         }
         return; 
     } else {
-        // Frases para ADM que manda link
-        const frasesAdm = [
-            `😎 Link?? Você se salvou porque é ADM, filho, se não eu ia bloquear na HORAA!!!!!!! 😎😎😎😎`,
-            `👀 Postando link, patrão? Como você é ADM, vou deixar passar dessa vez... mas fica de olho! 🧐`,
-            `💥 Link liberado pro ADM! Mas não abusa, que o sistema aqui é bruto! 😂`,
-            `👑 Ah, um link de um ADM! Vou abrir uma exceção porque você manda aqui. 😎`
-        ];
-        const sorteioAdm = frasesAdm[Math.floor(Math.random() * frasesAdm.length)];
-
-        await sock.sendMessage(sender, { react: { text: '👀', key: msg.key } });
-        await sock.sendMessage(sender, { text: sorteioAdm }, { quoted: msg });
+        // Para ADM: Apenas reage com um emoji e não envia texto
+        await sock.sendMessage(sender, { react: { text: '✅', key: msg.key } });
     }
 }
     // --- INÍCIO DO ANTI-TRAVA ---
@@ -275,12 +267,13 @@ if (isLink) {
     // --- INÍCIO DO NOVO ANTI-SPAM (4 mensagens em 1 segundo = MUTE) ---
         // --- NOVO ANTI-SPAM COM AVISO PARA ADM ---
     // --- ANTI-SPAM AJUSTADO (SEM ERROS DE ASSINCRONIA) ---
+// --- ANTI-SPAM AJUSTADO (SEM ERROS DE ASSINCRONIA) ---
 const agora = Date.now();
 if (!contagemFlood[participant]) contagemFlood[participant] = [];
 contagemFlood[participant] = contagemFlood[participant].filter(t => agora - t < 1000);
 contagemFlood[participant].push(agora);
 
-if (contagemFlood[participant].length >= 4) {
+if (contagemFlood[participant].length >= 5) {
     // Agora o bot testa na hora sem depender de buscar o metadata do grupo
     // Se o seu número (ou dos ADMs) estiver na lista de admins do grupo, isso vai disparar
     const metadata = await sock.groupMetadata(sender).catch(() => null);
