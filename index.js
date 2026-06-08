@@ -874,7 +874,7 @@ if (text.startsWith('!musica ')) {
     try {
         await sock.sendMessage(sender, { text: "Calma aí apressado, 🔍 Buscando sua música..." });
         
-        
+
         const searchResults = await ytsr(busca, { limit: 1 });
         const video = searchResults.items[0];
         
@@ -897,8 +897,33 @@ if (text.startsWith('!musica ')) {
 // --- BLOCO DO JOGO DA FORCA ---
     // 1. Comando de Início
     if (text.startsWith('!forca')) {
-        const palavrasDificeis = ['abstrato', 'efemeridade', 'paradoxo', 'onisciente', 'idiossincrasia', 'inexoravel'];
-        jogoForca.palavra = palavrasDificeis[Math.floor(Math.random() * palavrasDificeis.length)];
+        const palavrasHard = ['abstrato', 'efemeridade', 'paradoxo', 'onisciente', 'idiossincrasia', 'inexoravel'];
+        const palavrasMedio = ['arquitetura', 'paradigma', 'recursividade', 'criptografia', 'abstração', 'framework'];
+        
+        const dicasHard = {
+            'abstrato': 'Algo que não é concreto, uma ideia ou conceito.',
+            'efemeridade': 'Algo que dura pouco tempo.',
+            'paradoxo': 'Uma contradição que parece verdadeira.',
+            'onisciente': 'Alguém que sabe tudo.',
+            'idiossincrasia': 'Uma característica peculiar de alguém.',
+            'inexoravel': 'Algo que não se pode evitar ou dobrar.'
+        };
+        const dicasMedio = {
+            'arquitetura': 'A estrutura lógica ou física de um sistema.',
+            'paradigma': 'Um modelo ou padrão a ser seguido.',
+            'recursividade': 'Uma função que chama a si mesma.',
+            'criptografia': 'Transformar informação em código para proteger dados.',
+            'abstração': 'Esconder detalhes complexos e mostrar apenas o essencial.',
+            'framework': 'Um conjunto de ferramentas que facilita o desenvolvimento de software.'
+        };
+
+        // Decide entre Hard ou Medio
+        const nivel = Math.random() > 0.5 ? 'hard' : 'medio';
+        const listaPalavras = nivel === 'hard' ? palavrasHard : palavrasMedio;
+        const listaDicas = nivel === 'hard' ? dicasHard : dicasMedio;
+
+        jogoForca.palavra = listaPalavras[Math.floor(Math.random() * listaPalavras.length)];
+        jogoForca.dica = listaDicas[jogoForca.palavra];
         jogoForca.descobertas = Array(jogoForca.palavra.length).fill('_');
         jogoForca.tentativas = [];
         jogoForca.ativo = true;
@@ -908,10 +933,10 @@ if (text.startsWith('!musica ')) {
         const msgForca = await sock.sendMessage(sender, { 
             video: { url: 'https://media.tenor.com/7HUogy7rXs4AAAPo/feel-me-think-about-it.mp4' }, 
             gifPlayback: true,
-            caption: `💀 *JOGO DA FORCA, QUERO VER ACERTAR (NÍVEL HARD)*\n\nPalavra: ${jogoForca.descobertas.join(' ')}\n\nResponda dando reply (em cima) com uma letra!` 
+            caption: `💀 *JOGO DA FORCA (${nivel.toUpperCase()})*\n\nDica: ${jogoForca.dica}\n\nPalavra: ${jogoForca.descobertas.join(' ')}\n\nResponda em cima dessa mensagem com uma letra ou a palavra toda!` 
         }, { quoted: msg });
         jogoForca.idMensagem = msgForca.key.id; 
-        return; // Sai após iniciar
+        return;
     }
 
 
@@ -926,33 +951,36 @@ if (text.startsWith('!musica ')) {
             const resposta = text.toLowerCase().trim();
             const autor = msg.key.participant || msg.key.remoteJid;
 
-            // 1. TENTAR PALAVRA COMPLETA
-            if (resposta === jogoForca.palavra) {
-                jogoForca.ativo = false;
-                await sock.sendMessage(sender, { react: { text: '🎉', key: msg.key } });
-                // GIF de vitória adicionado aqui
-                await sock.sendMessage(sender, { 
-                    video: { url: 'https://media.tenor.com/eakvOpIu7fAAAAPo/sarcastic-clap.mp4' }, 
-                    gifPlayback: true, 
-                    caption: `🎉 PARABÉNS @${autor.split('@')[0]}! Você acertou a palavra completa: *${jogoForca.palavra.toUpperCase()}*`,
-                    mentions: [autor]
-                }, { quoted: msg });
+            // 1. TENTAR PALAVRA COMPLETA (MAIS DE UMA LETRA)
+            if (resposta.length > 1) {
+                if (resposta === jogoForca.palavra) {
+                    jogoForca.ativo = false;
+                    await sock.sendMessage(sender, { react: { text: '🎉', key: msg.key } });
+                    await sock.sendMessage(sender, { 
+                        video: { url: 'https://media.tenor.com/eakvOpIu7fAAAAPo/sarcastic-clap.mp4' }, 
+                        gifPlayback: true, 
+                        caption: `🎉 PARABÉNS @${autor.split('@')[0]}! Você acertou a palavra completa: *${jogoForca.palavra.toUpperCase()}*`,
+                        mentions: [autor]
+                    }, { quoted: msg });
+                } else {
+                    await sock.sendMessage(sender, { text: `QUASE!! Mas não é HAHAHAHA, tente novamente! 🤡`, quoted: msg });
+                }
             } 
             // 2. TENTAR LETRA ÚNICA
             else if (resposta.length === 1) {
                 const letra = resposta;
-                
+  
                 if (jogoForca.tentativas.includes(letra)) {
                     await sock.sendMessage(sender, { text: `⚠️ @${autor.split('@')[0]}, você já tentou a letra "${letra.toUpperCase()}".`, mentions: [autor] }, { quoted: msg });
                 } else {
                     jogoForca.tentativas.push(letra);
-
+       
                     if (jogoForca.palavra.includes(letra)) {
                         await sock.sendMessage(sender, { react: { text: '✅', key: msg.key } });
                         for (let i = 0; i < jogoForca.palavra.length; i++) {
                             if (jogoForca.palavra[i] === letra) jogoForca.descobertas[i] = letra;
                         }
-                        
+    
                         if (!jogoForca.descobertas.includes('_')) {
                             jogoForca.ativo = false;
                             await sock.sendMessage(sender, { text: `🎉 PARABÉNS @${autor.split('@')[0]}! Você salvou a alma dele! A palavra era: *${jogoForca.palavra.toUpperCase()}*`, mentions: [autor] }, { quoted: msg });
@@ -977,9 +1005,7 @@ if (text.startsWith('!musica ')) {
                 }
             }
 
-            setTimeout(() => { 
-                jogoForca.processando = false; 
-            }, 1000); 
+            setTimeout(() => { jogoForca.processando = false; }, 1000); 
         }
     }
     // --- FIM DA LÓGICA DA FORCA ---
