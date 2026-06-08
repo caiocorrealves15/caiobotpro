@@ -455,47 +455,50 @@ if (text === '!sortear') {
 
 
     // 4. Saudações
-    // 4. Saudações
-    if (lowerText.includes('bom dia') || lowerText.includes('boa tarde') || lowerText.includes('boa noite')) {
-    let emoji = '☀️';
-    let opcoes = [];
+// 4. Saudações (Mensagens Motivacionais)
+if (lowerText.includes('bom dia') || lowerText.includes('boa tarde') || lowerText.includes('boa noite')) {
+    let emoji = '✨';
+    let frases = [];
 
     if (lowerText.includes('bom dia')) {
         emoji = '☀️';
-        opcoes = [
-            { frase: 'Bom dia! Dormi igual a um anjo, acordei igual a um boleto vencido. 😂', url: 'https://media.tenor.com/7HPdFKRYFwMAAAPo/thank-you.mp4' },
-            { frase: 'Bom dia, gente! Acordar cedo é uma decisão que tomo todos os dias, mas me arrependo em todas elas. ☕', url: 'https://media.tenor.com/3uHpirQd8qgAAAPo/max1-maxz.mp4' },
-            { frase: 'Bom dia! Se a vida te der limões, faça uma limonada... ou venda e compre café. 🍋', url: 'https://media.tenor.com/8LQ_HOzhCbUAAAPo/ni%CC%87che-frui%CC%87t-lemon-eati%CC%87ng-ni%CC%87che.mp4' },
-            { frase: 'Bom dia! Que a preguiça nos visite, mas que o trabalho não nos veja. 😴', url: 'https://media.tenor.com/0RCfPxdUCs8AAAPo/dvfedvr.mp4' }
+        frases = [
+            'Bom dia! Cada novo amanhecer é uma página em branco na sua história. Escreva algo incrível hoje! ✨',
+            'Bom dia! Acredite no seu potencial. Hoje é o dia perfeito para dar um passo em direção aos seus sonhos. 🚀',
+            'Bom dia! Que a sua energia positiva contagie a todos ao seu redor. Tenha um dia produtivo e abençoado! 🌈',
+            'Bom dia! Não deixe para amanhã o sucesso que você pode começar a construir agora mesmo. 💪',
+            'Bom dia! A vida é um presente valioso. Agradeça por mais esta oportunidade de evoluir. 🎁',
+            'Bom dia! O otimismo é o ímã da felicidade. Mantenha o foco no positivo e coisas boas acontecerão. ☀️'
         ];
     } else if (lowerText.includes('boa tarde')) {
         emoji = '🌤️';
-        opcoes = [
-            { frase: 'Boa tarde! Que a força do café esteja comigo, porque a minha já acabou. 💔', url: 'https://media.tenor.com/C78aGUgwTEYAAAPo/good-afternoon-rollygifs.mp4' },
-            { frase: 'Boa tarde! O dia tá passando mais rápido que meu salário na mão. 💸', url: 'https://media.tenor.com/Atn_x9ecziUAAAPo/cat-dance-on-door-glass-door-window-jump.mp4' },
-            { frase: 'Boa tarde! Se alguém precisar de mim, estarei ali na esquina... ou em lugar nenhum. 😎', url: 'https://media.tenor.com/0kRkOqvKwBgAAAPo/mr-bean-middle-finger.mp4' },
-            { frase: 'Boa tarde! Trabalhando muito ou trabalhando pouco? O importante é que tá acabando. ⏳', url: 'https://media.tenor.com/5gOeuHmLaLoAAAPo/spongebob-wipe.mp4' }
+        frases = [
+            'Boa tarde! Respire fundo e foque no que realmente importa. Você está fazendo um ótimo trabalho! 🍃',
+            'Boa tarde! O dia ainda não acabou, ainda há tempo de realizar grandes coisas. Mantenha a motivação! 🔥',
+            'Boa tarde! A persistência é o caminho do êxito. Continue firme, o resultado virá. 🎯',
+            'Boa tarde! Aproveite este momento para renovar as energias e seguir com força total. 🔋',
+            'Boa tarde! Lembre-se: pequenas vitórias diárias constroem grandes conquistas no futuro. 🎖️',
+            'Boa tarde! Que a paz e o equilíbrio acompanhem o restante do seu dia. 🕊️'
         ];
     } else if (lowerText.includes('boa noite')) {
         emoji = '🌙';
-        opcoes = [
-            { frase: 'Boa noite! Que o seu sono seja tão profundo quanto o saldo negativo da minha conta. 🥱', url: 'https://media.tenor.com/p4y_zlIm1MMAAAPo/donald-duck-sleep.mp4' },
-            { frase: 'Boa noite! Fechando os olhos e rezando pra não lembrar de nenhum email que esqueci de enviar. 😵‍💫', url: 'https://media.tenor.com/Ptpt40WGI_cAAAPo/boa-noite-valtatui-good-night.mp4' },
-            { frase: 'Boa noite! Hora de sonhar com o feriado que nunca chega. 💤', url: 'https://media.tenor.com/R3mUg2FCAPIAAAPo/cute-sleepy.mp4' },
-            { frase: 'Boa noite! Durmam bem, porque amanhã a luta recomeça e a gente nem teve folga hoje. 🌙', url: 'https://media.tenor.com/VYO7Ra0DP5wAAAPo/good-night-my-love.mp4' }
+        frases = [
+            'Boa noite! Descanse o corpo e a mente. Amanhã é uma nova oportunidade para brilhar. 💤',
+            'Boa noite! A gratidão transforma o que temos em suficiente. Durma bem e sinta-se em paz. 🌟',
+            'Boa noite! Que o seu descanso seja reparador e seus sonhos tragam inspiração. 🌌',
+            'Boa noite! Desligue as preocupações e abra espaço para o descanso merecido. Você merece! 🛡️',
+            'Boa noite! O sol se põe, mas a sua luz interior continua brilhando. Até amanhã! ✨',
+            'Boa noite! Guarde com carinho as conquistas de hoje e prepare o coração para as de amanhã. 🌙'
         ];
     }
 
-    // Sorteia um dos objetos da lista de opções
-    const sorteio = opcoes[Math.floor(Math.random() * opcoes.length)];
+    const sorteio = frases[Math.floor(Math.random() * frases.length)];
 
+    // Reação na mensagem do usuário
     await sock.sendMessage(sender, { react: { text: emoji, key: msg.key } });
-
-    await sock.sendMessage(sender, { 
-        video: { url: sorteio.url }, 
-        gifPlayback: true, 
-        caption: `🤖 *${sorteio.frase}*` 
-    }, { quoted: msg }); 
+    
+    // Envia a mensagem de texto motivacional
+    await sock.sendMessage(sender, { text: `🤖 *${sorteio}*` }, { quoted: msg });
 }
 
         // 5. Sextou
@@ -766,62 +769,96 @@ if (text.startsWith('!adm')) {
     }
 }
 
-        // 5. !SOCAR
+// 5. !SOCAR (Com Reply e Frases Aleatórias)
         if (text.startsWith('!socar')) {
-    const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
-    if (mention) {
-        // Exemplo de como enviar um GIF junto com a mensagem
-        await sock.sendMessage(sender, { 
-            video: { url: 'https://media.tenor.com/6Cp5tiRwh-YAAAPo/meme-memes.mp4' }, // O WhatsApp entende vídeo/gif
-            gifPlayback: true, // Isso faz o arquivo tocar como GIF
-            caption: `TOMAAAAAAAA 😤😤!!!! O @${participant.split('@')[0]} deu um soco no @${mention.split('@')[0]}! 🤜`,
-            mentions: [participant, mention]
-        });
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            if (mention) {
+                const frasesSoco = [
+                    `TOMAAAAAAAA 😤😤!!!! O @${participant.split('@')[0]} deu um soco no @${mention.split('@')[0]}! 🤜`,
+                    `VRAU! 💥 O @${participant.split('@')[0]} perdeu a paciência e mandou o @${mention.split('@')[0]} pra lona!`,
+                    `EITA! O @${participant.split('@')[0]} não perdoou e desceu o cacete no @${mention.split('@')[0]}! 🥊`,
+                    `O clima fechou! O @${participant.split('@')[0]} aplicou um golpe certeiro no @${mention.split('@')[0]}! 💥`
+                ];
+                const sorteioSoco = frasesSoco[Math.floor(Math.random() * frasesSoco.length)];
+
+                await sock.sendMessage(sender, { 
+                    video: { url: 'https://media.tenor.com/6Cp5tiRwh-YAAAPo/meme-memes.mp4' }, 
+                    gifPlayback: true, 
+                    caption: sorteioSoco,
+                    mentions: [participant, mention]
+                }, { quoted: msg }); // Adicionado reply aqui
+            } else {
+                await sock.sendMessage(sender, { text: "❌ Mencione alguém!", quoted: msg });
+            }
+        }
+
+        // 5.1 !BEIJAR (Com Reply e Frases Aleatórias)
+        if (text.startsWith('!beijar')) {
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            if (mention) {
+                const quemBeija = participant.split('@')[0];
+                const quemRecebe = mention.split('@')[0];
+                const frasesBeijo = [
+                    `O @${quemBeija} está dando um beijão no @${quemRecebe}! Que clima de romance... 💋`,
+                    `Oh lá lá! O @${quemBeija} tascou um beijo apaixonado no @${quemRecebe}! 👩‍❤️‍💋‍👨`,
+                    `O amor está no ar! @${quemBeija} beijou o @${quemRecebe} e deixou todo mundo sem graça. 😍`,
+                    `Clima de romance! @${quemBeija} e @${quemRecebe} protagonizaram um beijão de cinema! 💘`
+                ];
+                const sorteioBeijo = frasesBeijo[Math.floor(Math.random() * frasesBeijo.length)];
+                
+                await sock.sendMessage(sender, { 
+                    video: { url: "https://media.tenor.com/eCNrTq7wOpgAAAPo/kiss.mp4" }, 
+                    gifPlayback: true,
+                    caption: sorteioBeijo, 
+                    mentions: [participant, mention] 
+                }, { quoted: msg }); // Adicionado reply aqui
+            } else {
+                await sock.sendMessage(sender, { text: "❌ Mencione alguém para beijar!", quoted: msg });
+            }
+        }
+
+        // 6. Admin Fechar/Abrir (Com Reply e Frases Aleatórias)
+if (text === '!fechar') {
+    if (!isAdmin) {
+        const frasesErro = [
+            "Tentando furar as regras, né?? HAHAHHAHA 👀👀👀\n\nSabe que um ADM está de olho em você agora né?",
+            "Ops! Você não tem o poder necessário para isso, melhor não brincar com o perigo! 🚫",
+            "Ih, ala! O engraçadinho quer fechar o grupo? Deixa isso com quem manda! 🤡"
+        ];
+        const msgErro = frasesErro[Math.floor(Math.random() * frasesErro.length)];
+        await sock.sendMessage(sender, { text: msgErro, quoted: msg });
     } else {
-        await sock.sendMessage(sender, { text: "❌ Mencione alguém!" });
+        const frasesAdm = [
+            "SILÊNCIO!!!!!!!!! Fechei mesmo🤫, Um ADM vai querer anunciar alguma coisa🫡🫡🫡",
+            "Grupo fechado! Todo mundo de boca calada, hora de ouvir os chefes! 🤐",
+            "Cala a boca todo mundo! O grupo está em modo de anúncio! 📢"
+        ];
+        const msgAdm = frasesAdm[Math.floor(Math.random() * frasesAdm.length)];
+        await sock.sendMessage(sender, { text: msgAdm, quoted: msg });
+        await sock.groupSettingUpdate(sender, 'announcement');
     }
 }
 
-        // 5.1 !BEIJAR
-        // 5.1 !BEIJAR (COM GIF)
-if (text.startsWith('!beijar')) {
-    const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
-    if (mention) {
-        const quemBeija = participant.split('@')[0];
-        const quemRecebe = mention.split('@')[0];
-        
-        // Exemplo de link de GIF (você pode trocar esse link depois)
-        const linkGif = "https://media.tenor.com/eCNrTq7wOpgAAAPo/kiss.mp4";
-
-        await sock.sendMessage(sender, { 
-            video: { url: linkGif }, 
-            gifPlayback: true,
-            caption: `O @${quemBeija} está dando um beijão no @${quemRecebe}! Que clima de romance... 💋`, 
-            mentions: [participant, mention] 
-        });
+if (text === '!abrir') {
+    if (!isAdmin) {
+        const frasesErro = [
+            "Tentando furar as regras, né?? HAHAHHAHA 👀👀👀\n\nSabe que um ADM está de olho em você agora né?",
+            "Tá achando que é dono do pedaço? Acesso negado, amigão! 🚫",
+            "Negativo! Só ADM manda aqui, volta pra sua cadeira! 😂"
+        ];
+        const msgErro = frasesErro[Math.floor(Math.random() * frasesErro.length)];
+        await sock.sendMessage(sender, { text: msgErro, quoted: msg });
     } else {
-        await sock.sendMessage(sender, { text: "❌ Mencione alguém para beijar!" });
+        const frasesAdm = [
+            "Pronto, podem falar a vontade bando de desempregados HAHAHAHA.😂😂",
+            "Grupo aberto! Podem soltar os cachorros e começar a bagunça de novo! 🔓",
+            "Liberado para conversas! O silêncio acabou, podem gastar o teclado! ⌨️"
+        ];
+        const msgAdm = frasesAdm[Math.floor(Math.random() * frasesAdm.length)];
+        await sock.sendMessage(sender, { text: msgAdm, quoted: msg });
+        await sock.groupSettingUpdate(sender, 'not_announcement');
     }
 }
-
-        // 6. Admin Fechar/Abrir
-        if (text === '!fechar') {
-            if (!isAdmin) {
-                await sock.sendMessage(sender, { text: "Tentando furar as regras, né?? HAHAHHAHA 👀👀👀\n\nSabe que um ADM está de olho em você agora né?" });
-            } else {
-                await sock.sendMessage(sender, { text: "SILÊNCIO!!!!!!!!! Fechei mesmo🤫, Um ADM vai querer anunciar alguma coisa🫡🫡🫡" });
-                await sock.groupSettingUpdate(sender, 'announcement');
-            }
-        }
-        
-        if (text === '!abrir') {
-            if (!isAdmin) {
-                await sock.sendMessage(sender, { text: "Tentando furar as regras, né?? HAHAHHAHA 👀👀👀\n\nSabe que um ADM está de olho em você agora né?" });
-            } else {
-                await sock.sendMessage(sender, { text: "Pronto, podem falar a vontade bando de desempregados HAHAHAHA.😂😂" });
-                await sock.groupSettingUpdate(sender, 'not_announcement');
-            }
-        }
 
         // 7. Música e Figurinha
         // Adicione lá no topo do arquivo (junto com os outros 'require')
@@ -1045,10 +1082,13 @@ if (text.startsWith('!musica ')) {
             await sock.sendMessage(sender, { text: "Você está falando demais, dá um tempo seu rabugento.😂❌", mentions: [mention] });
         }
         // 8. COMANDO CLIMA (TRADUZIDO)
-       // 8. COMANDO CLIMA (Ajustado com Reação e Reply)
+       // 8. COMANDO CLIMA (Ajustado)
 if (text.startsWith('!clima')) {
     const cidade = text.replace('!clima', '').trim();
     if (!cidade) return await sock.sendMessage(sender, { text: "❌ Digite a cidade! Ex: !clima Cariacica", quoted: msg });
+
+    // Armazena a mensagem original em uma constante para usar dentro da função de clima
+    const mensagemOriginal = msg; 
 
     const traduzir = (condicao) => {
         const manual = {
@@ -1062,7 +1102,7 @@ if (text.startsWith('!clima')) {
 
     weather.find({ search: cidade, degreeType: 'C' }, async (err, result) => {
         if (err || !result || result.length === 0) {
-            return await sock.sendMessage(sender, { text: "❌ Cidade não encontrada.", quoted: msg });
+            return await sock.sendMessage(sender, { text: "❌ Cidade não encontrada.", quoted: mensagemOriginal });
         }
         
         const current = result[0].current;
@@ -1071,12 +1111,12 @@ if (text.startsWith('!clima')) {
         const msgClima = `🌤 *Tempo em: ${current.observationpoint}*\n` +
                          `🌡 Temperatura: ${current.temperature}°C\n` +
                          `☁️ Condição: ${condicaoTraduzida}`;
-        
-        // 1. REAÇÃO NA MENSAGEM DO USUÁRIO
-        await sock.sendMessage(sender, { react: { text: '🌤', key: msg.key } });
 
-        // 2. RESPOSTA (REPLY)
-        await sock.sendMessage(sender, { text: msgClima, quoted: msg });
+        // Primeiro, reagimos à mensagem original
+        await sock.sendMessage(sender, { react: { text: '🌤', key: mensagemOriginal.key } });
+        
+        // Depois, enviamos a resposta citando a mensagem original
+        await sock.sendMessage(sender, { text: msgClima }, { quoted: mensagemOriginal });
     });
 }
     }); // Fecha o messages.upsert
