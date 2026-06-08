@@ -872,28 +872,25 @@ if (text === '!avisoadm') {
 if (text.startsWith('!musica ')) {
     const busca = text.replace('!musica ', '');
     try {
-        await sock.sendMessage(sender, { text: "Calma aí apressado, 🎧 Procurando o áudio da música..." });
+        await sock.sendMessage(sender, { text: "Calma aí apressado, 🔍 Buscando sua música..." });
         
-        // Buscamos o vídeo para pegar a URL de stream
+        
         const searchResults = await ytsr(busca, { limit: 1 });
         const video = searchResults.items[0];
         
-        if (!video) return await sock.sendMessage(sender, { text: "❌ Não encontrei." });
+        if (!video) return await sock.sendMessage(sender, { text: "❌ Não encontrado." });
 
-        // IMPORTANTE: O WhatsApp exige que arquivos de áudio sejam enviados com buffer ou url direta.
-        // Como não podemos baixar e converter arquivos grandes no Render, 
-        // a melhor forma de enviar "como áudio" é usar um serviço de conversão ou link direto.
-        
-        // Enviando como áudio (Ptt: true faz aparecer com a voz do WhatsApp)
-        await sock.sendMessage(sender, { 
-            audio: { url: video.url }, // O WhatsApp tenta processar o link como áudio
-            mimetype: 'audio/mp4',
-            ptt: true 
-        }, { quoted: msg });
+        // Enviamos apenas o link. É seguro, não bloqueia o bot e não exige processamento pesado do Render.
+        const mensagem = `🎵 *Música Encontrada!*\n\n` +
+                         `🎤 *Título:* ${video.title}\n` +
+                         `🔗 *Link:* ${video.url}\n\n` +
+                         `🤖 *Dica:* Como o YouTube bloqueia tentativas de extrair áudio direto, estou te mandando o link para você ouvir com tranquilidade!`;
+
+        await sock.sendMessage(sender, { text: mensagem }, { quoted: msg });
 
     } catch (e) {
         console.error(e);
-        await sock.sendMessage(sender, { text: "❌ Erro: O bot não conseguiu processar esse áudio. Tente outra música." });
+        await sock.sendMessage(sender, { text: "❌ O YouTube está protegendo demais o conteúdo agora. Tente novamente mais tarde." });
     }
 }
        
