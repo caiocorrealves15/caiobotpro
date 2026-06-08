@@ -18,28 +18,37 @@ async function buscarETocar(nomeMusica) {
     const key = '2b70843e46msh714109c6e6c48d3p1b34e5jsn51f85b76c0c6';
 
     try {
-        // 1. Busca - Usando a estrutura correta de parâmetros que a API pediu
-        const resBusca = await axios.get(`https://${host}/search`, {
-            headers: { 'x-rapidapi-key': key, 'x-rapidapi-host': host },
-            params: { query: nomeMusica } // Ajustado para o parâmetro correto 'query'
+        // Vamos forçar a montagem da URL completa na mão para não ter erro
+        const urlBusca = `https://${host}/search?query=${encodeURIComponent(nomeMusica)}`;
+        console.log("DEBUG URL:", urlBusca); // Para você ver no terminal
+
+        const resBusca = await axios.get(urlBusca, {
+            headers: { 
+                'x-rapidapi-key': key, 
+                'x-rapidapi-host': host 
+            }
         });
 
+        // DEBUG: Imprime o que recebemos
         console.log("DEBUG API BUSCA:", JSON.stringify(resBusca.data, null, 2));
 
-        // Acessando o ID dentro da lista de vídeos que vimos no print
+        // Acessa o primeiro vídeo da lista 'videos'
         const videoId = resBusca.data.videos[0].id;
         
-        if (!videoId) throw new Error("ID não encontrado na resposta");
+        if (!videoId) throw new Error("ID não encontrado");
 
-        // 2. Download - Usando o ID obtido acima
-        const resDownload = await axios.get(`https://${host}/mp3`, {
-            headers: { 'x-rapidapi-key': key, 'x-rapidapi-host': host },
-            params: { id: videoId }
+        // 2. Download - Também montando na mão
+        const urlDownload = `https://${host}/mp3?id=${videoId}`;
+        const resDownload = await axios.get(urlDownload, {
+            headers: { 
+                'x-rapidapi-key': key, 
+                'x-rapidapi-host': host 
+            }
         });
 
         return resDownload.data.link;
     } catch (e) {
-        console.error("ERRO NA BUSCA/DOWNLOAD:", e.message);
+        console.error("ERRO FINAL:", e.message);
         return null;
     }
 }
