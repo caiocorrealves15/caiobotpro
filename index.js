@@ -527,7 +527,7 @@ if (lowerText.includes('bebida') || lowerText.includes('cerveja') || lowerText.i
 
     // 9. Comandos extras (ban, tier, matar, rank, adm, socar, beijar, fechar, abrir, musica, desmute, mute, clima)
     // *Dica: Aplique o quoted: msg em todos os sock.sendMessage dentro desses blocos também!*
-    const comandosExistentes = ['!menu', '!rank', '!casar', '!casais', '!avisoadm', '!emoji', '!sortear', '!jogar', '!forca', '!link', '!tier', '!rankingemoji', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute'];
+    const comandosExistentes = ['!menu', '!rank', '!casar', '!casais', '!avisoadm', '!descasar', '!emoji', '!sortear', '!jogar', '!forca', '!link', '!tier', '!rankingemoji', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute'];
 
 if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd))) {
     const autor = msg.key.participant || msg.key.remoteJid;
@@ -855,6 +855,47 @@ if (text === '!casais') {
     await sock.sendMessage(sender, { 
         text: textoRanking, 
         mentions: listaCasais.flatMap(c => [c.p1 + "@s.whatsapp.net", c.p2 + "@s.whatsapp.net"]),
+        quoted: msg 
+    });
+}
+
+// 5.4 !DESCASAR (O comando do Divórcio)
+if (text.startsWith('!descasar')) {
+    const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+    if (!mention) {
+        return await sock.sendMessage(sender, { text: "❌ Mencione o seu ex-amor para pedir o divórcio!", quoted: msg });
+    }
+
+    const autor = participant.split('@')[0];
+    const alvo = mention.split('@')[0];
+
+    // Tenta encontrar o casal (considerando que pode ser o autor pedindo ou o alvo)
+    const index = listaCasais.findIndex(c => 
+        (c.p1 === autor && c.p2 === alvo) || (c.p1 === alvo && c.p2 === autor)
+    );
+
+    if (index === -1) {
+        await sock.sendMessage(sender, { react: { text: '🤔', key: msg.key } });
+        return await sock.sendMessage(sender, { text: "❌ Vocês nem casados estão! Tá querendo divorciar de quem nunca existiu? 😂", quoted: msg });
+    }
+
+    // Remove o casal da lista
+    listaCasais.splice(index, 1);
+
+    const frasesDivorcio = [
+        `💔 O divórcio saiu! @${autor} finalmente se livrou do peso morto chamado @${alvo}. Parabéns pela liberdade! 🥂`,
+        `📉 O amor acabou! @${autor} e @${alvo} não aguentaram a pressão. Agora é cada um por si e Deus por todos! 😂`,
+        `🧹 A faxina foi feita! @${autor} deu um chute na bunda do @${alvo}. Fim de papo! 💥`,
+        `🤡 O casamento de mentira acabou! @${autor} pediu o divórcio e o @${alvo} ficou chupando dedo! ✌️`
+    ];
+    const sorteioDivorcio = frasesDivorcio[Math.floor(Math.random() * frasesDivorcio.length)];
+
+    // Reação de luto/divórcio
+    await sock.sendMessage(sender, { react: { text: '💔', key: msg.key } });
+
+    await sock.sendMessage(sender, { 
+        text: sorteioDivorcio, 
+        mentions: [participant, mention],
         quoted: msg 
     });
 }
