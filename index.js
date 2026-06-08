@@ -1082,13 +1082,13 @@ if (text.startsWith('!musica ')) {
             await sock.sendMessage(sender, { text: "Você está falando demais, dá um tempo seu rabugento.😂❌", mentions: [mention] });
         }
         // 8. COMANDO CLIMA (TRADUZIDO)
-       // 8. COMANDO CLIMA (Ajustado)
+       // 8. COMANDO CLIMA (Forçando o Reply com variável constante)
 if (text.startsWith('!clima')) {
     const cidade = text.replace('!clima', '').trim();
     if (!cidade) return await sock.sendMessage(sender, { text: "❌ Digite a cidade! Ex: !clima Cariacica", quoted: msg });
 
-    // Armazena a mensagem original em uma constante para usar dentro da função de clima
-    const mensagemOriginal = msg; 
+    // Captura o objeto da mensagem original antes de entrar no callback
+    const mensagemParaResponder = msg;
 
     const traduzir = (condicao) => {
         const manual = {
@@ -1102,7 +1102,7 @@ if (text.startsWith('!clima')) {
 
     weather.find({ search: cidade, degreeType: 'C' }, async (err, result) => {
         if (err || !result || result.length === 0) {
-            return await sock.sendMessage(sender, { text: "❌ Cidade não encontrada.", quoted: mensagemOriginal });
+            return await sock.sendMessage(sender, { text: "❌ Cidade não encontrada.", quoted: mensagemParaResponder });
         }
         
         const current = result[0].current;
@@ -1111,12 +1111,12 @@ if (text.startsWith('!clima')) {
         const msgClima = `🌤 *Tempo em: ${current.observationpoint}*\n` +
                          `🌡 Temperatura: ${current.temperature}°C\n` +
                          `☁️ Condição: ${condicaoTraduzida}`;
-
-        // Primeiro, reagimos à mensagem original
-        await sock.sendMessage(sender, { react: { text: '🌤', key: mensagemOriginal.key } });
         
-        // Depois, enviamos a resposta citando a mensagem original
-        await sock.sendMessage(sender, { text: msgClima }, { quoted: mensagemOriginal });
+        // REAÇÃO
+        await sock.sendMessage(sender, { react: { text: '🌤', key: mensagemParaResponder.key } });
+
+        // RESPOSTA COM BALÃO (REPLY FORÇADO)
+        await sock.sendMessage(sender, { text: msgClima }, { quoted: mensagemParaResponder });
     });
 }
     }); // Fecha o messages.upsert
