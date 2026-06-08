@@ -12,7 +12,13 @@ const ARQUIVO_PLACAR_EMOJI = './placar_emoji.json';
 const infrações = {};
 const ultimaMensagem = {};
 const contagemFlood = {};
-let listaCasais = [];
+listaCasais.push({ 
+    p1: quemCasa, 
+    p2: quemRecebe, 
+    nome1: msg.pushName || quemCasa, // Pega o nome do perfil de quem mandou
+    nome2: quemRecebe,               // O nome de quem recebeu é o número mesmo, o WhatsApp não entrega o nome do mencionado
+    data: new Date().toLocaleDateString() 
+});
 
 
 let placarEmoji = fs.existsSync(ARQUIVO_PLACAR_EMOJI) ? JSON.parse(fs.readFileSync(ARQUIVO_PLACAR_EMOJI)) : {};
@@ -829,9 +835,10 @@ if (text.startsWith('!casar')) {
 }
 
 // 5.3 !CASAIS (Ranking com Reação, Reply e frases zoadas)
+// 5.3 !CASAIS (Versão com Reply Forçado)
 if (text === '!casais') {
-    if (listaCasais.length === 0) {
-        // Reação de deboche se não tiver ninguém
+   
+ if (listaCasais.length === 0) {
         await sock.sendMessage(sender, { react: { text: '🤡', key: msg.key } });
         return await sock.sendMessage(sender, { text: "❌ Ainda não temos casais aqui. O pessoal tá muito encalhado ou ninguém quer assumir a B.O.! 😂", quoted: msg });
     }
@@ -844,19 +851,24 @@ if (text === '!casais') {
     let textoRanking = frasesRanking[Math.floor(Math.random() * frasesRanking.length)];
 
     listaCasais.forEach((casal, index) => {
+        const nome1 = casal.nome1 || casal.p1;
+        const nome2 = casal.nome2 || casal.p2;
         textoRanking += `${index + 1}. @${casal.p1} ❤️ @${casal.p2}\n`;
     });
     
     textoRanking += "\n\nQuem será o próximo a cair na armadilha? HAHAHAHA 🤡";
 
-    // Reação de troféu quando alguém chama o comando
+    // 1. Reação
     await sock.sendMessage(sender, { react: { text: '🏆', key: msg.key } });
 
+    // 2. Preparar os mentions corretamente
+    const participantes = listaCasais.flatMap(c => [c.p1 + "@s.whatsapp.net", c.p2 + "@s.whatsapp.net"]);
+
+    // 3. Enviar com o quoted explícito
     await sock.sendMessage(sender, { 
         text: textoRanking, 
-        mentions: listaCasais.flatMap(c => [c.p1 + "@s.whatsapp.net", c.p2 + "@s.whatsapp.net"]),
-        quoted: msg 
-    });
+        mentions: participantes
+    }, { quoted: msg }); 
 }
 
 // 5.4 !DESCASAR (O comando do Divórcio)
