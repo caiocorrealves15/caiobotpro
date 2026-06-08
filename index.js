@@ -798,7 +798,7 @@ if (text.startsWith('!adm')) {
 if (text.startsWith('!casar')) {
     const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
     if (mention) {
-        const quemCasa = participant.split('@')[0];
+        const quemCasa = msg.pushName || participant.split('@')[0];
         const quemRecebe = mention.split('@')[0];
         
         const frasesCasamento = [
