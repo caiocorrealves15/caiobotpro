@@ -14,12 +14,18 @@ const ultimaMensagem = {};
 const contagemFlood = {};
 let listaCasais = [];
 const salvarCasais = () => {
-    fs.writeFileSync('./casais.json', JSON.stringify(listaCasais));
+    fs.writeFileSync('./casais.json', JSON.stringify(listaCasais, null, 2)); // Adicionei o 'null, 2' para ficar legível
 };
+
+// Carrega o arquivo ao iniciar o bot
 if (fs.existsSync('./casais.json')) {
-    listaCasais = JSON.parse(fs.readFileSync('./casais.json'));
-} else {
-    listaCasais = [];
+    try {
+        const dados = fs.readFileSync('./casais.json');
+        listaCasais = JSON.parse(dados);
+    } catch (e) {
+        console.log("Erro ao ler casais.json, iniciando vazio.");
+        listaCasais = [];
+    }
 }
 
 
