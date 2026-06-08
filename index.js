@@ -1083,12 +1083,31 @@ if (text.startsWith('!musica ')) {
         }
         // 8. COMANDO CLIMA (TRADUZIDO)
        // 8. COMANDO CLIMA (Forçando o Reply com variável constante)
+// 8. COMANDO CLIMA (Com frases engraçadas!)
 if (text.startsWith('!clima')) {
     const cidade = text.replace('!clima', '').trim();
     if (!cidade) return await sock.sendMessage(sender, { text: "❌ Digite a cidade! Ex: !clima Cariacica", quoted: msg });
 
-    // Captura o objeto da mensagem original antes de entrar no callback
     const mensagemParaResponder = msg;
+
+    // Objeto com frases engraçadas por condição
+    const piadasClima = {
+        'sunny': [
+            "Tá um sol pra cada um, né? Não derrete não, hein! 😂",
+            "Céu limpo... perfeito pra ficar no ar-condicionado e não fazer nada. ☀️",
+            "Esse sol tá mais forte que minha vontade de ganhar na mega-sena. 🔥"
+        ],
+        'cloudy': [
+            "Tempo nublado... o clima perfeito pra uma depressão motivacional. ☁️",
+            "Tá nublado, mas minha alma continua brilhando... ou quase isso. 🤡",
+            "Céu cinza, igual à minha cara quando vejo o boleto chegando. 💸"
+        ],
+        'rain': [
+            "Chuva? Ótimo, agora minha preguiça tem justificativa oficial! 🌧️",
+            "Tá chovendo, o clima perfeito pra dormir e esquecer da vida. 💤",
+            "Se molhar na chuva dá gripe, então fica em casa assistindo série! 📺"
+        ]
+    };
 
     const traduzir = (condicao) => {
         const manual = {
@@ -1106,16 +1125,28 @@ if (text.startsWith('!clima')) {
         }
         
         const current = result[0].current;
+        const condicaoOriginal = current.skytext.toLowerCase();
         const condicaoTraduzida = traduzir(current.skytext);
         
+        // Define uma frase engraçada baseada na condição
+        let fraseExtra = "";
+        if (condicaoOriginal.includes('sunny') || condicaoOriginal.includes('clear')) {
+            fraseExtra = piadasClima['sunny'][Math.floor(Math.random() * piadasClima['sunny'].length)];
+        } else if (condicaoOriginal.includes('cloudy')) {
+            fraseExtra = piadasClima['cloudy'][Math.floor(Math.random() * piadasClima['cloudy'].length)];
+        } else if (condicaoOriginal.includes('rain')) {
+            fraseExtra = piadasClima['rain'][Math.floor(Math.random() * piadasClima['rain'].length)];
+        }
+
         const msgClima = `🌤 *Tempo em: ${current.observationpoint}*\n` +
                          `🌡 Temperatura: ${current.temperature}°C\n` +
-                         `☁️ Condição: ${condicaoTraduzida}`;
+                         `☁️ Condição: ${condicaoTraduzida}\n\n` +
+                         (fraseExtra ? `💬 *Bot:* ${fraseExtra}` : "");
         
         // REAÇÃO
         await sock.sendMessage(sender, { react: { text: '🌤', key: mensagemParaResponder.key } });
 
-        // RESPOSTA COM BALÃO (REPLY FORÇADO)
+        // RESPOSTA COM BALÃO (REPLY)
         await sock.sendMessage(sender, { text: msgClima }, { quoted: mensagemParaResponder });
     });
 }
