@@ -864,6 +864,51 @@ if (text.startsWith('!descasar')) {
     await sock.sendMessage(sender, { text: `💔 O divórcio saiu! @${p1} e @${p2} não estão mais juntos. Cada um pro seu lado! 🥂`, mentions: [participant, mention], quoted: msg });
 }
 
+if (text.startsWith('!casar')) {
+    // 1. Verifica se a menção existe
+    const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+    if (!mention) {
+        return await sock.sendMessage(sender, { text: "❌ Mencione alguém para casar!", quoted: msg });
+    }
+
+    // 2. Garante que a variável listaCasais existe
+    if (typeof listaCasais === 'undefined') { var listaCasais = []; }
+
+    const p1 = participant.split('@')[0];
+    const p2 = mention.split('@')[0];
+    const nome1 = msg.pushName || p1;
+    const nome2 = "Mencionado"; // O WhatsApp enviará o nome corretamente via mention
+
+    // 3. Verifica se já não estão casados (opcional, mas recomendado)
+    const jaCasado = listaCasais.find(c => (c.p1 === p1 && c.p2 === p2) || (c.p1 === p2 && c.p2 === p1));
+    if (jaCasado) {
+        return await sock.sendMessage(sender, { text: "❌ Vocês já são casados, pombinhos!", quoted: msg });
+    }
+
+    // 4. Salva no array e no arquivo JSON
+    listaCasais.push({ p1, p2, nome1, nome2 });
+    salvarCasais(); 
+
+    // 5. Frases de efeito
+    const frasesCasamento = [
+        `💍 O @${p1} pediu o @${p2} em casamento! Já avisou que vai ser no cartório pra economizar? 😂`,
+        `💒 Alerta de união duvidosa! @${p1} resolveu juntar os panos com @${p2}. O divórcio sai em quanto tempo? 🤡`,
+        `👰🤵 O @${p1} perdeu a noção e o @${p2} aceitou! Agora preparem o fígado pra festa, porque vai ter pinga! 🥃`,
+        `💍 O @${p1} e o @${p2} decidiram casar! É oficial: o amor é cego e a gente que lute pra aguentar esse casal! 💘`
+    ];
+    const sorteioCasamento = frasesCasamento[Math.floor(Math.random() * frasesCasamento.length)];
+
+    // 6. ENVIO FORÇADO (Reação + GIF + Mensagem respondida)
+    await sock.sendMessage(sender, { react: { text: '💍', key: msg.key } });
+
+    await sock.sendMessage(sender, { 
+        video: { url: "https://media.tenor.com/h981yJykAXYAAAPo/la-haut-dessin-anime.mp4" }, 
+        gifPlayback: true,
+        caption: sorteioCasamento, 
+        mentions: [participant, mention] 
+    }, { quoted: msg }); // O balãozinho acontece aqui!
+}
+
 if (text === '!casais') {
   
     if (fs.existsSync('./casais.json')) {
