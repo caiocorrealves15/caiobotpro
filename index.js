@@ -203,36 +203,54 @@ O bot monitora automaticamente:
     }
 
     // --- LÓGICA DO ANTI-LINK COM AUTO BAN ---
-    const isLink = /https?:\/\/[^\s]+/.test(text);
-    if (isLink) {
-        const getIsAdmin = async () => { if (!sender.endsWith('@g.us')) return false; try { const metadata = await sock.groupMetadata(sender); return metadata.participants.find(p => p.id === participant)?.admin !== null; } catch { return false; } };
-        const isAdmin = await getIsAdmin();
-        
-        if (!isAdmin) {
-            infrações[participant] = (infrações[participant] || 0) + 1;
-            const limite = 3; 
-            const restam = limite - infrações[participant];
+    // --- LÓGICA DO ANTI-LINK COM AUTO BAN ---
+const isLink = /https?:\/\/[^\s]+/.test(text);
+if (isLink) {
+    const getIsAdmin = async () => { if (!sender.endsWith('@g.us')) return false; try { const metadata = await sock.groupMetadata(sender); return metadata.participants.find(p => p.id === participant)?.admin !== null; } catch { return false; } };
+    const isAdmin = await getIsAdmin();
+    
+    if (!isAdmin) {
+        infrações[participant] = (infrações[participant] || 0) + 1;
+        const limite = 3; 
+        const restam = limite - infrações[participant];
 
-            if (infrações[participant] >= limite) {
-                await sock.sendMessage(sender, { text: `🚫 @${participant.split('@')[0]} foi banido por insistir em mandar links!`, mentions: [participant] }, { quoted: msg });
-                await sock.groupParticipantsUpdate(sender, [participant], "remove");
-                delete infrações[participant];
-            } else {
-                await sock.sendMessage(sender, { 
-                    video: { url: 'https://media.tenor.com/q4GIdsYVSXcAAAPo/no-nooo.mp4' },
-                    gifPlayback: true,
-                    caption: `🚫 OPA, @${participant.split('@')[0]}! Aqui não pode link. Você tem ${restam} chance(s) antes do ban!`,
-                    mentions: [participant]
-                }, { quoted: msg });
-                await sock.sendMessage(sender, { delete: msg.key });
-            }
-            return; 
+        if (infrações[participant] >= limite) {
+            await sock.sendMessage(sender, { text: `🚫 @${participant.split('@')[0]} foi banido por insistir em mandar links!`, mentions: [participant] }, { quoted: msg });
+            await sock.groupParticipantsUpdate(sender, [participant], "remove");
+            delete infrações[participant];
         } else {
-            await sock.sendMessage(sender, { react: { text: '👀', key: msg.key } });
-            await sock.sendMessage(sender, { text: `😎 Link?? Você se salvou porque é ADM, filho, se não eu ia bloquear na HORAA!!!!!!! 😎😎😎😎` }, { quoted: msg });
-        }
-    }
+            // Frases aleatórias para o aviso
+            const frasesAviso = [
+                `🚫 OPA, @${participant.split('@')[0]}! Aqui não pode link. Você tem ${restam} chance(s) antes do ban!`,
+                `⚠️ @${participant.split('@')[0]}, soltou o link? O sistema não perdoa! Faltam ${restam} chances.`,
+                `🧐 Opa, link por aqui? Nem tenta! O sistema está de olho. Mais ${restam} chance(s) e vaza!`,
+                `🚫 Link detectado! @${participant.split('@')[0]}, você está brincando com a sorte. ${restam} chance(s) restantes!`
+            ];
+            const sorteioAviso = frasesAviso[Math.floor(Math.random() * frasesAviso.length)];
 
+            await sock.sendMessage(sender, { 
+                video: { url: 'https://media.tenor.com/q4GIdsYVSXcAAAPo/no-nooo.mp4' },
+                gifPlayback: true,
+                caption: sorteioAviso,
+                mentions: [participant]
+            }, { quoted: msg });
+            await sock.sendMessage(sender, { delete: msg.key });
+        }
+        return; 
+    } else {
+        // Frases para ADM que manda link
+        const frasesAdm = [
+            `😎 Link?? Você se salvou porque é ADM, filho, se não eu ia bloquear na HORAA!!!!!!! 😎😎😎😎`,
+            `👀 Postando link, patrão? Como você é ADM, vou deixar passar dessa vez... mas fica de olho! 🧐`,
+            `💥 Link liberado pro ADM! Mas não abusa, que o sistema aqui é bruto! 😂`,
+            `👑 Ah, um link de um ADM! Vou abrir uma exceção porque você manda aqui. 😎`
+        ];
+        const sorteioAdm = frasesAdm[Math.floor(Math.random() * frasesAdm.length)];
+
+        await sock.sendMessage(sender, { react: { text: '👀', key: msg.key } });
+        await sock.sendMessage(sender, { text: sorteioAdm }, { quoted: msg });
+    }
+}
     // --- INÍCIO DO ANTI-TRAVA ---
     if (text.length > 5000) {
         const getIsAdmin = async () => { if (!sender.endsWith('@g.us')) return false; try { const metadata = await sock.groupMetadata(sender); return metadata.participants.find(p => p.id === participant)?.admin !== null; } catch { return false; } };
@@ -696,94 +714,192 @@ if (text.startsWith('!penalti')) {
 }
 
         // 3. !BAN
-        if (text.startsWith('!ban')) {
-            if (!isAdmin) {
-                await sock.sendMessage(sender, { text: "Tentando furar as regras, né?? HAHAHHAHA 👀👀👀\n\nSabe que um ADM está de olho em você agora né?" });
-            } else {
-                const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
-                const meuIDProtegido = '96057379803159';
+if (text.startsWith('!ban')) {
+    if (!isAdmin) {
+        await sock.sendMessage(sender, { text: "Tentando furar as regras, né?? HAHAHHAHA 👀👀👀\n\nSabe que um ADM está de olho em você agora né?" });
+    } else {
+        const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+        const meuIDProtegido = '96057379803159'; // Seu ID de criador/dono
 
-                if (mention && mention.includes(meuIDProtegido)) {
-                    await sock.sendMessage(sender, { text: "❌ Nem tenta! O criador é intocável! 👑" });
-                } else if (mention) {
-                    await sock.sendMessage(sender, { text: `Tchauuuu, chora para um ADM depois no PV se quiser voltar, viu???`, mentions: [mention] });
-                    setTimeout(async () => { await sock.groupParticipantsUpdate(sender, [mention], 'remove'); }, 2000);
-                }
-            }
+        if (mention && mention.includes(meuIDProtegido)) {
+            await sock.sendMessage(sender, { text: "❌ Nem tenta! O criador é intocável! 👑" });
+        } else if (mention) {
+            // Frases leves e debochadas
+            const frasesBan = [
+                `👋 O @${mention.split('@')[0]} decidiu tirar férias permanentes do grupo. Aproveita a liberdade! ✈️`,
+                `🚫 O banhammer passou por aqui e o @${mention.split('@')[0]} foi o escolhido da vez. Tchauzinho! 👋`,
+                `🤡 @${mention.split('@')[0]} foi promovido a "ex-membro". Parabéns pela conquista! 😂`,
+                `💨 @${mention.split('@')[0]} foi convidado a se retirar porque estava brilhando demais... ou não. Vaza! 🏃‍♂️`,
+                `🛑 @${mention.split('@')[0]} entrou para a galeria dos que tentaram, mas não conseguiram. Até a próxima! 💅`,
+                `💤 @${mention.split('@')[0]} foi colocar o grupo pra dormir, mas acabou sendo ele quem foi dormir... fora daqui! 😴`,
+                `🚪 A porta da rua é serventia da casa, @${mention.split('@')[0]}! Boa sorte na caminhada. 🚶‍♂️`
+            ];
+
+            const sorteioBan = frasesBan[Math.floor(Math.random() * frasesBan.length)];
+
+            // Envia a mensagem de deboche
+            await sock.sendMessage(sender, { 
+                text: sorteioBan, 
+                mentions: [mention] 
+            }, { quoted: msg });
+
+            // Executa o banimento após 2 segundos
+            setTimeout(async () => { 
+                await sock.groupParticipantsUpdate(sender, [mention], 'remove'); 
+            }, 2000);
+        } else {
+            await sock.sendMessage(sender, { text: "❌ Mencione alguém para banir!" }, { quoted: msg });
         }
+    }
+}
 
-        // 4. !TIER
-        if (text.startsWith('!tier')) {
-            const tema = text.replace('!tier', '').trim() || "do grupo";
-            const metadata = await sock.groupMetadata(sender);
-            let ppts = metadata.participants.sort(() => 0.5 - Math.random()).slice(0, 5);
-            let res = `🏆 *TIER LIST: ${tema.toUpperCase()}*\n\n`;
-            ppts.forEach((p, i) => res += `${i + 1}. @${p.id.split('@')[0]} - ${Math.floor(Math.random() * 100) + 1}%\n`);
-            await sock.sendMessage(sender, { text: res, mentions: ppts.map(p => p.id) });
-        }
+        // 4. !TIER (Versão Debochada e com Resposta)
+if (text.startsWith('!tier')) {
+    // 1. Reação imediata de quem solicitou
+    await sock.sendMessage(sender, { react: { text: '📊', key: msg.key } });
 
-        // 5.2 !MATAR (COM GIF)
+    const tema = text.replace('!tier', '').trim() || "do grupo";
+    const metadata = await sock.groupMetadata(sender);
+    
+    // Sorteia 5 participantes aleatórios
+    let ppts = metadata.participants.sort(() => 0.5 - Math.random()).slice(0, 5);
+    
+    // Frases de efeito engraçadas para o cabeçalho
+    const frasesTier = [
+        `🏆 *TIER LIST: ${tema.toUpperCase()} (OS ESCOLHIDOS PELO DESTINO)*`,
+        `🔥 *TOP 5: OS MAIS ${tema.toUpperCase()} SEGUNDO A CIÊNCIA (CONFIA!)*`,
+        `📉 *RANKING DE ${tema.toUpperCase()}: A LISTA QUE NINGUÉM PEDIU, MAS TODO MUNDO QUERIA!*`,
+        `👀 *QUEM SÃO OS ${tema.toUpperCase()} DA VEZ? DESCUBRA AGORA:*`
+    ];
+    
+    const titulo = frasesTier[Math.floor(Math.random() * frasesTier.length)];
+    let res = `${titulo}\n\n`;
+
+    // Monta o ranking com frases extras
+    ppts.forEach((p, i) => {
+        const score = Math.floor(Math.random() * 100) + 1;
+        let comentario = "";
+        
+        if (score > 90) comentario = " (Lenda! 😎)";
+        else if (score > 70) comentario = " (Respeita o homem/mulher! 🤙)";
+        else if (score > 40) comentario = " (Tá na média... eu acho 🤡)";
+        else comentario = " (Vixe, passa vergonha não! 💀)";
+
+        res += `${i + 1}. @${p.id.split('@')[0]} - ${score}% ${comentario}\n`;
+    });
+
+    // 2. Envio com menções e resposta no balão (quoted)
+    await sock.sendMessage(sender, { 
+        text: res, 
+        mentions: ppts.map(p => p.id) 
+    }, { quoted: msg });
+}
+
+// 5.2 !MATAR (COM GIF E DEBOCHE)
 if (text.startsWith('!matar')) {
     const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
     if (mention) {
         const autor = participant.split('@')[0];
         const alvo = mention.split('@')[0];
         
-        // Link do GIF (você pode trocar por outro link que termine em .gif)
+        // Frases de deboche
+        const frasesMatar = [
+            `O @${autor} mandou o @${alvo} de arrasta pra cima! Que vacilo, hein? 💀`,
+            `Vixi... @${autor} não teve piedade e eliminou o @${alvo} do mapa! ⚰️`,
+            `O @${autor} decidiu que o @${alvo} não precisava mais respirar o mesmo ar. Que maldade! 🗡️`,
+            `@${autor} aplicou o golpe final no @${alvo}. RIP para esse guerreiro! 🪦`,
+            `Game Over para o @${alvo}! O @${autor} deu um fim na história dele aqui. 😂`,
+            `O @${autor} acabou de fazer uma limpa no @${alvo}. Tá com Deus agora! 👻`
+        ];
+
+        const sorteioMatar = frasesMatar[Math.floor(Math.random() * frasesMatar.length)];
+
+        // Link do GIF (mantido conforme pedido)
         const linkGifMatar = "https://media.tenor.com/3gus0SGhiEIAAAPo/cool-beans.mp4";
 
         await sock.sendMessage(sender, { 
             video: { url: linkGifMatar }, 
             gifPlayback: true,
-            caption: `O @${autor} mandou o @${alvo} de arrasta pra cima! Que vacilo, hein? 💀`, 
+            caption: sorteioMatar, 
             mentions: [participant, mention] 
-        });
+        }, { quoted: msg }); // Mantido o quoted: msg para responder no balão
     } else {
-        await sock.sendMessage(sender, { text: "❌ Mencione alguém para eliminar!" });
+        await sock.sendMessage(sender, { text: "❌ Mencione alguém para eliminar!", quoted: msg });
     }
 }
-        // 1. !RANK (ORGANIZADO)
-        if (text === '!rank') {
-            // Ordena os usuários pelo número de mensagens (do maior para o menor)
-            const ranking = Object.entries(contagemMensagens)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 10); // Mostra apenas os 10 primeiros
 
-            let res = `🏆 *RANKING DE MENSAGENS (TOP 10)*\n\n`;
-            ranking.forEach((entry, index) => {
-                const [id, count] = entry;
-                res += `${index + 1}. @${id.split('@')[0]} - ${count} mensagens\n`;
-            });
+        // 1. !RANK (ORGANIZADO E DEBOCHADO)
+if (text === '!rank') {
+    // Ordena os usuários pelo número de mensagens (do maior para o menor)
+    const ranking = Object.entries(contagemMensagens)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10); // Mostra apenas os 10 primeiros
 
-            await sock.sendMessage(sender, { 
-                text: res, 
-                mentions: ranking.map(entry => entry[0]) 
-            });
-        }
-        // 5.3 !ADM (COM GIF)
+    const frasesRanking = [
+        "🏆 *RANKING DE QUEM VIVE NO ZAP (VÍCIADOS)*",
+        "🔥 *TOP 10: QUEM NÃO TEM NADA PRA FAZER DA VIDA*",
+        "🤡 *LISTA DOS FALADORES E DOS QUE NÃO CALAM A BOCA*",
+        "👑 *OS REIS DO TECLADO - QUEM MAIS RESPONDE*"
+    ];
+
+    const titulo = frasesRanking[Math.floor(Math.random() * frasesRanking.length)];
+    let res = `${titulo}\n\n`;
+
+    ranking.forEach((entry, index) => {
+        const [id, count] = entry;
+        let comentario = "";
+
+        // Adiciona um deboche baseado na posição
+        if (index === 0) comentario = " (O dono da casa! 🏠)";
+        else if (index < 3) comentario = " (Tá quase chegando no topo! 🚀)";
+        else if (index > 7) comentario = " (Tá bem quietinho, hein... 👀)";
+        else comentario = " (Usuário padrão do grupo 🤙)";
+
+        res += `${index + 1}. @${id.split('@')[0]} - ${count} mensagens ${comentario}\n`;
+    });
+
+    res += "\n\n🤖 *Dica: Se falar menos, sobra mais tempo pra viver!*";
+
+    await sock.sendMessage(sender, { 
+        text: res, 
+        mentions: ranking.map(entry => entry[0]) 
+    }, { quoted: msg });
+}
+
+        // 5.3 !ADM (COM GIF E FRASES DEBOCHADAS)
 if (text.startsWith('!adm')) {
     if (!isAdmin) {
-        await sock.sendMessage(sender, { text: "Tentando furar as regras, né?? HAHAHHAHA 👀👀👀\n\nSabe que um ADM está de olho em você agora né?" });
+        await sock.sendMessage(sender, { text: "Tentando furar as regras, né?? HAHAHHAHA 👀👀👀\n\nSabe que um ADM está de olho em você agora né?" }, { quoted: msg });
     } else {
         const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
         if (mention) {
             try {
                 await sock.groupParticipantsUpdate(sender, [mention], 'promote');
                 
-                // Link do GIF para promoção (substitua por um link de sua preferência)
+                // Frases debochadas para a promoção
+                const frasesAdm = [
+                    `👑 O @${mention.split('@')[0]} foi promovido a administrador! Agora aguenta a responsabilidade, parceiro! 😂`,
+                    `🚨 Atenção! O @${mention.split('@')[0]} agora tem poder. Se verem ele fazendo besteira, a culpa é de quem promoveu! 🤡`,
+                    `😎 Agora o @${mention.split('@')[0]} é adm. Não deixa o poder subir à cabeça, hein?! 👑`,
+                    `🔥 @${mention.split('@')[0]} recebeu a coroa! Vamos ver se ele dura mais de uma semana ou se vai banir todo mundo! 🤣`,
+                    `📢 Habemus Administrador! @${mention.split('@')[0]} agora manda (ou finge que manda) nesta bagunça. Parabéns! 🎉`
+                ];
+                
+                const sorteioAdm = frasesAdm[Math.floor(Math.random() * frasesAdm.length)];
                 const linkGifAdm = "https://media.tenor.com/ASV7XuWQLXwAAAPo/alligator-crocodile.mp4";
 
                 await sock.sendMessage(sender, { 
                     video: { url: linkGifAdm },
                     gifPlayback: true,
-                    caption: `👑 O @${mention.split('@')[0]} agora é um ADMINISTRADOR do grupo! Parabéns!`, 
+                    caption: sorteioAdm, 
                     mentions: [mention] 
-                });
+                }, { quoted: msg }); // Adicionado quoted aqui também
+                
             } catch (e) {
-                await sock.sendMessage(sender, { text: "❌ Não consegui promover. Verifique se o bot é administrador do grupo." });
+                await sock.sendMessage(sender, { text: "❌ Não consegui promover. Verifique se o bot é administrador do grupo.", quoted: msg });
             }
         } else {
-            await sock.sendMessage(sender, { text: "❌ Você precisa mencionar alguém para tornar administrador!" });
+            await sock.sendMessage(sender, { text: "❌ Você precisa mencionar alguém para tornar administrador!", quoted: msg });
         }
     }
 }
@@ -991,9 +1107,10 @@ if (text === '!abrir') {
 
 // Dentro de sock.ev.on('messages.upsert', ...), substitua o seu bloco !musica atual por este:
 // 7. Música e Figurinha// Altere para um nome que não conflite com o seu !adm atual
+// AVISO ADM (ESTILO EMERGÊNCIA DRAMÁTICA)
 if (text === '!avisoadm') { 
     if (!msg.key.remoteJid.endsWith('@g.us')) {
-        return await sock.sendMessage(sender, { text: 'Este comando só funciona em grupos!' }, { quoted: msg });
+        return await sock.sendMessage(sender, { text: 'Este comando só funciona em grupos!', quoted: msg });
     }
 
     try {
@@ -1008,17 +1125,27 @@ if (text === '!avisoadm') {
         const ehAdmin = autorDados && autorDados.admin !== null;
 
         if (!ehAdmin) {
-            return await sock.sendMessage(sender, { text: '❌ Sai pra lá, apenas administradores podem usar este comando.' }, { quoted: msg });
+            return await sock.sendMessage(sender, { text: '❌ Sai pra lá, apenas administradores podem usar este comando.', quoted: msg });
         }
 
         // 3. Prossegue com a busca dos ADMs para notificar
         const admins = participantes.filter(p => p.admin !== null).map(p => p.id);
 
         if (admins.length === 0) {
-            return await sock.sendMessage(sender, { text: 'Não encontrei administradores neste grupo.' }, { quoted: msg });
+            return await sock.sendMessage(sender, { text: 'Não encontrei administradores neste grupo.', quoted: msg });
         }
 
-        const mençãoAdm = `📢 *ATENÇÃO ADMS!* \n\nPrecisamos de uma reunião ou verificação urgente. \n\n${admins.map(adm => `@${adm.split('@')[0]}`).join(' ')}`;
+        // Frases de pânico para o aviso
+        const frasesAlerta = [
+            `🚨 *ALERTA VERMELHO!* 🚨\n\nOs ADMs foram convocados para uma reunião de emergência! O circo está pegando fogo! 🔥`,
+            `📢 *CHAMADA GERAL DE ADMS!* 📢\n\nLarguem o que estão fazendo! O grupo precisa de vocês antes que a casa caia! 🏃‍♂️`,
+            `⚠️ *STATUS: CAOS!* ⚠️\n\nPrecisamos de uma verificação urgente dos nossos ADMs. Cadê vocês, seus lindos? 🧐`,
+            `🔥 *REUNIÃO DE CÚPULA!* 🔥\n\nOs ADMs foram convocados para resolver mais uma encrenca. O show não pode parar! 🎭`,
+            `📢 *ALERTA DE SEGURANÇA!* 📢\n\nADM, atenda ao chamado! A zueira está fora de controle! 😂`
+        ];
+
+        const sorteioAlerta = frasesAlerta[Math.floor(Math.random() * frasesAlerta.length)];
+        const mençãoAdm = `${sorteioAlerta} \n\n${admins.map(adm => `@${adm.split('@')[0]}`).join(' ')}`;
 
         await sock.sendMessage(sender, { 
             text: mençãoAdm, 
@@ -1027,6 +1154,7 @@ if (text === '!avisoadm') {
 
     } catch (error) {
         console.error('Erro ao chamar ADMs:', error);
+        await sock.sendMessage(sender, { text: '❌ O sistema de alarme falhou... os ADMs estão soltos!', quoted: msg });
     }
 }
         // Substitua seu bloco !musica por este:
