@@ -1045,33 +1045,40 @@ if (text.startsWith('!musica ')) {
             await sock.sendMessage(sender, { text: "Você está falando demais, dá um tempo seu rabugento.😂❌", mentions: [mention] });
         }
         // 8. COMANDO CLIMA (TRADUZIDO)
-        // 8. COMANDO CLIMA (Ajustado)
-        if (text.startsWith('!clima')) {
-            const cidade = text.replace('!clima', '').trim();
-            if (!cidade) return await sock.sendMessage(sender, { text: "❌ Digite a cidade! Ex: !clima Cariacica", quoted: msg });
+       // 8. COMANDO CLIMA (Ajustado com Reação e Reply)
+if (text.startsWith('!clima')) {
+    const cidade = text.replace('!clima', '').trim();
+    if (!cidade) return await sock.sendMessage(sender, { text: "❌ Digite a cidade! Ex: !clima Cariacica", quoted: msg });
 
-            const traduzir = (condicao) => {
-                const manual = {
-                    'light rain': 'Chuva leve', 'rain': 'Chuva', 'sunny': 'Ensolarado',
-                    'mostly sunny': 'Predominância de sol', 'cloudy': 'Nublado',
-                    'mostly cloudy': 'Predominância de nuvens', 'partly cloudy': 'Parcialmente nublado',
-                    'clear': 'Céu limpo', 'thunderstorms': 'Tempestades'
-                };
-                return manual[condicao.toLowerCase()] || condicao;
-            };
+    const traduzir = (condicao) => {
+        const manual = {
+            'light rain': 'Chuva leve', 'rain': 'Chuva', 'sunny': 'Ensolarado',
+            'mostly sunny': 'Predominância de sol', 'cloudy': 'Nublado',
+            'mostly cloudy': 'Predominância de nuvens', 'partly cloudy': 'Parcialmente nublado',
+            'clear': 'Céu limpo', 'thunderstorms': 'Tempestades'
+        };
+        return manual[condicao.toLowerCase()] || condicao;
+    };
 
-            weather.find({ search: cidade, degreeType: 'C' }, async (err, result) => {
-                if (err || !result || result.length === 0) return await sock.sendMessage(sender, { text: "❌ Cidade não encontrada.", quoted: msg });
-                
-                const current = result[0].current;
-                const condicaoTraduzida = traduzir(current.skytext);
-                
-                const msgClima = `🌤 *Tempo em: ${current.observationpoint}*\n` +
-                                 `🌡 Temperatura: ${current.temperature}°C\n` +
-                                 `☁️ Condição: ${condicaoTraduzida}`;
-                await sock.sendMessage(sender, { text: msgClima, quoted: msg });
-            });
+    weather.find({ search: cidade, degreeType: 'C' }, async (err, result) => {
+        if (err || !result || result.length === 0) {
+            return await sock.sendMessage(sender, { text: "❌ Cidade não encontrada.", quoted: msg });
         }
+        
+        const current = result[0].current;
+        const condicaoTraduzida = traduzir(current.skytext);
+        
+        const msgClima = `🌤 *Tempo em: ${current.observationpoint}*\n` +
+                         `🌡 Temperatura: ${current.temperature}°C\n` +
+                         `☁️ Condição: ${condicaoTraduzida}`;
+        
+        // 1. REAÇÃO NA MENSAGEM DO USUÁRIO
+        await sock.sendMessage(sender, { react: { text: '🌤', key: msg.key } });
+
+        // 2. RESPOSTA (REPLY)
+        await sock.sendMessage(sender, { text: msgClima, quoted: msg });
+    });
+}
     }); // Fecha o messages.upsert
 } // Fecha o connectToWhatsApp
 connectToWhatsApp();
