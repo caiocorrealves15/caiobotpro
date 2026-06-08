@@ -13,6 +13,14 @@ const infrações = {};
 const ultimaMensagem = {};
 const contagemFlood = {};
 let listaCasais = [];
+const salvarCasais = () => {
+    fs.writeFileSync('./casais.json', JSON.stringify(listaCasais));
+};
+if (fs.existsSync('./casais.json')) {
+    listaCasais = JSON.parse(fs.readFileSync('./casais.json'));
+} else {
+    listaCasais = [];
+}
 
 
 let placarEmoji = fs.existsSync(ARQUIVO_PLACAR_EMOJI) ? JSON.parse(fs.readFileSync(ARQUIVO_PLACAR_EMOJI)) : {};
@@ -818,12 +826,10 @@ if (text.startsWith('!casar')) {
         // Reação de aliança na mensagem de quem pediu
         await sock.sendMessage(sender, { react: { text: '💍', key: msg.key } });
 
-        // Salva o casal no ranking antes de enviar a mensagem
-        listaCasais.push({ 
-            p1: quemCasa, 
-            p2: quemRecebe, 
-            data: new Date().toLocaleDateString() 
-        });
+        // ... dentro do seu if(text.startsWith('!casar')) ...
+    listaCasais.push({ p1: quemCasa, p2: quemRecebe, data: new Date().toLocaleDateString() });
+    salvarCasais(); // Adicione esta linha!
+
 
         await sock.sendMessage(sender, { 
             video: { url: "https://media.tenor.com/h981yJykAXYAAAPo/la-haut-dessin-anime.mp4" }, 
@@ -898,8 +904,8 @@ if (text.startsWith('!descasar')) {
         return await sock.sendMessage(sender, { text: "❌ Vocês nem casados estão! Tá querendo divorciar de quem nunca existiu? 😂", quoted: msg });
     }
 
-    // Remove o casal da lista
-    listaCasais.splice(index, 1);
+listaCasais.splice(index, 1);
+salvarCasais(); // Adicione esta linha!
 
     const frasesDivorcio = [
         `💔 O divórcio saiu! @${autor} finalmente se livrou do peso morto chamado @${alvo}. Parabéns pela liberdade! 🥂`,
