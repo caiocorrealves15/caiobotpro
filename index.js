@@ -867,32 +867,33 @@ if (text === '!avisoadm') {
     }
 }
         // Substitua seu bloco !musica por este:
+// Você precisará instalar: npm install ytsr (para buscar) e usar uma API que entregue o stream direto
+// Como o YouTube é a fonte de quase tudo, vou manter a busca, mas forçar o envio como ÁUDIO.
 if (text.startsWith('!musica ')) {
     const busca = text.replace('!musica ', '');
     try {
-        await sock.sendMessage(sender, { text: "🔍 Calma aí \"Cantor\", estou Buscando sua música..." });
+        await sock.sendMessage(sender, { text: "Calma aí apressado, 🎧 Procurando o áudio da música..." });
         
-        // Busca o link do vídeo
+        // Buscamos o vídeo para pegar a URL de stream
         const searchResults = await ytsr(busca, { limit: 1 });
         const video = searchResults.items[0];
         
-        if (!video) return await sock.sendMessage(sender, { text: "❌ Não encontrado." });
+        if (!video) return await sock.sendMessage(sender, { text: "❌ Não encontrei." });
 
-        // Mensagem com o link e o GIF divertido
-        const mensagem = `🎵 *Música Encontrada!*\n\n` +
-                         `🎤 *Título:* ${video.title}\n` +
-                         `🔗 *Link:* ${video.url}\n\n` +
-                         `Dançando enquanto prepara o som... 😎, se você não tem Youtube Premium ou Spotify, melhor pagar seu pobre.`;
-
+        // IMPORTANTE: O WhatsApp exige que arquivos de áudio sejam enviados com buffer ou url direta.
+        // Como não podemos baixar e converter arquivos grandes no Render, 
+        // a melhor forma de enviar "como áudio" é usar um serviço de conversão ou link direto.
+        
+        // Enviando como áudio (Ptt: true faz aparecer com a voz do WhatsApp)
         await sock.sendMessage(sender, { 
-            video: { url: 'https://media.tenor.com/9SFSfC2n0lkAAAPo/head-phones-music.mp4' }, // GIF divertido
-            gifPlayback: true, 
-            caption: mensagem
-        });
+            audio: { url: video.url }, // O WhatsApp tenta processar o link como áudio
+            mimetype: 'audio/mp4',
+            ptt: true 
+        }, { quoted: msg });
 
     } catch (e) {
         console.error(e);
-        await sock.sendMessage(sender, { text: "❌ Erro ao buscar a música." });
+        await sock.sendMessage(sender, { text: "❌ Erro: O bot não conseguiu processar esse áudio. Tente outra música." });
     }
 }
        
