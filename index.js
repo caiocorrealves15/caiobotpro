@@ -27,7 +27,7 @@ async function buscarETocar(nomeMusica) {
         console.log("DEBUG API BUSCA:", JSON.stringify(resBusca.data, null, 2));
 
         // Tenta pegar o ID de várias formas possíveis que as APIs costumam usar
-        const videoId = resBusca.data.id || (resBusca.data[0] ? resBusca.data[0].id : null) || (resBusca.data.videos ? resBusca.data.videos[0].id : null);
+        const videoId = resBusca.data.videos[0].id;
         
         if (!videoId) throw new Error("ID não encontrado na resposta");
 
