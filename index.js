@@ -810,22 +810,29 @@ if (text.startsWith('!adm')) {
 
 // 5.3 !CASAIS (Versão com Reply Forçado)
 if (text === '!casais') {
-    // 1. Recarrega do arquivo
+    // 1. Proteção: Garante que a lista exista na memória antes de qualquer coisa
+    if (typeof listaCasais === 'undefined' || listaCasais === null) {
+        listaCasais = [];
+    }
+
+    // 2. Recarrega do arquivo de forma segura
     if (fs.existsSync('./casais.json')) {
         try {
-            listaCasais = JSON.parse(fs.readFileSync('./casais.json'));
+            const dadosArquivo = fs.readFileSync('./casais.json');
+            listaCasais = JSON.parse(dadosArquivo);
         } catch (e) {
+            console.error("Erro ao ler casais.json, resetando lista:", e);
             listaCasais = [];
         }
     }
 
-    // 2. Verifica se está vazio
-    if (listaCasais.length === 0) {
+    // 3. Verifica se a lista existe e está vazia
+    if (!listaCasais || listaCasais.length === 0) {
         await sock.sendMessage(sender, { react: { text: '🤡', key: msg.key } });
         return await sock.sendMessage(sender, { text: "❌ Ninguém casou ainda! Estão todos encalhados.", quoted: msg });
     }
 
-    // 3. Monta frases variadas para o topo do ranking
+    // 4. Monta frases variadas para o topo do ranking
     const frasesTopo = [
         "🏆 *RANKING DOS APAIXONADOS (OU LOUCOS)* 🏆",
         "🔥 *OS POMBINHOS DO GRUPO (SÓ O FILÉ):* 🔥",
@@ -835,7 +842,7 @@ if (text === '!casais') {
     ];
     let texto = frasesTopo[Math.floor(Math.random() * frasesTopo.length)] + "\n\n";
 
-    // 4. Monta o corpo com nomes ou IDs
+    // 5. Monta o corpo com nomes (ou IDs se não houver nome)
     listaCasais.forEach((c, i) => {
         const nomeExibicao1 = c.nome1 ? c.nome1 : `@${c.p1}`;
         const nomeExibicao2 = c.nome2 ? c.nome2 : `@${c.p2}`;
@@ -844,7 +851,7 @@ if (text === '!casais') {
     
     texto += "\n🤡 Quem será o próximo a cair na armadilha? HAHAHAHA";
 
-    // 5. Envio com reação e resposta (quoted)
+    // 6. Envio com reação e resposta (quoted)
     await sock.sendMessage(sender, { react: { text: '🏆', key: msg.key } });
     
     await sock.sendMessage(sender, { 
