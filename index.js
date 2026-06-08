@@ -811,7 +811,7 @@ if (text.startsWith('!adm')) {
             }
         }
 
-        
+
 
 
 if (text.startsWith('!descasar')) {
@@ -871,34 +871,44 @@ if (text.startsWith('!casar')) {
 
 
 if (text === '!casais') {
-    // 1. LEITURA OBRIGATÓRIA ANTES DE VERIFICAR
+    // 1. Recarrega do arquivo
     if (fs.existsSync('./casais.json')) {
         try {
             listaCasais = JSON.parse(fs.readFileSync('./casais.json', 'utf8'));
         } catch (e) {
             listaCasais = [];
         }
-    } else {
-        listaCasais = [];
     }
-
 
     if (!listaCasais || listaCasais.length === 0) {
-        return await sock.sendMessage(sender, { text: "❌ Ninguém casou ainda, pessoal!", quoted: msg });
+        return await sock.sendMessage(sender, { text: "❌ Ninguém casou ainda! Estão todos encalhados (e continuará assim).", quoted: msg });
     }
 
-  
-    let texto = "🏆 *RANKING DE CASAMENTOS* 🏆\n\n";
+    // 2. Frases zueiras para o cabeçalho
+    const frasesZueiras = [
+        "🏆 *CARTÓRIO DO CAOS - CASAIS DO MOMENTO* 🏆",
+        "🔥 *OS LOUCOS QUE DECIDIRAM SOFRER JUNTOS* 🔥",
+        "💒 *LISTA DE QUEM PERDEU A LIBERDADE (E A DIGNIDADE)* 💒",
+        "🤡 *REDE GLOBO DE CASAMENTOS DUVIDOSOS* 🤡",
+        "💖 *ALERTA DE ROMANCE: CUIDADO, CONTÉM EXCESSO DE MICO!* 💖",
+        "💀 *UNIDADES DE CUIDADOS INTENSIVOS (CASAL)* 💀"
+    ];
+    let texto = frasesZueiras[Math.floor(Math.random() * frasesZueiras.length)] + "\n\n";
+
+    let listaMentions = [];
+
     listaCasais.forEach((c, i) => {
         texto += `${i + 1}. @${c.p1} ❤️ @${c.p2}\n`;
+        listaMentions.push(c.p1 + "@s.whatsapp.net");
+        listaMentions.push(c.p2 + "@s.whatsapp.net");
     });
- 
-    texto += "\n🤡 Quem será o próximo?";
+    
+    texto += "\n🤡 Quem será o próximo trouxa a se declarar? Digite !casar @alguém";
 
-  
+    // 3. Envio com a zueira garantida
     await sock.sendMessage(sender, { 
         text: texto, 
-        mentions: listaCasais.flatMap(c => [c.p1 + "@s.whatsapp.net", c.p2 + "@s.whatsapp.net"]),
+        mentions: listaMentions,
         quoted: msg 
     });
 }
