@@ -119,34 +119,30 @@ async function connectToWhatsApp() {
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Fala aí, @${userId.split('@')[0]}! 🎉 
-Você acaba de entrar no grupo mais zueiro do Zap!
+Você acaba de ser convocado para a elite da zueira!
 
-🚀 *O QUE ROLA POR AQUI?*
-🎮 *JOGOS:* Emoji, RPG, Forca, Ranking de mensagens, Pênalti e mais!
-🎶 Músicas via comando !musica.
-🥊 Muita interação e resenha.
-🏆 Ranking de membros ativos.
+👑 *A ORDEM DO BONDE:*
+Aqui, seu nome vale ouro e sua posição no ranking define sua moral.
+Não somos apenas um grupo, somos uma hierarquia de lendas! 🏆
 
-👑 *DONO DO GRUPO:* Caio
-Dúvidas? Procure um dos nossos ADMs no privado.
+💎 *SISTEMA DE STATUS (CARGOS DE ELITE)*
+Você tem o que é preciso para subir na nossa hierarquia?
+• 👑 *LENDA:* O topo da pirâmide, onde poucos chegam.
+• 🔥 *REI DA ZUEIRA:* O caos personificado, nosso mestre das piadas.
+• 🐂 *GADO SUPREMO:* O posto mais disputado e amado do bonde.
+• 🤫 *FOFOQUEIRO(A):* O olho que tudo vê (e espalha).
 
-📝 *PARA COMEÇAR BEM:*
-Envie sua *FOTO | CIDADE | IDADE | NOME*.
+💰 *COMO OSTENTAR?*
+Interaja, jogue e suba no nosso ranking global. 
+Use *!cargos* para ver os preços e *!comprar_cargo* para cravar seu nome na história.
 
-🚫 *REGRAS DE OURO E SEGURANÇA*
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-• Proibido brigas, ofensas ou preconceito.
-• Proibido invadir PV sem permissão.
-• Proibido conteúdo adulto.
+📝 *PRIMEIRO PASSO:*
+Envie sua *FOTO | CIDADE | IDADE | NOME* para ser registrado no sistema.
 
-🚨 *SISTEMA DE PROTEÇÃO ATIVO 24H:*
-O bot monitora automaticamente:
-• *Links:* Proibido (Ban automático na insistência).
-• *Travas:* Proibido (Ban imediato).
-• *Spam/Flood:* Proibido (Mute automático).
-━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚫 *LEI DO BONDE:*
+Respeito é a base. Links, spam ou travas resultam em exclusão sumária. Aqui o sistema é bruto, mas justo!
 
-🤖 *DICA:* Digite *!menu* para ver todos os comandos e divirta-se!`;
+🤖 *DICA:* Digite *!menu* e veja do que o meu sistema é capaz!`;
 
         await sock.sendMessage(id, { 
             text: textoBoasVindas, 
@@ -736,39 +732,43 @@ if (text === '!menu') {
     const meuId = '5527992997083@s.whatsapp.net'; 
 
     const menuTexto = `
-╭━━ 🇧🇷 BONDE DO BRASIL 🇧🇷
+╭━━━ 🇧🇷 BONDE DO BRASIL 🇧🇷 ━━━╮
 │
-│ Fala, @${senderId.split('@')[0]}!
+│ 👤 Fala, @${senderId.split('@')[0]}!
 │ 📅 ${dataAtual} | ⏰ ${horaAtual}
 │ 👑 Dono: @5527992997083
 │
-├──── 🎮 JOGOS ────
+├──── 💎 STATUS & CARGOS ────
+│ 🛍️ !cargos  | 💳 !comprar_cargo
+│ 🎖️ !dar_cargo (ADM)
+│
+├──── 🎮 JOGOS & ECONOMIA ────
 │ 🔰 !rank      | ⌛ !sortear
-│ 🎇 !tier      | 🎮 !jogar
-│ 😵 !forca     | ⚽ !penalti
-│ 🎥 !emoji     | 🤡 !piada
-│ 🧠 !perguntas | 🏆 !rankingemoji
-│ 💍 !casar     | 💔 !descasar
-│ 👥 !casais    | 💰 !roubar
+│ 🎮 !jogar    | 💰 !roubar
+│ 😵 !forca    | ⚽ !penalti
+│ 🎥 !emoji    | 🤡 !piada
+│ 🧠 !perguntas| 🏆 !rankingemoji
+│ 💍 !casar    | 💔 !descasar
+│ 👥 !casais
 │
 ├──── 😂 ZUEIRA ────
-│ 🤜 !socar     | 😘 !beijar
-│ 🗡️ !matar     | 🤳 !f
-│ 🐂 !gado      | 🦌 !corno
+│ 🤜 !socar    | 😘 !beijar
+│ 🗡️ !matar    | 🤳 !f
+│ 🐂 !gado     | 🦌 !corno
 │ 🤫 !fofoca
 │
 ├──── 🚨 ADMIN ────
-│ ❌ !ban       | ❇️ !adm
-│ 🚫 !fechar    | 🔓 !abrir
-│ 🔇 !mute      | 🔊 !desmute
-│ 📣 !avisoadm  | 🕹️ !jogoson/off
+│ ❌ !ban      | ❇️ !adm
+│ 🚫 !fechar   | 🔓 !abrir
+│ 🔇 !mute     | 🔊 !desmute
+│ 📣 !avisoadm | 🕹️ !jogoson/off
 │
 ├──── ⚙️ UTIL & SUPORTE ────
-│ 📛 !menu      | 🌤️ !clima
-│ 🎵 !musica    | 🔗 !link
+│ 📛 !menu     | 🌤️ !clima
+│ 🎵 !musica   | 🔗 !link
 │
-╰━━━━━━━━━━━━━━━╯
-🤖 *Neymar BOT em constante evolução! Toda semana tem novidades.*`.trim();
+╰━━━━━━━━━━━━━━━━━━━━━━╯
+🤖 *O nível do jogo subiu! Acumule pontos, ostente seu cargo e não seja um NPC.*`.trim();
 
     await sock.sendMessage(sender, { 
         video: { url: 'https://media.tenor.com/WV_2tGerThoAAAPo/farming-aura-farming.mp4' },
@@ -1179,47 +1179,49 @@ if (text.startsWith('!roubar')) {
 }
         // 1. !RANK (ORGANIZADO E DEBOCHADO)
 // Substitua o seu bloco !rank atual por este:
+// Substitua o seu bloco !rank atual por este código completo:
 if (text === '!rank') {
-    // 1. LÊ OS CARGOS (Leitura obrigatória)
     let cargos = fs.existsSync('./cargos.json') ? JSON.parse(fs.readFileSync('./cargos.json', 'utf8')) : {};
-
-    // Ordena os usuários pelo número de mensagens (do maior para o menor)
     const ranking = Object.entries(contagemMensagens)
         .sort((a, b) => b[1] - a[1])
-        .slice(0, 10); // Mostra apenas os 10 primeiros
+        .slice(0, 10);
 
-    const frasesRanking = [
-        "🏆 *RANKING DE QUEM VIVE NO ZAP (VÍCIADOS)*",
-        "🔥 *TOP 10: QUEM NÃO TEM NADA PRA FAZER DA VIDA*",
-        "🤡 *LISTA DOS FALADORES E DOS QUE NÃO CALAM A BOCA*",
-        "👑 *OS REIS DO TECLADO - QUEM MAIS RESPONDE*"
-    ];
+    let res = "🏆 *RANKING DE QUEM VIVE NO ZAP*\n\n";
 
-    const titulo = frasesRanking[Math.floor(Math.random() * frasesRanking.length)];
-    let res = `${titulo}\n\n`;
-
+    // 1. LISTA PRINCIPAL
     ranking.forEach((entry, index) => {
         const [id, count] = entry;
-        let comentario = "";
-        
-        // 2. VERIFICA SE O USUÁRIO TEM CARGO
-        let cargoUser = cargos[id] ? `[${cargos[id]}] ` : "";
-
-        // Adiciona um deboche baseado na posição
-        if (index === 0) comentario = " (O dono da casa! 🏠)";
-        else if (index < 3) comentario = " (Tá quase chegando no topo! 🚀)";
-        else if (index > 7) comentario = " (Tá bem quietinho, hein... 👀)";
-        else comentario = " (Usuário padrão do grupo 🤙)";
-
-        // 3. ADICIONA O cargoUser ANTES DO @ID
-        res += `${index + 1}. ${cargoUser}@${id.split('@')[0]} - ${count} mensagens ${comentario}\n`;
+        let cargoUser = cargos[id] ? `[${cargos[id]}] ` : "👤 ";
+        res += `${index + 1}. ${cargoUser}@${id.split('@')[0]} - ${count} mens.\n`;
     });
 
-    res += "\n\n🤖 *Dica: Se falar menos, sobra mais tempo pra viver!*";
+    // 2. HIERARQUIA DE CARGOS (Destacada abaixo)
+    res += "\n━━━━━━━━━━━━━━━━━━\n👑 *HIERARQUIA DE PODER:*\n";
+    
+    const iconesCargos = {
+        "Lenda": "👑",
+        "Rei da Zueira": "🔥",
+        "Gado Supremo": "🐂",
+        "Fofoqueiro(a)": "🤫"
+    };
+
+    // Agrupa usuários por cargo
+    const gruposCargos = {};
+    for (const [id, cargo] of Object.entries(cargos)) {
+        if (!gruposCargos[cargo]) gruposCargos[cargo] = [];
+        gruposCargos[cargo].push(`@${id.split('@')[0]}`);
+    }
+
+    for (const [cargo, usuarios] of Object.entries(gruposCargos)) {
+        const icone = iconesCargos[cargo] || "⭐";
+        res += `${icone} *${cargo}*: ${usuarios.join(', ')}\n`;
+    }
+
+    res += "\n🤖 *Dica: Suba no ranking para comprar cargos!*";
 
     await sock.sendMessage(sender, { 
         text: res, 
-        mentions: ranking.map(entry => entry[0]) 
+        mentions: Object.keys(cargos) // Menciona todos que têm cargo
     }, { quoted: msg });
 }
 
