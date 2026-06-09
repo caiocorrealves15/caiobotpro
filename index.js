@@ -947,26 +947,24 @@ if (text.startsWith('!casar')) {
     const p1 = participant.split('@')[0];
     const p2 = mention.split('@')[0];
     
-    // Captura o nome de quem enviou (pushName)
+    // Captura o nome de quem enviou
     const nome1 = msg.pushName || "Alguém"; 
     
-    // Captura o nome de quem foi mencionado buscando no grupo
+    // Tenta pegar o nome da pessoa mencionada no grupo
     let nome2 = "Mencionado";
     try {
         const metadata = await sock.groupMetadata(sender);
-        const participanteMencionado = metadata.participants.find(p => p.id === mention);
-        if (participanteMencionado) {
-            // Tenta pegar o nome do perfil (se disponível)
-            nome2 = participanteMencionado.notify || participanteMencionado.pushName || "Mencionado";
-        }
+        const participante = metadata.participants.find(p => p.id === mention);
+        // O pushName é o nome que a pessoa escolheu no WhatsApp
+        nome2 = participante?.pushName || "Convidado(a)";
     } catch (e) {
-        console.error("Erro ao buscar nome do mencionado:", e);
+        nome2 = "Convidado(a)";
     }
 
     const jaCasado = listaCasais.find(c => (c.p1 === p1 && c.p2 === p2) || (c.p1 === p2 && c.p2 === p1));
     if (jaCasado) return await sock.sendMessage(sender, { text: "❌ Vocês já são casados!", quoted: msg });
 
-    // SALVANDO O NOME CORRETO NO JSON
+    // SALVANDO O NOME CORRETO
     listaCasais.push({ p1, p2, nome1, nome2 });
     salvarCasais(); 
 
