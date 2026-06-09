@@ -236,11 +236,31 @@ O bot monitora automaticamente:
         return await sock.sendMessage(sender, { text: "🔓 *JOGOS ATIVADOS!* Podem soltar a bagunça! 🎉", quoted: msg });
     }
 
-    // 4. Trava de segurança para jogos
-    const comandosDeJogo = ['!piada', '!casar', '!descasar', '!forca', '!penalti', '!sortear', '!emoji', '!jogar'];
-    if (!jogosLiberados && comandosDeJogo.some(cmd => text.startsWith(cmd))) {
-        return await sock.sendMessage(sender, { text: "❌ *Os jogos estão desativados por um ADM.* Aguarde a liberação para brincar! 🤐", quoted: msg });
+    // --- 4. Trava de segurança para jogos (COM EXCEÇÃO PARA ADM) ---
+const comandosDeJogo = ['!piada', '!casar', '!descasar', '!forca', '!penalti', '!sortear', '!emoji', '!jogar'];
+
+if (!jogosLiberados && comandosDeJogo.some(cmd => text.startsWith(cmd))) {
+    if (isAdmin) {
+        const frasesAdm = [
+            "🤖 Os jogos estão trancados a sete chaves, mas como você é o dono da banca (ADM), vou abrir uma exceção só pra você! 👑",
+            "😎 O grupo tá em modo sério, mas pra você eu abro qualquer porta. Pode mandar o comando! 🔓",
+            "🤴 Você não deveria, mas você é o chefe, né? Jogos liberados só por causa da sua majestade! 👑",
+            "🧐 O sistema tá bloqueado, mas pra você eu faço um 'gato' aqui. Manda ver, ADM! 🛠️",
+            "🤡 Os plebeus não podem jogar, mas como você é o ADM, vou ignorar as regras só pra te agradar! 🎉"
+        ];
+        
+        await sock.sendMessage(sender, { 
+            text: frasesAdm[Math.floor(Math.random() * frasesAdm.length)], 
+            quoted: msg 
+        });
+        // O código continua e executa o jogo normalmente
+    } else {
+        return await sock.sendMessage(sender, { 
+            text: "❌ *Os jogos estão desativados por um ADM.* Aguarde a liberação para brincar, seu apressado! 🤐", 
+            quoted: msg 
+        });
     }
+}
 
     // --- LÓGICA DO ANTI-LINK COM AUTO BAN ---
 // --- LÓGICA DO ANTI-LINK COM AUTO BAN ---
