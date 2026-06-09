@@ -1798,6 +1798,7 @@ if (text.startsWith('!musica ')) {
        // 8. COMANDO CLIMA (Forçando o Reply com variável constante)
 // 8. COMANDO CLIMA (Versão Debochada e Otimizada)
 // 8. COMANDO CLIMA (Versão Debochada e Otimizada)
+// --- COMANDO !CLIMA (VERSÃO DEBOCHADA E OTIMIZADA) ---
 if (text.startsWith('!clima')) {
     const cidade = text.replace('!clima', '').trim();
     if (!cidade) return await sock.sendMessage(sender, { text: "❌ Digite a cidade! Ex: !clima Cariacica", quoted: msg });
@@ -1846,11 +1847,10 @@ if (text.startsWith('!clima')) {
         
         await sock.sendMessage(sender, { react: { text: '🌤', key: mensagemParaResponder.key } });
         await sock.sendMessage(sender, { text: msgClima }, { quoted: mensagemParaResponder });
-    // ... [seu código anterior continua aqui]
     }); 
-} // Fecha o if do !clima
+} // Fecha o if da condição !clima
 
 }); // Fecha o sock.ev.on('messages.upsert', ...)
-} // Fecha o async function connectToWhatsApp()
+} // Fecha a function connectToWhatsApp()
 
 connectToWhatsApp();
