@@ -1799,6 +1799,7 @@ if (text.startsWith('!musica ')) {
 // 8. COMANDO CLIMA (Versão Debochada e Otimizada)
 // 8. COMANDO CLIMA (Versão Debochada e Otimizada)
 // --- COMANDO !CLIMA (VERSÃO DEBOCHADA E OTIMIZADA) ---
+// --- 8. COMANDO CLIMA (VERSÃO DEBOCHADA E OTIMIZADA) ---
 if (text.startsWith('!clima')) {
     const cidade = text.replace('!clima', '').trim();
     if (!cidade) return await sock.sendMessage(sender, { text: "❌ Digite a cidade! Ex: !clima Cariacica", quoted: msg });
@@ -1848,9 +1849,9 @@ if (text.startsWith('!clima')) {
         await sock.sendMessage(sender, { react: { text: '🌤', key: mensagemParaResponder.key } });
         await sock.sendMessage(sender, { text: msgClima }, { quoted: mensagemParaResponder });
     }); 
-} // Fecha o if da condição !clima
+} // <--- FECHA O IF DO !CLIMA (APENAS UM AQUI)
 
-}); // Fecha o sock.ev.on('messages.upsert', ...)
-} // Fecha a function connectToWhatsApp()
+}); // <--- FECHA O MESSAGES.UPSERT
+} // <--- FECHA O CONNECTTOWHATSAPP
 
 connectToWhatsApp();
