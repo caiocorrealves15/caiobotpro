@@ -880,6 +880,7 @@ if (text.startsWith('!jogar')) {
         // Premiação no placar
         let placar = JSON.parse(fs.readFileSync('./placar.json', 'utf8'));
         placar[participant] = (placar[participant] || 0) + 150;
+        await enviarBackupAutomatico(sock); // <--- Adicione isso aqui!
         fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
 
         await sock.sendMessage(sender, { 
@@ -1366,6 +1367,7 @@ if (text.startsWith('!casar')) {
     // Adiciona o novo casal
     listaCasais.push({ p1, p2 }); 
     salvarCasais(); 
+    await enviarBackupAutomatico(sock);
 
     const frases = [
         `💍 O @${p1.split('@')[0]} casou com @${p2.split('@')[0]}!`,
