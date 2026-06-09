@@ -91,16 +91,17 @@ let contagemMensagens = fs.existsSync(ARQUIVO_RANK) ? JSON.parse(fs.readFileSync
 let mutados = fs.existsSync(ARQUIVO_MUTADOS) ? JSON.parse(fs.readFileSync(ARQUIVO_MUTADOS)) : {};
 
 // --- FUNÇÃO DE CONEXÃO ---
+// --- FUNÇÃO DE CONEXÃO ---
 async function connectToWhatsApp() {
-        console.log("--- FUNÇÃO DE CONEXÃO INICIADA ---");
-        const { state, saveCreds } = await useMultiFileAuthState('auth_info');
+    console.log("--- FUNÇÃO DE CONEXÃO INICIADA ---");
+    const { state, saveCreds } = await useMultiFileAuthState('auth_info');
 
-        const sock = makeWASocket({
-            logger: pino({ level: 'silent' }),
-            auth: state,
-            syncFullHistory: false, // Mudei para false para estabilizar
-            browser: ['Desktop', 'Chrome', '121.0.0.0'] 
-        });
+    const sock = makeWASocket({
+        logger: pino({ level: 'silent' }),
+        auth: state,
+        syncFullHistory: false,
+        browser: ['Desktop', 'Chrome', '121.0.0.0'] 
+    });
 
     sock.ev.on('creds.update', saveCreds);
 
@@ -205,29 +206,25 @@ O bot monitora automaticamente:
     }
 
    sock.ev.on('messages.upsert', async (m) => {
-    const msg = m.messages[0];
-    if (!msg.message || msg.key.fromMe) return;
-    
-    const sender = msg.key.remoteJid;
-    const participant = msg.key.participant || sender;
-    const isGroup = sender.endsWith('@g.us');
-    
-    // Captura do texto de forma robusta
-    const text = msg.message.conversation || msg.message.extendedTextMessage?.text || msg.message.imageMessage?.caption || msg.message.videoMessage?.caption || "";
-    const lowerText = text.toLowerCase();
-    const isMedia = (msg.message.imageMessage || msg.message.videoMessage || msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage || msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage);
+        const msg = m.messages[0];
+        if (!msg.message || msg.key.fromMe) return;
+        
+        const sender = msg.key.remoteJid;
+        const participant = msg.key.participant || sender;
+        const isGroup = sender.endsWith('@g.us');
+        
+        const text = msg.message.conversation || msg.message.extendedTextMessage?.text || msg.message.imageMessage?.caption || msg.message.videoMessage?.caption || "";
+        const lowerText = text.toLowerCase();
+        const isMedia = (msg.message.imageMessage || msg.message.videoMessage || msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage || msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage);
 
-    // 1. Definição automática de ADMs para evitar erros
-    let isAdmin = false;
-    if (isGroup) {
-        try {
-            const metadata = await sock.groupMetadata(sender);
-            const groupAdmins = metadata.participants.filter(p => p.admin !== null).map(p => p.id);
-            isAdmin = groupAdmins.includes(participant);
-        } catch (e) {
-            console.log("Erro ao buscar admins:", e);
+        let isAdmin = false;
+        if (isGroup) {
+            try {
+                const metadata = await sock.groupMetadata(sender);
+                const groupAdmins = metadata.participants.filter(p => p.admin !== null).map(p => p.id);
+                isAdmin = groupAdmins.includes(participant);
+            } catch (e) { console.log("Erro ao buscar admins:", e); }
         }
-    }
 
     // 2. Verificação de Mutados
     if (mutados[participant] && Date.now() < mutados[participant]) {
@@ -272,6 +269,40 @@ if (!jogosLiberados && comandosDeJogo.some(cmd => text.startsWith(cmd))) {
             quoted: msg 
         });
     }
+}
+
+if (text.startsWith('!comprar_cargo')) {
+    const novoCargo = text.replace('!comprar_cargo', '').trim();
+    if (!novoCargo) return await sock.sendMessage(sender, { text: "❌ Qual cargo você quer? Ex: !comprar_cargo Rei da Zueira", quoted: msg });
+
+    let placar = JSON.parse(fs.readFileSync('./placar.json', 'utf8'));
+    let cargos = fs.existsSync('./cargos.json') ? JSON.parse(fs.readFileSync('./cargos.json', 'utf8')) : {};
+    
+    const custo = 500; // Preço do luxo
+    if ((placar[participant] || 0) < custo) return await sock.sendMessage(sender, { text: `❌ Você não tem ${custo} pontos! Vai trabalhar! 😂`, quoted: msg });
+
+    placar[participant] -= custo;
+    cargos[participant] = novoCargo;
+    
+    fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
+    fs.writeFileSync('./cargos.json', JSON.stringify(cargos, null, 2));
+
+    await sock.sendMessage(sender, { text: `👑 Parabéns @${participant.split('@')[0]}! Agora seu cargo oficial é: *${novoCargo}*`, mentions: [participant], quoted: msg });
+}
+
+if (text.startsWith('!dar_cargo')) {
+    if (!isAdmin) return await sock.sendMessage(sender, { text: "❌ Só ADM tem poder para dar cargos!", quoted: msg });
+    
+    const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+    const cargoNome = text.replace('!dar_cargo', '').replace(/@\d+/, '').trim();
+    
+    if (!mention || !cargoNome) return await sock.sendMessage(sender, { text: "❌ Use: !dar_cargo @mencao [nome do cargo]", quoted: msg });
+
+    let cargos = fs.existsSync('./cargos.json') ? JSON.parse(fs.readFileSync('./cargos.json', 'utf8')) : {};
+    cargos[mention] = cargoNome;
+    fs.writeFileSync('./cargos.json', JSON.stringify(cargos, null, 2));
+
+    await sock.sendMessage(sender, { text: `✅ Cargo "${cargoNome}" concedido com sucesso ao @${mention.split('@')[0]}!`, mentions: [mention], quoted: msg });
 }
 
 // --- COMANDO !PERGUNTAS (QUIZ MEDIANO/DIFÍCIL) ---
@@ -478,7 +509,7 @@ if (jogoEmoji.ativo &&
         
         // --- ATUALIZAÇÃO DO PLACAR ---
         const pId = msg.key.participant;
-        placarEmoji[pId] = (placarEmoji[pId] || 0) + 1;
+        placarEmoji[pId] = (placarEmoji[pId] || 0) + 100;
         fs.writeFileSync(ARQUIVO_PLACAR_EMOJI, JSON.stringify(placarEmoji, null, 2));
 
         await sock.sendMessage(sender, { 
@@ -667,10 +698,16 @@ if (lowerText.includes('bebida') || lowerText.includes('cerveja') || lowerText.i
     await sock.sendMessage(sender, { react: { text: emojiSorteado, key: msg.key } });
 }
 
-
-    // 9. Comandos extras (ban, tier, matar, rank, adm, socar, beijar, fechar, abrir, musica, desmute, mute, clima)
-    // *Dica: Aplique o quoted: msg em todos os sock.sendMessage dentro desses blocos também!*
-    const comandosExistentes = ['!menu', '!rank', '!casar', '!casais', '!piada', '!avisoadm', '!descasar', '!emoji', '!sortear', '!perguntas', '!jogar', '!forca', '!jogosoff', '!jogoson', '!link', '!tier', '!rankingemoji', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute', '!gado', '!corno', '!fofoca', '!roubar'];
+    // Ache essa linha no seu código e adicione o '!cargos' nela:
+const comandosExistentes = [
+    '!menu', '!rank', '!casar', '!casais', '!piada', '!avisoadm', 
+    '!descasar', '!emoji', '!sortear', '!perguntas', '!jogar', 
+    '!forca', '!jogosoff', '!jogoson', '!link', '!tier', 
+    '!rankingemoji', '!penalti', '!musica', '!socar', '!beijar', 
+    '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', 
+    '!clima', '!desmute', '!mute', '!gado', '!corno', 
+    '!fofoca', '!roubar', '!cargos', '!comprar_cargo', '!dar_cargo' // Adicionei aqui
+];
 
 if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd))) {
     const autor = msg.key.participant || msg.key.remoteJid;
@@ -747,43 +784,64 @@ if (text.startsWith('!jogar')) {
 
     const args = text.split(' ');
     const escolha = parseInt(args[1]);
+    const senderId = msg.key.remoteJid;
 
     // Definição dos cenários possíveis
     const cenarios = [
-        { nome: "Caverna Misteriosa", desc: "Você encontrou uma caverna! Escolha um caminho:" },
-        { nome: "Castelo Assombrado", desc: "Você está na porta de um castelo! Escolha uma porta:" },
-        { nome: "Floresta Proibida", desc: "Você se perdeu na floresta! Escolha uma trilha:" }
+        { nome: "Caverna Misteriosa", desc: "Você entrou numa caverna úmida e escura. Escolha um caminho:" },
+        { nome: "Castelo Assombrado", desc: "Você está na porta de um castelo mal-assombrado! Escolha uma porta:" },
+        { nome: "Floresta Proibida", desc: "Você se perdeu na floresta e ouviu um barulho estranho! Escolha uma trilha:" }
     ];
 
     // Se o usuário não digitou um número (ou número inválido)
     if (!escolha || escolha < 1 || escolha > 3) {
         const cenarioSorteado = cenarios[Math.floor(Math.random() * cenarios.length)];
         return await sock.sendMessage(sender, { 
-            video: { url: 'https://media.tenor.com/jhsMAREYalUAAAPo/pacman-gaming.mp4' }, // GIF de abertura
+            video: { url: 'https://media.tenor.com/jhsMAREYalUAAAPo/pacman-gaming.mp4' }, 
             gifPlayback: true,
             caption: `🎮 *RPG DO BONDE - ${cenarioSorteado.nome}*\n\n${cenarioSorteado.desc}\n\n1. Esquerda\n2. Centro\n3. Direita\n\nDigite !jogar [1, 2 ou 3]`
-        }, { quoted: msg }); // Responde ao jogador corretamente
+        }, { quoted: msg });
     }
 
     // Lógica de resultado
     const caminhoVencedor = Math.floor(Math.random() * 3) + 1;
+    
+    // Frases zueiras para vitória
+    const frasesVitoria = [
+        `🏆 BOA! Você escolheu o caminho ${escolha} e encontrou um baú cheio de ouro! Ganhou 150 pontos! 💰`,
+        `🎉 MITOU! Você escolheu o ${escolha} e deu de cara com um tesouro escondido. Recebeu 150 pontos! 💎`,
+        `😎 O mestre do destino! Você acertou e o bot te deu 150 pontos pela sorte! 🧧`
+    ];
+
+    // Frases zueiras para derrota
+    const frasesDerrota = [
+        `💀 Xiii... deu ruim! Você escolheu o ${escolha} e caiu numa armadilha de urso. O caminho certo era o ${caminhoVencedor}. Tenta não morrer na próxima! 😂`,
+        `🤡 Que feio! Você escolheu o ${escolha} e deu de cara com um monstro faminto. O certo era ${caminhoVencedor}. Pobre coitado! 👻`,
+        `📉 Deu PT! Você escolheu o ${escolha} e se perdeu todo. O caminho era o ${caminhoVencedor}. Fraco demais! 🤣`
+    ];
 
     if (escolha === caminhoVencedor) {
+        // Premiação no placar
+        let placar = JSON.parse(fs.readFileSync('./placar.json', 'utf8'));
+        placar[participant] = (placar[participant] || 0) + 150;
+        fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
+
         await sock.sendMessage(sender, { 
             video: { url: 'https://media.tenor.com/FCtDCj3ihF8AAAPo/bugs-bunny-looney-tunes.mp4' }, 
             gifPlayback: true, 
-            caption: `🏆 BOA! Você escolheu o caminho ${escolha} e encontrou um tesouro épico!`
+            caption: frasesVitoria[Math.floor(Math.random() * frasesVitoria.length)]
         }, { quoted: msg });
     } else {
         await sock.sendMessage(sender, { 
             video: { url: 'https://media.tenor.com/Lhwo0gmSWLcAAAPo/higuruma-jjk.mp4' }, 
             gifPlayback: true, 
-            caption: `💀 Xiii... deu ruim! Você escolheu o ${escolha} e deu de cara com um monstro. O caminho certo era o ${caminhoVencedor}.`
+            caption: frasesDerrota[Math.floor(Math.random() * frasesDerrota.length)]
         }, { quoted: msg });
     }
 }
 
-// --- COMANDO !PIADA ---
+// ... (mantenha tudo o que vem antes, até o final do !jogar)
+
 // --- COMANDO !PIADA ---
 if (text === '!piada') {
     const piadas = [
@@ -806,10 +864,8 @@ if (text === '!piada') {
 
     const sorteada = piadas[Math.floor(Math.random() * piadas.length)];
 
-    // Reage na mensagem de quem pediu
     await sock.sendMessage(sender, { react: { text: '🤡', key: msg.key } });
 
-    // Envia o desafio com GIF e menção implícita no quoted
     const msgPiada = await sock.sendMessage(sender, { 
         video: { url: 'https://media.tenor.com/TK5ohR8zXzAAAAPo/o-livro-dos-insultos-the-noite-com-danilo-gentili.mp4' },
         gifPlayback: true,
@@ -821,19 +877,22 @@ if (text === '!piada') {
     jogoPiada.idMensagem = msgPiada.key.id;
 }
 
-// Lógica de validação
+// Lógica de validação do piada
 if (jogoPiada.ativo && msg.message?.extendedTextMessage?.contextInfo?.stanzaId === jogoPiada.idMensagem) {
     const respostaUsuario = text.toLowerCase().trim();
-
     if (respostaUsuario === jogoPiada.resposta) {
         jogoPiada.ativo = false;
+        let placar = JSON.parse(fs.readFileSync('./placar.json', 'utf8'));
+        placar[participant] = (placar[participant] || 0) + 75; // Premiação piada
+        fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
         await sock.sendMessage(sender, { react: { text: '🏆', key: msg.key } });
-        await sock.sendMessage(sender, { text: `🎉 BOA! @${participant.split('@')[0]} é um mestre das piadas sem graça! A resposta era mesmo: *${jogoPiada.resposta.toUpperCase()}*`, mentions: [participant], quoted: msg });
+        await sock.sendMessage(sender, { text: `🎉 BOA! @${participant.split('@')[0]} ganhou 75 pontos! A resposta era: *${jogoPiada.resposta.toUpperCase()}*`, mentions: [participant], quoted: msg });
     } else {
         await sock.sendMessage(sender, { react: { text: '❌', key: msg.key } });
-        await sock.sendMessage(sender, { text: `❌ Errou feio! Continua tentando aí, o grupo agradece o esforço.`, quoted: msg });
     }
 }
+
+// ... (Siga o padrão acima para os outros comandos)
 
 if (text.startsWith('!penalti')) {
     // Reação de bola de futebol
@@ -858,7 +917,7 @@ if (text.startsWith('!penalti')) {
 
     const defesa = Math.random() < 0.5;
     if (!defesa) {
-        placar[senderId] += 1;
+        placar[senderId] += 50;
         fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
         await sock.sendMessage(sender, { 
             caption: `⚽ GOOOOOL! Você marcou! Total de gols: ${placar[senderId]}`, 
@@ -1119,7 +1178,11 @@ if (text.startsWith('!roubar')) {
     }
 }
         // 1. !RANK (ORGANIZADO E DEBOCHADO)
+// Substitua o seu bloco !rank atual por este:
 if (text === '!rank') {
+    // 1. LÊ OS CARGOS (Leitura obrigatória)
+    let cargos = fs.existsSync('./cargos.json') ? JSON.parse(fs.readFileSync('./cargos.json', 'utf8')) : {};
+
     // Ordena os usuários pelo número de mensagens (do maior para o menor)
     const ranking = Object.entries(contagemMensagens)
         .sort((a, b) => b[1] - a[1])
@@ -1138,6 +1201,9 @@ if (text === '!rank') {
     ranking.forEach((entry, index) => {
         const [id, count] = entry;
         let comentario = "";
+        
+        // 2. VERIFICA SE O USUÁRIO TEM CARGO
+        let cargoUser = cargos[id] ? `[${cargos[id]}] ` : "";
 
         // Adiciona um deboche baseado na posição
         if (index === 0) comentario = " (O dono da casa! 🏠)";
@@ -1145,7 +1211,8 @@ if (text === '!rank') {
         else if (index > 7) comentario = " (Tá bem quietinho, hein... 👀)";
         else comentario = " (Usuário padrão do grupo 🤙)";
 
-        res += `${index + 1}. @${id.split('@')[0]} - ${count} mensagens ${comentario}\n`;
+        // 3. ADICIONA O cargoUser ANTES DO @ID
+        res += `${index + 1}. ${cargoUser}@${id.split('@')[0]} - ${count} mensagens ${comentario}\n`;
     });
 
     res += "\n\n🤖 *Dica: Se falar menos, sobra mais tempo pra viver!*";
@@ -1154,6 +1221,23 @@ if (text === '!rank') {
         text: res, 
         mentions: ranking.map(entry => entry[0]) 
     }, { quoted: msg });
+}
+
+// --- COMANDO !CARGOS (LISTA DE PREÇOS) ---
+if (text === '!cargos') {
+    const listaPrecos = `🛍️ *MERCADO DE CARGOS - BONDE DO BRASIL*\n\n` +
+                        `Escolha seu título e ostente no Ranking!\n\n` +
+                        `👑 *Lenda* - 1000 pontos\n` +
+                        `🔥 *Rei da Zueira* - 500 pontos\n` +
+                        `🐂 *Gado Supremo* - 300 pontos\n` +
+                        `🤫 *Fofoqueiro(a)* - 200 pontos\n\n` +
+                        `Use: !comprar_cargo [NomeDoCargo]\n` +
+                        `Exemplo: !comprar_cargo Lenda`;
+    
+    await sock.sendMessage(sender, { 
+        text: listaPrecos,
+        quoted: msg 
+    });
 }
 
         // 5.3 !ADM (COM GIF E FRASES DEBOCHADAS)
@@ -1254,6 +1338,15 @@ if (text.startsWith('!casar')) {
     const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
     if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione alguém para casar, senão vai ficar encalhado!", quoted: msg });
 
+    // AJUSTE: Força a leitura do arquivo atualizado antes de qualquer verificação
+    try {
+        if (fs.existsSync('./casais.json')) {
+            listaCasais = JSON.parse(fs.readFileSync('./casais.json', 'utf8'));
+        }
+    } catch (e) {
+        listaCasais = [];
+    }
+
     const p1 = participant; // ID completo de quem chamou
     const p2 = mention;     // ID completo do mencionado
 
@@ -1291,18 +1384,22 @@ if (text.startsWith('!casar')) {
 }
 
 if (text === '!casais') {
- 
-    if (fs.existsSync('./casais.json')) {
-        try {
+    // AJUSTE: Força a leitura do arquivo toda vez que o comando é chamado
+    try {
+        if (fs.existsSync('./casais.json')) {
             listaCasais = JSON.parse(fs.readFileSync('./casais.json', 'utf8'));
-        } catch (e) { listaCasais = []; }
+        } else {
+            listaCasais = [];
+        }
+    } catch (e) {
+        console.error("Erro ao ler casais.json:", e);
+        listaCasais = [];
     }
 
     if (!listaCasais || listaCasais.length === 0) {
         return await sock.sendMessage(sender, { text: "❌ Ninguém casou ainda! Estão todos encalhados.", quoted: msg });
     }
 
- 
     const frasesZueiras = [
         "🏆 *CARTÓRIO DO CAOS - CASAIS DO MOMENTO* 🏆",
         "🔥 *OS LOUCOS QUE DECIDIRAM SOFRER JUNTOS* 🔥",
@@ -1318,7 +1415,6 @@ if (text === '!casais') {
 
     let listaMentions = [];
 
-  
     listaCasais.forEach((c, i) => {
         // Usa o formato @ID para o WhatsApp processar a menção
         const id1 = c.p1.split('@')[0];
@@ -1333,7 +1429,6 @@ if (text === '!casais') {
     
     texto += "\n🤡 Quem será o próximo trouxa a cair na armadilha? Digite !casar @alguém";
 
-  
     await sock.sendMessage(sender, { react: { text: '💍', key: msg.key } });
     await sock.sendMessage(sender, { 
         text: texto, 
