@@ -221,11 +221,17 @@ if (text === '!jogoson') {
     await sock.sendMessage(sender, { text: "🔓 *JOGOS ATIVADOS!* Podem soltar a bagunça! 🎉", quoted: msg });
 }
 
+// Verifica quem são os administradores do grupo
+const groupMetadata = isGroup ? await sock.groupMetadata(from) : "";
+const groupAdmins = isGroup ? groupMetadata.participants.filter(v => v.admin !== null).map(v => v.id) : [];
+const isGroupAdmins = groupAdmins.includes(sender);
+
 const comandosDeJogo = ['!piada', '!casar', '!descasar', '!forca', '!penalti', '!sortear', '!emoji', '!jogar'];
 
 if (!jogosLiberados && comandosDeJogo.some(cmd => text.startsWith(cmd))) {
     return await sock.sendMessage(sender, { text: "❌ *Os jogos estão desativados por um ADM.* Aguarde a liberação para brincar! 🤐", quoted: msg });
 }
+
     // --- LÓGICA DO ANTI-LINK COM AUTO BAN ---
 // --- LÓGICA DO ANTI-LINK COM AUTO BAN ---
 const isLink = /https?:\/\/[^\s]+/.test(text);
@@ -578,7 +584,7 @@ if (lowerText.includes('bebida') || lowerText.includes('cerveja') || lowerText.i
 
     // 9. Comandos extras (ban, tier, matar, rank, adm, socar, beijar, fechar, abrir, musica, desmute, mute, clima)
     // *Dica: Aplique o quoted: msg em todos os sock.sendMessage dentro desses blocos também!*
-    const comandosExistentes = ['!menu', '!rank', '!casar', '!casais', '!piada', '!avisoadm', '!descasar', '!emoji', '!sortear', '!jogar', '!forca', '!link', '!tier', '!rankingemoji', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute'];
+    const comandosExistentes = ['!menu', '!rank', '!casar', '!casais', '!piada', '!avisoadm', '!descasar', '!emoji', '!sortear', '!jogar', '!forca', '!jogosoff', '!jogoson', '!link', '!tier', '!rankingemoji', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute'];
 
 if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd))) {
     const autor = msg.key.participant || msg.key.remoteJid;
