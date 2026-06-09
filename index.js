@@ -484,8 +484,7 @@ if (text === '!sortear') {
 }
 
 
-    // 4. Saudações
-// 4. Saudações (Mensagens Motivacionais)
+   // 4. Saudações (Mensagens Engraçadas e Debochadas)
 if (lowerText.includes('bom dia') || lowerText.includes('boa tarde') || lowerText.includes('boa noite')) {
     let emoji = '✨';
     let frases = [];
@@ -493,32 +492,32 @@ if (lowerText.includes('bom dia') || lowerText.includes('boa tarde') || lowerTex
     if (lowerText.includes('bom dia')) {
         emoji = '☀️';
         frases = [
-            'Bom dia! Cada novo amanhecer é uma página em branco na sua história. Escreva algo incrível hoje! ✨',
-            'Bom dia! Acredite no seu potencial. Hoje é o dia perfeito para dar um passo em direção aos seus sonhos. 🚀',
-            'Bom dia! Que a sua energia positiva contagie a todos ao seu redor. Tenha um dia produtivo e abençoado! 🌈',
-            'Bom dia! Não deixe para amanhã o sucesso que você pode começar a construir agora mesmo. 💪',
-            'Bom dia! A vida é um presente valioso. Agradeça por mais esta oportunidade de evoluir. 🎁',
-            'Bom dia! O otimismo é o ímã da felicidade. Mantenha o foco no positivo e coisas boas acontecerão. ☀️'
+            'Bom dia! Já acordou querendo trabalhar ou só vai enrolar o dia todo mesmo? 🤡',
+            'Bom dia! O sol nasceu para todos, mas só para os trouxas que já estão acordados. ☀️',
+            'Bom dia! Já deu bom dia pro grupo ou vai ficar só de olho nas mensagens? 🧐',
+            'Bom dia! Levanta que o boleto não se paga sozinho e a vida de herdeiro não chegou! 💸',
+            'Bom dia! O café tá pronto, mas a vontade de trabalhar ainda não apareceu. ☕',
+            'Bom dia! Mais um dia tentando não ser demitido. Boa sorte pra nós! 🍀'
         ];
     } else if (lowerText.includes('boa tarde')) {
         emoji = '🌤️';
         frases = [
-            'Boa tarde! Respire fundo e foque no que realmente importa. Você está fazendo um ótimo trabalho! 🍃',
-            'Boa tarde! O dia ainda não acabou, ainda há tempo de realizar grandes coisas. Mantenha a motivação! 🔥',
-            'Boa tarde! A persistência é o caminho do êxito. Continue firme, o resultado virá. 🎯',
-            'Boa tarde! Aproveite este momento para renovar as energias e seguir com força total. 🔋',
-            'Boa tarde! Lembre-se: pequenas vitórias diárias constroem grandes conquistas no futuro. 🎖️',
-            'Boa tarde! Que a paz e o equilíbrio acompanhem o restante do seu dia. 🕊️'
+            'Boa tarde! O dia já tá acabando e você produziu o quê? Exatamente... nada! 😂',
+            'Boa tarde! Hora daquele cochilo maroto que o chefe não pode saber. 💤',
+            'Boa tarde! Só passei pra ver quem ainda está vivo e quem já morreu de preguiça. 💀',
+            'Boa tarde! A tarde é o melhor horário pra fingir que está muito ocupado. 📉',
+            'Boa tarde! O almoço foi bom, agora é só esperar a hora de ir embora. ⏳',
+            'Boa tarde! Quem tá trabalhando que lute, eu só estou aqui de bot! 🤖'
         ];
     } else if (lowerText.includes('boa noite')) {
         emoji = '🌙';
         frases = [
-            'Boa noite! Descanse o corpo e a mente. Amanhã é uma nova oportunidade para brilhar. 💤',
-            'Boa noite! A gratidão transforma o que temos em suficiente. Durma bem e sinta-se em paz. 🌟',
-            'Boa noite! Que o seu descanso seja reparador e seus sonhos tragam inspiração. 🌌',
-            'Boa noite! Desligue as preocupações e abra espaço para o descanso merecido. Você merece! 🛡️',
-            'Boa noite! O sol se põe, mas a sua luz interior continua brilhando. Até amanhã! ✨',
-            'Boa noite! Guarde com carinho as conquistas de hoje e prepare o coração para as de amanhã. 🌙'
+            'Boa noite! Vai dormir que amanhã o sofrimento continua! 🌙',
+            'Boa noite! Sonhe com os anjos (ou com o pix que nunca cai). 💸',
+            'Boa noite! Desliga esse celular e vai dormir, viciado em zap! 📱',
+            'Boa noite! Amanhã é um novo dia para cometer os mesmos erros de sempre. 🤡',
+            'Boa noite! Já escovou os dentes ou vai dormir com bafo de dragão? 🐉',
+            'Boa noite! O grupo vai ficar em paz agora que você finalmente vai fechar o olho. 😴'
         ];
     }
 
@@ -527,7 +526,7 @@ if (lowerText.includes('bom dia') || lowerText.includes('boa tarde') || lowerTex
     // Reação na mensagem do usuário
     await sock.sendMessage(sender, { react: { text: emoji, key: msg.key } });
     
-    // Envia a mensagem de texto motivacional
+    // Envia a mensagem de texto debochada
     await sock.sendMessage(sender, { text: `🤖 *${sorteio}*` }, { quoted: msg });
 }
 
