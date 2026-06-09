@@ -1197,7 +1197,6 @@ if (text.startsWith('!roubar')) {
     }
 }
         // 1. !RANK (ORGANIZADO E DEBOCHADO)
-// Substitua o seu bloco !rank atual por este:
 if (text === '!rank') {
     let cargos = fs.existsSync('./cargos.json') ? JSON.parse(fs.readFileSync('./cargos.json', 'utf8')) : {};
 
@@ -1209,26 +1208,32 @@ if (text === '!rank') {
 
     ranking.forEach((entry, index) => {
         const [id, count] = entry;
-        // Se tem cargo, mostra com emoji de diamante, se não, um bonequinho simples
-        let cargoDisplay = cargos[id] ? `💎 *${cargos[id].toUpperCase()}*` : "👤 Usuário Comum";
-        res += `${index + 1}. @${id.split('@')[0]} | ${cargoDisplay} | ${count} mensagens\n`;
+        // Pega apenas o número (sem o @s.whatsapp.net)
+        const numero = id.split('@')[0];
+        // Cargo destacado
+        let cargoDisplay = cargos[id] ? `💎 *${cargos[id].toUpperCase()}*` : "👤 *Membro*";
+        res += `${index + 1}. 📞 ${numero} | ${cargoDisplay} | ${count} msg\n`;
     });
 
     res += "\n━━━━━━━━━━━━━━━━━━\n\n👑 *HIERARQUIA DE PODER (ELITE):*\n";
     
-    // Lista fixa dos cargos para garantir que apareça sempre
-    const cargosExistentes = ["Lenda", "Rei da Zueira", "Gado Supremo", "Fofoqueiro(a)"];
+    // Lista de cargos para exibir
+    const cargosDisponiveis = ["Lenda", "Rei da Zueira", "Gado Supremo", "Fofoqueiro(a)"];
     const icones = { "Lenda": "👑", "Rei da Zueira": "🔥", "Gado Supremo": "🐂", "Fofoqueiro(a)": "🤫" };
 
-    cargosExistentes.forEach(cargo => {
+    let encontrouAlguem = false;
+    cargosDisponiveis.forEach(cargo => {
         const membros = Object.entries(cargos)
             .filter(([id, nomeCargo]) => nomeCargo === cargo)
-            .map(([id]) => `@${id.split('@')[0]}`);
+            .map(([id]) => id.split('@')[0]); // Lista só os números
         
         if (membros.length > 0) {
             res += `${icones[cargo] || "⭐"} *${cargo.toUpperCase()}*: ${membros.join(', ')}\n`;
+            encontrouAlguem = true;
         }
     });
+
+    if (!encontrouAlguem) res += "Ninguém atingiu o status de Elite ainda! 🤡";
 
     res += "\n🤖 *Dica: Seja ativo e compre seu cargo!*";
 
@@ -1237,24 +1242,6 @@ if (text === '!rank') {
         mentions: Object.keys(cargos) 
     }, { quoted: msg });
 }
-
-// --- COMANDO !CARGOS (LISTA DE PREÇOS) ---
-if (text === '!cargos') {
-    const listaPrecos = `🛍️ *MERCADO DE CARGOS - BONDE DO BRASIL*\n\n` +
-                        `Escolha seu título e ostente no Ranking!\n\n` +
-                        `👑 *Lenda* - 1000 pontos\n` +
-                        `🔥 *Rei da Zueira* - 500 pontos\n` +
-                        `🐂 *Gado Supremo* - 300 pontos\n` +
-                        `🤫 *Fofoqueiro(a)* - 200 pontos\n\n` +
-                        `Use: !comprar_cargo [NomeDoCargo]\n` +
-                        `Exemplo: !comprar_cargo Lenda`;
-    
-    await sock.sendMessage(sender, { 
-        text: listaPrecos,
-        quoted: msg 
-    });
-}
-
         // 5.3 !ADM (COM GIF E FRASES DEBOCHADAS)
 if (text.startsWith('!adm')) {
     if (!isAdmin) {
