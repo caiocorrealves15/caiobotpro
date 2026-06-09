@@ -1797,13 +1797,13 @@ if (text.startsWith('!musica ')) {
         // 8. COMANDO CLIMA (TRADUZIDO)
        // 8. COMANDO CLIMA (Forçando o Reply com variável constante)
 // 8. COMANDO CLIMA (Versão Debochada e Otimizada)
+// 8. COMANDO CLIMA (Versão Debochada e Otimizada)
 if (text.startsWith('!clima')) {
     const cidade = text.replace('!clima', '').trim();
     if (!cidade) return await sock.sendMessage(sender, { text: "❌ Digite a cidade! Ex: !clima Cariacica", quoted: msg });
 
     const mensagemParaResponder = msg;
 
-    // Frases novas, bem mais zueiras
     const piadasClima = {
         'sunny': [
             "Tá um sol que parece que o inferno abriu uma filial aqui! 🔥",
@@ -1827,14 +1827,12 @@ if (text.startsWith('!clima')) {
 
     weather.find({ search: cidade, degreeType: 'C' }, async (err, result) => {
         if (err || !result || result.length === 0) {
-            // Tentativa de busca mais precisa
             return await sock.sendMessage(sender, { text: "❌ Cidade não encontrada. Tente colocar o Estado junto, ex: !clima Cariacica, ES", quoted: mensagemParaResponder });
         }
         
         const current = result[0].current;
         const condicaoOriginal = current.skytext.toLowerCase();
         
-        // Melhora na tradução para identificar melhor a condição
         let categoria = 'cloudy';
         if (condicaoOriginal.includes('sunny') || condicaoOriginal.includes('clear')) categoria = 'sunny';
         else if (condicaoOriginal.includes('rain') || condicaoOriginal.includes('storm')) categoria = 'rain';
@@ -1842,18 +1840,15 @@ if (text.startsWith('!clima')) {
         const fraseExtra = piadasClima[categoria][Math.floor(Math.random() * piadasClima[categoria].length)];
 
         const msgClima = `🌤 *Tempo em: ${current.observationpoint}*\n` +
-                     `🌡 Temperatura: ${current.temperature}°C\n` +
-                     `☁️ Condição: ${current.skytext}\n\n` +
-                     `💬 *Bot:* ${fraseExtra}`;
-
-    // Reação
-    await sock.sendMessage(sender, { react: { text: '🌤', key: mensagemParaResponder.key } });
-
-    // Resposta
-    await sock.sendMessage(sender, { text: msgClima }, { quoted: mensagemParaResponder });
-    }); 
-} // <-- Este fecha o if (text.startsWith('!clima'))
-}); // <-- Este fecha o sock.ev.on('messages.upsert', ...)
-} // <-- Este fecha o async function connectToWhatsApp()
+                         `🌡 Temperatura: ${current.temperature}°C\n` +
+                         `☁️ Condição: ${current.skytext}\n\n` +
+                         `💬 *Bot:* ${fraseExtra}`;
+        
+        await sock.sendMessage(sender, { react: { text: '🌤', key: mensagemParaResponder.key } });
+        await sock.sendMessage(sender, { text: msgClima }, { quoted: mensagemParaResponder });
+    }); // Fecha o weather.find
+} // Fecha o if do !clima
+}); // Fecha o sock.ev.on('messages.upsert', ...)
+} // Fecha o async function connectToWhatsApp()
 
 connectToWhatsApp();
