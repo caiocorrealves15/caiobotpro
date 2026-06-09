@@ -1846,8 +1846,12 @@ if (text.startsWith('!clima')) {
         
         await sock.sendMessage(sender, { react: { text: '🌤', key: mensagemParaResponder.key } });
         await sock.sendMessage(sender, { text: msgClima }, { quoted: mensagemParaResponder });
+    // ... [seu código anterior continua aqui]
+        await sock.sendMessage(sender, { react: { text: '🌤', key: mensagemParaResponder.key } });
+        await sock.sendMessage(sender, { text: msgClima }, { quoted: mensagemParaResponder });
     }); // Fecha o weather.find
-} // Fecha o if do !clima
+} // Fecha o if (!text.startsWith('!clima'))
+
 }); // Fecha o sock.ev.on('messages.upsert', ...)
 } // Fecha o async function connectToWhatsApp()
 
