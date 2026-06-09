@@ -19,6 +19,7 @@ let jogoPiada = {
     resposta: "",
     idMensagem: ""
 };
+let jogosLiberados = true;
 
 // Função de salvamento (mantenha como está)
 const salvarCasais = () => {
@@ -207,7 +208,24 @@ O bot monitora automaticamente:
         return; 
     }
 
-    // --- LÓGICA DO ANTI-LINK COM AUTO BAN ---
+    // --- MODO JOGO ---
+if (text === '!jogosoff') {
+    if (!isGroupAdmins) return await sock.sendMessage(sender, { text: "❌ Apenas ADMs podem desativar os jogos!", quoted: msg });
+    jogosLiberados = false;
+    await sock.sendMessage(sender, { text: "🚫 *JOGOS DESATIVADOS!* Foco na conversa agora. O bonde está em modo sério! 🤐", quoted: msg });
+}
+
+if (text === '!jogoson') {
+    if (!isGroupAdmins) return await sock.sendMessage(sender, { text: "❌ Apenas ADMs podem ativar os jogos!", quoted: msg });
+    jogosLiberados = true;
+    await sock.sendMessage(sender, { text: "🔓 *JOGOS ATIVADOS!* Podem soltar a bagunça! 🎉", quoted: msg });
+}
+
+const comandosDeJogo = ['!piada', '!casar', '!descasar', '!forca', '!penalti', '!sortear', '!emoji', '!jogar'];
+
+if (!jogosLiberados && comandosDeJogo.some(cmd => text.startsWith(cmd))) {
+    return await sock.sendMessage(sender, { text: "❌ *Os jogos estão desativados por um ADM.* Aguarde a liberação para brincar! 🤐", quoted: msg });
+}
     // --- LÓGICA DO ANTI-LINK COM AUTO BAN ---
 // --- LÓGICA DO ANTI-LINK COM AUTO BAN ---
 const isLink = /https?:\/\/[^\s]+/.test(text);
