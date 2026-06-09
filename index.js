@@ -944,39 +944,25 @@ if (text.startsWith('!casar')) {
     const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
     if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione alguém!", quoted: msg });
 
-    const p1 = participant.split('@')[0];
-    const p2 = mention.split('@')[0];
-    
-    // Captura o nome de quem enviou
-    const nome1 = msg.pushName || "Alguém"; 
-    
-    // Tenta pegar o nome da pessoa mencionada no grupo
-    let nome2 = "Mencionado";
-    try {
-        const metadata = await sock.groupMetadata(sender);
-        const participante = metadata.participants.find(p => p.id === mention);
-        // O pushName é o nome que a pessoa escolheu no WhatsApp
-        nome2 = participante?.pushName || "Convidado(a)";
-    } catch (e) {
-        nome2 = "Convidado(a)";
-    }
+    // Salva o ID completo (ex: 552799999999@s.whatsapp.net)
+    const p1 = participant; 
+    const p2 = mention; 
 
     const jaCasado = listaCasais.find(c => (c.p1 === p1 && c.p2 === p2) || (c.p1 === p2 && c.p2 === p1));
     if (jaCasado) return await sock.sendMessage(sender, { text: "❌ Vocês já são casados!", quoted: msg });
 
-    // SALVANDO O NOME CORRETO
-    listaCasais.push({ p1, p2, nome1, nome2 });
+    listaCasais.push({ p1, p2 }); 
     salvarCasais(); 
 
     const frases = [
-        `💍 O @${p1} casou com @${p2}!`,
-        `💒 Alerta de união duvidosa! @${p1} e @${p2} casaram.`,
-        `💘 O amor venceu! @${p1} e @${p2} agora formam o casal mais improvável do grupo! 😂`,
-        `🥂 A vida de solteiro acabou para o @${p1}! @${p2}, prepara o divórcio que a gente já vai começar a contar o tempo! 🤡`,
-        `💍 O @${p1} cansou da vida de solteiro e fisgou o @${p2}! Agora é oficial, bora pro churrasco de comemoração! 🥩`,
-        `🤵👰 Alguém avisa o cartório que o @${p1} e o @${p2} perderam o juízo e casaram! 💒`,
-        `🔥 O @${p1} não aguentou a pressão e pediu o @${p2} em casamento. O mico é grande, mas a união é sagrada! 🤣`,
-        `💖 É oficial: @${p1} e @${p2} decidiram dividir a conta de luz (e a paciência)! Casaram! ⚡`
+        `💍 O @${p1.split('@')[0]} casou com @${p2.split('@')[0]}!`,
+        `💒 Alerta de união duvidosa! @${p1.split('@')[0]} e @${p2.split('@')[0]} casaram.`,
+        `💘 O amor venceu! @${p1.split('@')[0]} e @${p2.split('@')[0]} agora formam o casal mais improvável do grupo! 😂`,
+        `🥂 A vida de solteiro acabou para o @${p1.split('@')[0]}! @${p2.split('@')[0]}, prepara o divórcio que a gente já vai começar a contar o tempo! 🤡`,
+        `💍 O @${p1.split('@')[0]} cansou da vida de solteiro e fisgou o @${p2.split('@')[0]}! Agora é oficial, bora pro churrasco de comemoração! 🥩`,
+        `🤵👰 Alguém avisa o cartório que o @${p1.split('@')[0]} e o @${p2.split('@')[0]} perderam o juízo e casaram! 💒`,
+        `🔥 O @${p1.split('@')[0]} não aguentou a pressão e pediu o @${p2.split('@')[0]} em casamento. O mico é grande, mas a união é sagrada! 🤣`,
+        `💖 É oficial: @${p1.split('@')[0]} e @${p2.split('@')[0]} decidiram dividir a conta de luz (e a paciência)! Casaram! ⚡`
     ];
     
     await sock.sendMessage(sender, { react: { text: '💍', key: msg.key } });
@@ -984,13 +970,13 @@ if (text.startsWith('!casar')) {
         video: { url: "https://media.tenor.com/h981yJykAXYAAAPo/la-haut-dessin-anime.mp4" }, 
         gifPlayback: true,
         caption: frases[Math.floor(Math.random() * frases.length)], 
-        mentions: [participant, mention] 
+        mentions: [p1, p2] 
     }, { quoted: msg });
 }
 
 
 if (text === '!casais') {
-    // 1. Recarrega do arquivo
+ 
     if (fs.existsSync('./casais.json')) {
         try {
             listaCasais = JSON.parse(fs.readFileSync('./casais.json', 'utf8'));
@@ -1001,7 +987,7 @@ if (text === '!casais') {
         return await sock.sendMessage(sender, { text: "❌ Ninguém casou ainda! Estão todos encalhados.", quoted: msg });
     }
 
-    // 2. Frases zueiras para o cabeçalho
+ 
     const frasesZueiras = [
         "🏆 *CARTÓRIO DO CAOS - CASAIS DO MOMENTO* 🏆",
         "🔥 *OS LOUCOS QUE DECIDIRAM SOFRER JUNTOS* 🔥",
@@ -1017,24 +1003,23 @@ if (text === '!casais') {
 
     let listaMentions = [];
 
-    // 3. Monta a lista garantindo as menções
+  
     listaCasais.forEach((c, i) => {
-        // Criamos a string com o @ para ser mencionada
-        const mencao1 = `@${c.p1}`;
-        const mencao2 = `@${c.p2}`;
+        // Usa o formato @ID para o WhatsApp processar a menção
+        const id1 = c.p1.split('@')[0];
+        const id2 = c.p2.split('@')[0];
         
-        texto += `${i + 1}. ${mencao1} ❤️ ${mencao2}\n`;
+        texto += `${i + 1}. @${id1} ❤️ @${id2}\n`;
         
-        // Adiciona os IDs completos na lista de menções para o WhatsApp processar
-        listaMentions.push(c.p1 + "@s.whatsapp.net");
-        listaMentions.push(c.p2 + "@s.whatsapp.net");
+        // Adiciona os IDs completos para a lista de menções do WhatsApp
+        listaMentions.push(c.p1);
+        listaMentions.push(c.p2);
     });
     
     texto += "\n🤡 Quem será o próximo trouxa a cair na armadilha? Digite !casar @alguém";
 
-    // 4. Reação e Envio
+  
     await sock.sendMessage(sender, { react: { text: '💍', key: msg.key } });
-    
     await sock.sendMessage(sender, { 
         text: texto, 
         mentions: listaMentions,
