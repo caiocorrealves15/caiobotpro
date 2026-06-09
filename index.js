@@ -922,30 +922,75 @@ if (text.startsWith('!adm')) {
 
 if (text.startsWith('!descasar')) {
     const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
-    if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione o seu ex-amor para divorciar!", quoted: msg });
+    if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione quem você quer largar, seu indeciso!", quoted: msg });
 
-    // Usamos os IDs completos conforme salvamos no !casar
-    const p1 = participant;
-    const p2 = mention;
+    const p1 = participant; // ID completo
+    const p2 = mention;     // ID completo
 
-    // Busca o casal comparando os IDs completos
     const index = listaCasais.findIndex(c => (c.p1 === p1 && c.p2 === p2) || (c.p1 === p2 && c.p2 === p1));
     
     if (index === -1) {
-        return await sock.sendMessage(sender, { text: "❌ Vocês nem casados estão! 😂", quoted: msg });
+        return await sock.sendMessage(sender, { text: "❌ Vocês nem casados estão! Tá tentando divorciar de quem não tem compromisso? 😂", quoted: msg });
     }
 
     listaCasais.splice(index, 1);
     salvarCasais(); 
 
+    const frasesDivorcio = [
+        `💔 O divórcio saiu! @${p1.split('@')[0]} e @${p2.split('@')[0]} não aguentaram a pressão e deram fim nisso! 🥂`,
+        `📉 Fim da linha! @${p1.split('@')[0]} e @${p2.split('@')[0]} assinaram o papel e cada um pro seu lado. Vida de solteiro é mais barato! 💸`,
+        `🏃‍♂️ Correram! @${p1.split('@')[0]} e @${p2.split('@')[0]} decidiram que o amor era só uma ilusão de ótica. Livreeee! 💨`,
+        `⚖️ Cartório do Caos informa: @${p1.split('@')[0]} e @${p2.split('@')[0]} estão oficialmente divorciados. O churrasco acabou! 🥩`,
+        `🚪 A porta da rua é serventia da casa! @${p1.split('@')[0]} e @${p2.split('@')[0]} agora são apenas conhecidos. Deu ruim! 🤡`
+    ];
+
     await sock.sendMessage(sender, { react: { text: '💔', key: msg.key } });
     await sock.sendMessage(sender, { 
-        text: `💔 O divórcio saiu! @${p1.split('@')[0]} e @${p2.split('@')[0]} não estão mais juntos. Cada um pro seu lado! 🥂`, 
+        text: frasesDivorcio[Math.floor(Math.random() * frasesDivorcio.length)], 
         mentions: [p1, p2], 
         quoted: msg 
     });
 }
 
+if (text.startsWith('!casar')) {
+    const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+    if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione alguém para casar, senão vai ficar encalhado!", quoted: msg });
+
+    const p1 = participant; // ID completo de quem chamou
+    const p2 = mention;     // ID completo do mencionado
+
+    // TRAVA DE BIGAMIA: Ninguém casa se já estiver casado com outra pessoa
+    const jaTemRelacionamento = listaCasais.find(c => c.p1 === p1 || c.p2 === p1 || c.p1 === p2 || c.p2 === p2);
+    if (jaTemRelacionamento) {
+        return await sock.sendMessage(sender, { 
+            text: "🚫 CRIME DE BIGAMIA! Um de vocês já está comprometido. Divorcie-se primeiro, seu safado! 😂", 
+            quoted: msg 
+        });
+    }
+
+    // Adiciona o novo casal
+    listaCasais.push({ p1, p2 }); 
+    salvarCasais(); 
+
+    const frases = [
+        `💍 O @${p1.split('@')[0]} casou com @${p2.split('@')[0]}!`,
+        `💒 Alerta de união duvidosa! @${p1.split('@')[0]} e @${p2.split('@')[0]} casaram.`,
+        `💘 O amor venceu! @${p1.split('@')[0]} e @${p2.split('@')[0]} agora formam o casal mais improvável do grupo! 😂`,
+        `🥂 A vida de solteiro acabou para o @${p1.split('@')[0]}! @${p2.split('@')[0]}, prepara o divórcio que a gente já vai começar a contar o tempo! 🤡`,
+        `💍 O @${p1.split('@')[0]} cansou da vida de solteiro e fisgou o @${p2.split('@')[0]}! Agora é oficial, bora pro churrasco de comemoração! 🥩`,
+        `🤵👰 Alguém avisa o cartório que o @${p1.split('@')[0]} e o @${p2.split('@')[0]} perderam o juízo e casaram! 💒`,
+        `🔥 O @${p1.split('@')[0]} não aguentou a pressão e pediu o @${p2.split('@')[0]} em casamento. O mico é grande, mas a união é sagrada! 🤣`,
+        `💖 É oficial: @${p1.split('@')[0]} e @${p2.split('@')[0]} decidiram dividir a conta de luz (e a paciência)! Casaram! ⚡`
+    ];
+    
+    await sock.sendMessage(sender, { react: { text: '💍', key: msg.key } });
+    await sock.sendMessage(sender, { 
+        video: { url: "https://media.tenor.com/h981yJykAXYAAAPo/la-haut-dessin-anime.mp4" }, 
+        gifPlayback: true,
+        caption: frases[Math.floor(Math.random() * frases.length)], 
+        mentions: [p1, p2] 
+    }, { quoted: msg });
+}
 
 if (text === '!casais') {
  
