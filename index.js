@@ -126,28 +126,30 @@ Aqui, seu nome vale ouro e sua posição no ranking define sua moral.
 Não somos apenas um grupo, somos uma hierarquia de lendas! 🏆
 
 💎 *SISTEMA DE STATUS (CARGOS DE ELITE)*
-Você tem o que é preciso para subir na nossa hierarquia?
-• 👑 *LENDA:* O topo da pirâmide, onde poucos chegam.
-• 🔥 *REI DA ZUEIRA:* O caos personificado, nosso mestre das piadas.
-• 🐂 *GADO SUPREMO:* O posto mais disputado e amado do bonde.
-• 🤫 *FOFOQUEIRO(A):* O olho que tudo vê (e espalha).
+Mostre quem manda aqui e suba na nossa hierarquia:
+• 👑 *LENDA:* O topo da pirâmide.
+• 🔥 *REI DA ZUEIRA:* O caos personificado.
+• 🐂 *GADO SUPREMO:* O posto mais disputado.
+• 🤫 *FOFOQUEIRO(A):* O olho que tudo vê.
+👉 Use *!cargos* para ver os preços e *!comprar_cargo* para ostentar.
 
-💰 *COMO OSTENTAR?*
-Interaja, jogue e suba no nosso ranking global. 
-Use *!cargos* para ver os preços e *!comprar_cargo* para cravar seu nome na história.
+📜 *REGULAMENTO DO BONDE (LEI É LEI)*
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+① *Respeito acima de tudo:* Sem brigas, ofensas ou preconceito.
+② *Privacidade:* Proibido invadir PV sem permissão.
+③ *Segurança:* Proibido conteúdo adulto.
+④ *Zero Tolerância:* Links suspeitos, spam ou travas resultam em BAN imediato.
+━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-📝 *PRIMEIRO PASSO:*
-Envie sua *FOTO | CIDADE | IDADE | NOME* para ser registrado no sistema.
+📝 *REGISTRO OBRIGATÓRIO:*
+Envie sua *FOTO | CIDADE | IDADE | NOME* para ser registrado no nosso sistema.
 
-🚫 *LEI DO BONDE:*
-Respeito é a base. Links, spam ou travas resultam em exclusão sumária. Aqui o sistema é bruto, mas justo!
+🤖 *DICA:* Digite *!menu* para acessar todos os comandos e divirta-se!`;
 
-🤖 *DICA:* Digite *!menu* e veja do que o meu sistema é capaz!`;
-
-        await sock.sendMessage(id, { 
-            text: textoBoasVindas, 
-            mentions: [userId] 
-        });
+await sock.sendMessage(id, { 
+    text: textoBoasVindas, 
+    mentions: [userId] 
+         });
     } 
 });
 
