@@ -196,41 +196,51 @@ O bot monitora automaticamente:
     const msg = m.messages[0];
     if (!msg.message || msg.key.fromMe) return;
     
-    const isMedia = (msg.message.imageMessage || msg.message.videoMessage || msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage || msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage);
-    const text = msg.message.conversation || msg.message.extendedTextMessage?.text || msg.message.imageMessage?.caption || msg.message.videoMessage?.caption || msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage?.caption || "";
-    const lowerText = text.toLowerCase();
-    const participant = msg.key.participant || msg.key.remoteJid;
     const sender = msg.key.remoteJid;
+    const participant = msg.key.participant || sender;
+    const isGroup = sender.endsWith('@g.us');
+    
+    // Captura do texto de forma robusta
+    const text = msg.message.conversation || msg.message.extendedTextMessage?.text || msg.message.imageMessage?.caption || msg.message.videoMessage?.caption || "";
+    const lowerText = text.toLowerCase();
+    const isMedia = (msg.message.imageMessage || msg.message.videoMessage || msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage || msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage);
 
-    // Verificação de Mutados
+    // 1. Definição automática de ADMs para evitar erros
+    let isAdmin = false;
+    if (isGroup) {
+        try {
+            const metadata = await sock.groupMetadata(sender);
+            const groupAdmins = metadata.participants.filter(p => p.admin !== null).map(p => p.id);
+            isAdmin = groupAdmins.includes(participant);
+        } catch (e) {
+            console.log("Erro ao buscar admins:", e);
+        }
+    }
+
+    // 2. Verificação de Mutados
     if (mutados[participant] && Date.now() < mutados[participant]) {
         await sock.sendMessage(sender, { delete: msg.key });
         return; 
     }
 
-    // --- MODO JOGO ---
-if (text === '!jogosoff') {
-    if (!isGroupAdmins) return await sock.sendMessage(sender, { text: "❌ Apenas ADMs podem desativar os jogos!", quoted: msg });
-    jogosLiberados = false;
-    await sock.sendMessage(sender, { text: "🚫 *JOGOS DESATIVADOS!* Foco na conversa agora. O bonde está em modo sério! 🤐", quoted: msg });
-}
+    // 3. Comando de Controle de Jogos (Ativar/Desativar)
+    if (text === '!jogosoff') {
+        if (!isAdmin) return await sock.sendMessage(sender, { text: "❌ Apenas ADMs podem desativar os jogos!", quoted: msg });
+        jogosLiberados = false;
+        return await sock.sendMessage(sender, { text: "🚫 *JOGOS DESATIVADOS!* O bonde está em modo sério! 🤐", quoted: msg });
+    }
 
-if (text === '!jogoson') {
-    if (!isGroupAdmins) return await sock.sendMessage(sender, { text: "❌ Apenas ADMs podem ativar os jogos!", quoted: msg });
-    jogosLiberados = true;
-    await sock.sendMessage(sender, { text: "🔓 *JOGOS ATIVADOS!* Podem soltar a bagunça! 🎉", quoted: msg });
-}
+    if (text === '!jogoson') {
+        if (!isAdmin) return await sock.sendMessage(sender, { text: "❌ Apenas ADMs podem ativar os jogos!", quoted: msg });
+        jogosLiberados = true;
+        return await sock.sendMessage(sender, { text: "🔓 *JOGOS ATIVADOS!* Podem soltar a bagunça! 🎉", quoted: msg });
+    }
 
-// Verifica quem são os administradores do grupo
-const groupMetadata = isGroup ? await sock.groupMetadata(from) : "";
-const groupAdmins = isGroup ? groupMetadata.participants.filter(v => v.admin !== null).map(v => v.id) : [];
-const isGroupAdmins = groupAdmins.includes(sender);
-
-const comandosDeJogo = ['!piada', '!casar', '!descasar', '!forca', '!penalti', '!sortear', '!emoji', '!jogar'];
-
-if (!jogosLiberados && comandosDeJogo.some(cmd => text.startsWith(cmd))) {
-    return await sock.sendMessage(sender, { text: "❌ *Os jogos estão desativados por um ADM.* Aguarde a liberação para brincar! 🤐", quoted: msg });
-}
+    // 4. Trava de segurança para jogos
+    const comandosDeJogo = ['!piada', '!casar', '!descasar', '!forca', '!penalti', '!sortear', '!emoji', '!jogar'];
+    if (!jogosLiberados && comandosDeJogo.some(cmd => text.startsWith(cmd))) {
+        return await sock.sendMessage(sender, { text: "❌ *Os jogos estão desativados por um ADM.* Aguarde a liberação para brincar! 🤐", quoted: msg });
+    }
 
     // --- LÓGICA DO ANTI-LINK COM AUTO BAN ---
 // --- LÓGICA DO ANTI-LINK COM AUTO BAN ---
