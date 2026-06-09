@@ -1098,6 +1098,56 @@ if (text.startsWith('!matar')) {
     }
 }
 
+       // --- COMANDO !LOJA ---
+if (text === '!loja') {
+    const placar = JSON.parse(fs.readFileSync('./placar.json', 'utf8'));
+    const saldo = placar[participant] || 0;
+
+    const menuLoja = `🛍️ *LOJA DO BONDE - SEU SALDO: ${saldo} pts*
+
+1️⃣ *MUTE (1 minuto)* - 100 pts
+   !comprar mute @mencao
+   
+2️⃣ *BAN temporário (ADM apenas)* - 1000 pts
+   (Você paga, mas um ADM precisa aprovar)
+
+3️⃣ *CARGO PERSONALIZADO* - 500 pts
+   !comprar_cargo [nome do cargo]
+
+🤖 *Escolha sua opção e seja o dono do grupo!*`;
+
+    await sock.sendMessage(sender, { text: menuLoja, quoted: msg });
+}
+
+       // --- COMANDO !COMPRAR ---
+if (text.startsWith('!comprar')) {
+    const args = text.split(' ');
+    const item = args[1]; // Ex: !comprar mute
+    const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+    
+    let placar = JSON.parse(fs.readFileSync('./placar.json', 'utf8'));
+    const saldo = placar[participant] || 0;
+
+    if (item === 'mute') {
+    const custo = 100;
+    if (saldo < custo) return await sock.sendMessage(sender, { text: `❌ Você precisa de ${custo} pontos!`, quoted: msg });
+    if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione quem você quer mutar!", quoted: msg });
+
+    // --- PROTEÇÃO: NÃO MUTAR ADM ---
+    const metadata = await sock.groupMetadata(sender);
+    const ehAdm = metadata.participants.find(p => p.id === mention)?.admin !== null;
+    
+    if (ehAdm) {
+        return await sock.sendMessage(sender, { text: "❌ Você não pode mutar um administrador, seu maluco! 😂", quoted: msg });
+    }
+    // -------------------------------
+
+    // Aplica o Mute
+    mutados[mention] = Date.now() + 60000;
+    fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
+    // ... restante da lógica ...
+}
+
 // --- !GADO (COM PORCENTAGEM E DEBOCHE) ---
 if (text.startsWith('!gado')) {
     const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
