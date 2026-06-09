@@ -30,6 +30,14 @@ const salvarCasais = () => {
     fs.writeFileSync('./casais.json', JSON.stringify(listaCasais, null, 2));
 };
 
+// Garante que o arquivo exista antes de qualquer coisa
+if (!fs.existsSync(ARQUIVO_PLACAR_EMOJI)) {
+    fs.writeFileSync(ARQUIVO_PLACAR_EMOJI, JSON.stringify({}));
+}
+// Faça o mesmo para o placar.json se necessário:
+if (!fs.existsSync('./placar.json')) {
+    fs.writeFileSync('./placar.json', JSON.stringify({}));
+}
 // CARREGAMENTO SEGURO
 try {
     if (fs.existsSync('./casais.json')) {
