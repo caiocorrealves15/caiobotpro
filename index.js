@@ -746,7 +746,7 @@ if (lowerText.includes('bebida') || lowerText.includes('cerveja') || lowerText.i
 
     // Ache essa linha no seu código e adicione o '!cargos' nela:
 const comandosExistentes = [
-    '!menu', '!rank', '!casar', '!casais', '!piada', '!avisoadm', 
+    '!menu', '!comprar', '!loja', '!rank', '!casar', '!casais', '!piada', '!avisoadm', 
     '!descasar', '!emoji', '!sortear', '!perguntas', '!jogar', 
     '!forca', '!jogosoff', '!jogoson', '!link', '!tier', 
     '!ranking', '!penalti', '!musica', '!socar', '!beijar', 
@@ -774,6 +774,7 @@ if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd)
         // 2. !MENU (ESTILO PERSONALIZADO BASEADO NA IMAGEM)
         // 2. !MENU (ESTILO PERSONALIZADO ATUALIZADO)
 // 2. !MENU (MENU COMPLETO E ORGANIZADO)
+// 2. !MENU (MENU COMPLETO E ATUALIZADO)
 if (text === '!menu') {
     const senderId = msg.key.participant || msg.key.remoteJid; 
     const dataAtual = new Date().toLocaleDateString('pt-BR');
@@ -788,37 +789,40 @@ if (text === '!menu') {
 │ 📅 ${dataAtual} | ⏰ ${horaAtual}
 │ 👑 Dono: @5527992997083
 │
-├────💎 STATUS & CARGOS────
-│ 🛍️ !cargos  | 💳 !comprar_cargo
-│ 🎖️ !dar_cargo (ADM)
+├────🛍️ LOJA & ECONOMIA────
+│ 🛒 !loja      | 💰 !roubar
+│ 💳 !comprar_cargo [nome]
+│ 🤫 !comprar mute @mencao
 │
-├────🎮 JOGOS & ECONOMIA────
-│ 🔰 !rank      | ⌛ !sortear
-│ 🎮 !jogar    | 💰 !roubar
-│ 😵 !forca    | ⚽ !penalti
-│ 🎥 !emoji    | 🤡 !piada
-│ 🧠 !perguntas| 🏆 !ranking
-│ 💍 !casar    | 💔 !descasar
-│ 👥 !casais
+├────💎 STATUS & CARGOS────
+│ 🛍️ !cargos    | 🎖️ !dar_cargo (ADM)
+│ 🔰 !rank      | 🏆 !ranking
+│
+├────🎮 JOGOS────
+│ ⌛ !sortear   | 🎮 !jogar
+│ 😵 !forca     | ⚽ !penalti
+│ 🎥 !emoji     | 🤡 !piada
+│ 🧠 !perguntas | 💍 !casar
+│ 💔 !descasar  | 👥 !casais
 │
 ├────😂 ZUEIRA────
-│ 🤜 !socar    | 😘 !beijar
-│ 🗡️ !matar    | 🤳 !f
-│ 🐂 !gado     | 🦌 !corno
+│ 🤜 !socar     | 😘 !beijar
+│ 🗡️ !matar     | 🤳 !f
+│ 🐂 !gado      | 🦌 !corno
 │ 🤫 !fofoca
 │
 ├────🚨 ADMIN────
-│ ❌ !ban      | ❇️ !adm
-│ 🚫 !fechar   | 🔓 !abrir
-│ 🔇 !mute     | 🔊 !desmute
-│ 📣 !avisoadm | 🕹️ !jogoson/off
+│ ❌ !ban       | ❇️ !adm
+│ 🚫 !fechar    | 🔓 !abrir
+│ 🔇 !mute      | 🔊 !desmute
+│ 📣 !avisoadm  | 🕹️ !jogoson/off
 │
 ├────⚙️ UTIL & SUPORTE────
-│ 📛 !menu     | 🌤️ !clima
-│ 🎵 !musica   | 🔗 !link
+│ 📛 !menu      | 🌤️ !clima
+│ 🎵 !musica    | 🔗 !link
 │
 ╰━━━━━━━━━━━━━━━━━━━━━━╯
-🤖 *O nível do jogo subiu! Acumule pontos, ostente seu cargo e não seja um NPC.*`.trim();
+🤖 *Acumule pontos, ostente seu cargo e não seja um NPC.*`.trim();
 
     await sock.sendMessage(sender, { 
         video: { url: 'https://media.tenor.com/WV_2tGerThoAAAPo/farming-aura-farming.mp4' },
@@ -1838,17 +1842,18 @@ if (text.startsWith('!clima')) {
         const fraseExtra = piadasClima[categoria][Math.floor(Math.random() * piadasClima[categoria].length)];
 
         const msgClima = `🌤 *Tempo em: ${current.observationpoint}*\n` +
-                         `🌡 Temperatura: ${current.temperature}°C\n` +
-                         `☁️ Condição: ${current.skytext}\n\n` +
-                         `💬 *Bot:* ${fraseExtra}`;
-        
-        // Reação
-        await sock.sendMessage(sender, { react: { text: '🌤', key: mensagemParaResponder.key } });
+                     `🌡 Temperatura: ${current.temperature}°C\n` +
+                     `☁️ Condição: ${current.skytext}\n\n` +
+                     `💬 *Bot:* ${fraseExtra}`;
 
-        // Resposta
-        await sock.sendMessage(sender, { text: msgClima }, { quoted: mensagemParaResponder });
-    });
-}
-    }); // Fecha o messages.upsert
-} // Fecha o connectToWhatsApp
+    // Reação
+    await sock.sendMessage(sender, { react: { text: '🌤', key: mensagemParaResponder.key } });
+
+    // Resposta
+    await sock.sendMessage(sender, { text: msgClima }, { quoted: mensagemParaResponder });
+    }); 
+} // <-- Este fecha o if (text.startsWith('!clima'))
+}); // <-- Este fecha o sock.ev.on('messages.upsert', ...)
+} // <-- Este fecha o async function connectToWhatsApp()
+
 connectToWhatsApp();
