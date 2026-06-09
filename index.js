@@ -299,8 +299,6 @@ if (text.startsWith('!comprar_cargo')) {
     fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
     fs.writeFileSync('./cargos.json', JSON.stringify(cargos, null, 2));
 
-     await enviarBackupAutomatico(sock); // Backup automático aqui
-
     await sock.sendMessage(sender, { text: `👑 Parabéns @${participant.split('@')[0]}! Agora seu cargo oficial é: *${novoCargo}*`, mentions: [participant], quoted: msg });
 }
 
@@ -315,7 +313,6 @@ if (text.startsWith('!dar_cargo')) {
     let cargos = fs.existsSync('./cargos.json') ? JSON.parse(fs.readFileSync('./cargos.json', 'utf8')) : {};
     cargos[mention] = cargoNome;
     fs.writeFileSync('./cargos.json', JSON.stringify(cargos, null, 2));
-    await enviarBackupAutomatico(sock); // Backup automático aqui
 
     await sock.sendMessage(sender, { text: `✅ Cargo "${cargoNome}" concedido com sucesso ao @${mention.split('@')[0]}!`, mentions: [mention], quoted: msg });
 }
@@ -373,7 +370,6 @@ if (jogoPerguntas.ativo && msg.message?.extendedTextMessage?.contextInfo?.stanza
         let placar = JSON.parse(fs.readFileSync('./placar.json', 'utf8'));
         placar[participant] = (placar[participant] || 0) + 30; // ADICIONA 30 PONTOS
         fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
-        await enviarBackupAutomatico(sock); // BACKUP AUTOMÁTICO
 
         await sock.sendMessage(sender, { react: { text: '🏆', key: msg.key } });
         await sock.sendMessage(sender, { 
@@ -491,9 +487,7 @@ if (contagemFlood[participant].length >= 5) {
   
     
     contagemMensagens[participant] = (contagemMensagens[participant] || 0) + 1;
-    fs.writeFileSync(ARQUIVO_RANK, JSON.stringify(contagemMensagens));
-    await enviarBackupAutomatico(sock); //
-    
+    fs.writeFileSync(ARQUIVO_RANK, JSON.stringify(contagemMensagens));    
 
     if (text.startsWith('!emoji')) {
     const desafios = [
@@ -880,7 +874,6 @@ if (text.startsWith('!jogar')) {
         // Premiação no placar
         let placar = JSON.parse(fs.readFileSync('./placar.json', 'utf8'));
         placar[participant] = (placar[participant] || 0) + 150;
-        await enviarBackupAutomatico(sock); // <--- Adicione isso aqui!
         fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
 
         await sock.sendMessage(sender, { 
@@ -976,7 +969,6 @@ if (text.startsWith('!penalti')) {
     if (!defesa) {
         placar[senderId] += 50;
         fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
-        await enviarBackupAutomatico(sock); // Backup automático aqui
         await sock.sendMessage(sender, { 
             caption: `⚽ GOOOOOL! Você marcou! Total de gols: ${placar[senderId]}`, 
             video: { url: 'https://media.tenor.com/vnXD4h47_ZwAAAPo/kick-goal.mp4' }, 
@@ -1215,7 +1207,6 @@ if (text.startsWith('!roubar')) {
         placar[participant] += valorRoubado;
         placar[mention] -= valorRoubado;
         fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
-        await enviarBackupAutomatico(sock); // Backup automático aqui
 
         await sock.sendMessage(sender, { 
             video: { url: 'https://media.tenor.com/5ckH12PXdUYAAAPo/ladr%C3%A3o-thief.mp4' }, 
@@ -1321,7 +1312,6 @@ if (text.startsWith('!descasar')) {
 
     listaCasais.splice(index, 1);
     salvarCasais(); 
-    await enviarBackupAutomatico(sock); // Backup automático aqui
 
     const frasesDivorcio = [
         `💔 O divórcio saiu! @${p1.split('@')[0]} e @${p2.split('@')[0]} não aguentaram a pressão e deram fim nisso! 🥂`,
@@ -1367,7 +1357,6 @@ if (text.startsWith('!casar')) {
     // Adiciona o novo casal
     listaCasais.push({ p1, p2 }); 
     salvarCasais(); 
-    await enviarBackupAutomatico(sock);
 
     const frases = [
         `💍 O @${p1.split('@')[0]} casou com @${p2.split('@')[0]}!`,
@@ -1467,6 +1456,13 @@ if (text === '!casais') {
                 await sock.sendMessage(sender, { text: "❌ Mencione alguém para beijar!", quoted: msg });
             }
         }
+
+       if (text === '!backup') {
+    const meuNumero = '5527992997083@s.whatsapp.net';
+    if (participant !== meuNumero) return; // Só você pode pedir
+    await enviarBackupAutomatico(sock);
+    await sock.sendMessage(sender, { text: "✅ Backups enviados com sucesso!" });
+}
 
         // 6. Admin Fechar/Abrir (Com Reply e Frases Aleatórias)
 if (text === '!fechar') {
