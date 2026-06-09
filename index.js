@@ -662,7 +662,7 @@ if (lowerText.includes('bebida') || lowerText.includes('cerveja') || lowerText.i
 
     // 9. Comandos extras (ban, tier, matar, rank, adm, socar, beijar, fechar, abrir, musica, desmute, mute, clima)
     // *Dica: Aplique o quoted: msg em todos os sock.sendMessage dentro desses blocos também!*
-    const comandosExistentes = ['!menu', '!rank', '!casar', '!casais', '!piada', '!avisoadm', '!descasar', '!emoji', '!sortear', '!sortear', '!perguntas', '!forca', '!jogosoff', '!jogoson', '!link', '!tier', '!rankingemoji', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute'];
+    const comandosExistentes = ['!menu', '!rank', '!casar', '!casais', '!piada', '!avisoadm', '!descasar', '!emoji', '!sortear', '!perguntas', '!jogar', '!forca', '!jogosoff', '!jogoson', '!link', '!tier', '!rankingemoji', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute', '!gado', '!corno', '!fofoca', '!roubar'];
 
 if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd))) {
     const autor = msg.key.participant || msg.key.remoteJid;
@@ -697,31 +697,33 @@ if (text === '!menu') {
 │ 📅 ${dataAtual} | ⏰ ${horaAtual}
 │ 👑 Dono: @5527992997083
 │
-├──── 🎮 JOGOS & DIVERSÃO ────
-│ 🔰 !rank     | ⌛ !sortear
-│ 🎇 !tier     | 🎮 !jogar
-│ 😵 !forca    | ⚽ !penalti
-│ 🎥 !emoji    | 🤡 !piada
-│ 🧠 !perguntas| 🏆 !rankingemoji
-│ 💍 !casar    | 💔 !descasar
-│ 👥 !casais
+├──── 🎮 JOGOS ────
+│ 🔰 !rank      | ⌛ !sortear
+│ 🎇 !tier      | 🎮 !jogar
+│ 😵 !forca     | ⚽ !penalti
+│ 🎥 !emoji     | 🤡 !piada
+│ 🧠 !perguntas | 🏆 !rankingemoji
+│ 💍 !casar     | 💔 !descasar
+│ 👥 !casais    | 💰 !roubar
 │
 ├──── 😂 ZUEIRA ────
-│ 🤜 !socar    | 😘 !beijar
-│ 🗡️ !matar    | 🤳 !f
+│ 🤜 !socar     | 😘 !beijar
+│ 🗡️ !matar     | 🤳 !f
+│ 🐂 !gado      | 🦌 !corno
+│ 🤫 !fofoca
 │
 ├──── 🚨 ADMIN ────
-│ ❌ !ban      | ❇️ !adm
-│ 🚫 !fechar   | 🔓 !abrir
-│ 🔇 !mute     | 🔊 !desmute
-│ 📣 !avisoadm | 🕹️ !jogoson/off
+│ ❌ !ban       | ❇️ !adm
+│ 🚫 !fechar    | 🔓 !abrir
+│ 🔇 !mute      | 🔊 !desmute
+│ 📣 !avisoadm  | 🕹️ !jogoson/off
 │
 ├──── ⚙️ UTIL & SUPORTE ────
-│ 📛 !menu     | 🌤️ !clima
-│ 🎵 !musica   | 🔗 !link
+│ 📛 !menu      | 🌤️ !clima
+│ 🎵 !musica    | 🔗 !link
 │
 ╰━━━━━━━━━━━━━━━╯
-🤖 *Bot em constante evolução! Toda semana tem jogos novos e novidades.*`.trim();
+🤖 *Bot em constante evolução! Toda semana tem novidades.*`.trim();
 
     await sock.sendMessage(sender, { 
         video: { url: 'https://media.tenor.com/WV_2tGerThoAAAPo/farming-aura-farming.mp4' },
@@ -979,6 +981,135 @@ if (text.startsWith('!matar')) {
     }
 }
 
+// --- !GADO (COM PORCENTAGEM E DEBOCHE) ---
+if (text.startsWith('!gado')) {
+    const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+    if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione alguém para ver o nível de gado!", quoted: msg });
+
+    const porcentagem = Math.floor(Math.random() * 101);
+    const alvo = mention.split('@')[0];
+    
+    let mensagemGado = "";
+    if (porcentagem < 20) mensagemGado = "é apenas um bezerro aprendiz, ainda tem salvação. 🐮";
+    else if (porcentagem < 50) mensagemGado = "é 50% gado, tá no caminho certo pra virar um boi reprodutor. 🐂";
+    else if (porcentagem < 80) mensagemGado = "é um gado nível hard! Esse aí já tá até seguindo o crush no LinkedIn. 🤡";
+    else mensagemGado = "é 100% GADO SUPREMO! Esse aí se chamar de 'amor' ele assina até o testamento no nome da pessoa. 🚩🚩🚩";
+
+    await sock.sendMessage(sender, { 
+        text: `🐂 *TESTE DO GADO* 🐂\n\nO @${alvo} é ${porcentagem}% gado! \n${mensagemGado}`, 
+        mentions: [mention] 
+    }, { quoted: msg });
+}
+
+// --- !CORNO (NÍVEL DE CHIFRE) ---
+if (text.startsWith('!corno')) {
+    const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+    if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione alguém para fazer o teste do chifre!", quoted: msg });
+
+    // Reação na mensagem de quem solicitou o comando
+    await sock.sendMessage(sender, { react: { text: '🦌', key: msg.key } });
+
+    const nivelChifre = Math.floor(Math.random() * 101);
+    const alvo = mention.split('@')[0];
+    
+    let resultado = "";
+    if (nivelChifre === 0) resultado = "é fiel pra caramba! Nem o GPS consegue rastrear desvio. 😇";
+    else if (nivelChifre < 30) resultado = "tem apenas um 'chifrinho' de estimação. Quase nada! 🤏";
+    else if (nivelChifre < 60) resultado = "tá usando um chifre que já começa a incomodar na hora de passar na porta. 🦌";
+    else if (nivelChifre < 90) resultado = "tem um chifre de nível altíssimo! A cabeça tá até pesando, né? 😂";
+    else resultado = "é o REI DOS CORNOS! Esse aí o chifre já virou anteninha pra pegar Wi-Fi de motel! 🚩🚩🚩";
+
+    await sock.sendMessage(sender, { 
+        video: { url: 'https://media.tenor.com/JTnj9CLoaI8AAAPo/meek-horn-corno-manso.mp4' }, 
+        gifPlayback: true,
+        caption: `🦌 *DETECTOR DE CHIFRES* 🦌\n\nO @${alvo} está com ${nivelChifre}% de chifre no momento!\n\nResultado: ${resultado}`, 
+        mentions: [mention] 
+    }, { quoted: msg });
+}
+
+// --- !FOFOCA (BOMBA NO GRUPO) ---
+if (text.startsWith('!fofoca')) {
+    if (!isGroup) return await sock.sendMessage(sender, { text: "❌ Isso só funciona em grupos, senão não tem graça!", quoted: msg });
+
+    // 1. Reação de segredo
+    await sock.sendMessage(sender, { react: { text: '🤫', key: msg.key } });
+
+    try {
+        const metadata = await sock.groupMetadata(sender);
+        const ppts = metadata.participants;
+        
+        // Sorteia duas pessoas diferentes
+        const alvo1 = ppts[Math.floor(Math.random() * ppts.length)];
+        const alvo2 = ppts[Math.floor(Math.random() * ppts.length)];
+
+        // Garante que não sorteie a mesma pessoa
+        if (alvo1.id === alvo2.id) {
+            return await sock.sendMessage(sender, { text: "❌ O @${alvo1.id.split('@')[0]} estava querendo fofocar sozinho, mas não deu certo. Tente de novo! 😂", mentions: [alvo1.id], quoted: msg });
+        }
+
+        const fofocas = [
+            `FONTES EXCLUSIVAS! Vi o @${alvo1.id.split('@')[0]} e o @${alvo2.id.split('@')[0]} de mãos dadas no privado! O grupo tá sabendo disso? 🤫`,
+            `Gente, não espalhem... mas o @${alvo1.id.split('@')[0]} foi visto bloqueando o @${alvo2.id.split('@')[0]} e depois desbloqueando logo em seguida. O drama! 🎭`,
+            `Parem tudo! @${alvo1.id.split('@')[0]} e @${alvo2.id.split('@')[0]} foram vistos discutindo por causa de uma figurinha polêmica! 🥊`,
+            `Vazou print! @${alvo1.id.split('@')[0]} disse que o @${alvo2.id.split('@')[0]} é o membro mais suspeito do grupo. Alguém confirma? 🧐`,
+            `O @${alvo1.id.split('@')[0]} estava perguntando ontem sobre o @${alvo2.id.split('@')[0]}... será que temos um novo casal ou uma nova treta? 🍿`
+        ];
+
+        const sorteioFofoca = fofocas[Math.floor(Math.random() * fofocas.length)];
+
+        await sock.sendMessage(sender, { 
+            video: { url: 'https://media.tenor.com/pSDQzIsy8bUAAAPo/brizza-brizzabro.mp4' }, 
+            gifPlayback: true,
+            caption: `🤫 *BOMBA NO GRUPO!* 🤫\n\n${sorteioFofoca}`, 
+            mentions: [alvo1.id, alvo2.id] 
+        }, { quoted: msg });
+
+    } catch (e) {
+        await sock.sendMessage(sender, { text: "❌ Erro ao buscar os fofoqueiros. Verifique se o bot é ADM!", quoted: msg });
+    }
+}
+
+// --- !ROUBAR (ASSALTO A PONTOS) ---
+if (text.startsWith('!roubar')) {
+    const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+    if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione quem você quer assaltar!", quoted: msg });
+    if (mention === participant) return await sock.sendMessage(sender, { text: "❌ Você não pode roubar a si mesmo, seu gênio! 😂", quoted: msg });
+
+    // Carrega o placar (que agora vira nosso banco de dados de saldo)
+    let placar = JSON.parse(fs.readFileSync('./placar.json', 'utf8'));
+    
+    // Inicializa quem não tem nada
+    if (!placar[participant]) placar[participant] = 0;
+    if (!placar[mention]) placar[mention] = 0;
+
+    // Sorteio: Se der sorte, rouba. Se der azar, é preso.
+    const sucesso = Math.random() < 0.5; // 50% de chance de sucesso
+
+    if (sucesso) {
+        const valorRoubado = Math.floor(Math.random() * 50) + 10; // Rouba entre 10 e 60 pontos
+        placar[participant] += valorRoubado;
+        placar[mention] -= valorRoubado;
+        fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
+
+        await sock.sendMessage(sender, { 
+            video: { url: 'https://media.tenor.com/5ckH12PXdUYAAAPo/ladr%C3%A3o-thief.mp4' }, 
+            gifPlayback: true,
+            caption: `💸 *ASSALTO BEM SUCEDIDO!* 💸\n\n@${participant.split('@')[0]} roubou ${valorRoubado} pontos do @${mention.split('@')[0]}!`, 
+            mentions: [participant, mention] 
+        }, { quoted: msg });
+    } else {
+        // Se falhar, perde pontos pra polícia
+        await sock.sendMessage(sender, { 
+            video: { url: 'https://media.tenor.com/wbMLB5AzQFkAAAPo/jail-bugs.mp4' }, 
+            gifPlayback: true,
+            caption: `🚓 *OPS! VOCÊ FOI PRESO!* 🚓\n\nO @${participant.split('@')[0]} tentou roubar o @${mention.split('@')[0]} e a polícia chegou! Perdeu 20 pontos de fiança!`, 
+            mentions: [participant, mention] 
+        }, { quoted: msg });
+        
+        placar[participant] = Math.max(0, placar[participant] - 20);
+        fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
+    }
+}
         // 1. !RANK (ORGANIZADO E DEBOCHADO)
 if (text === '!rank') {
     // Ordena os usuários pelo número de mensagens (do maior para o menor)
