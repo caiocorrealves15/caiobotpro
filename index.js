@@ -723,7 +723,7 @@ if (text === '!menu') {
 │ 🎵 !musica    | 🔗 !link
 │
 ╰━━━━━━━━━━━━━━━╯
-🤖 *Bot em constante evolução! Toda semana tem novidades.*`.trim();
+🤖 *Neymar BOT em constante evolução! Toda semana tem novidades.*`.trim();
 
     await sock.sendMessage(sender, { 
         video: { url: 'https://media.tenor.com/WV_2tGerThoAAAPo/farming-aura-farming.mp4' },
