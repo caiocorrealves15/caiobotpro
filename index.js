@@ -1145,12 +1145,16 @@ if (text.startsWith('!comprar')) {
         return await sock.sendMessage(sender, { text: "❌ Você não pode mutar um administrador, seu maluco! 😂", quoted: msg });
     }
     // -------------------------------
-
     // Aplica o Mute
     mutados[mention] = Date.now() + 60000;
     fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
-    // ... restante da lógica ...
-}
+    
+    // ATENÇÃO: Adicione essas linhas abaixo para fechar os blocos que você abriu:
+    placar[participant] -= custo;
+    fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
+    await sock.sendMessage(sender, { text: `✅ @${mention.split('@')[0]} foi mutado por 1 minuto!`, mentions: [mention], quoted: msg });
+    } // Fecha o if (item === 'mute')
+} // Fecha o if (text.startsWith('!comprar'))
 
 // --- !GADO (COM PORCENTAGEM E DEBOCHE) ---
 if (text.startsWith('!gado')) {
@@ -1851,7 +1855,10 @@ if (text.startsWith('!clima')) {
     }); 
 } // <--- FECHA O IF DO !CLIMA (APENAS UM AQUI)
 
-}); // <--- FECHA O MESSAGES.UPSERT
-} // <--- FECHA O CONNECTTOWHATSAPP
 
+
+    }); // <--- ESTE FECHA O sock.ev.on('messages.upsert', ...)
+} // <--- ESTE FECHA A function connectToWhatsApp()
+
+connectToWhatsApp();
 connectToWhatsApp();
