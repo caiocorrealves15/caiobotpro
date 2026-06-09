@@ -14,6 +14,11 @@ const ultimaMensagem = {};
 const contagemFlood = {};
 // ... (seus outros requires)
 let listaCasais = [];
+let jogoPiada = {
+    ativo: false,
+    resposta: "",
+    idMensagem: ""
+};
 
 // Função de salvamento (mantenha como está)
 const salvarCasais = () => {
@@ -555,7 +560,7 @@ if (lowerText.includes('bebida') || lowerText.includes('cerveja') || lowerText.i
 
     // 9. Comandos extras (ban, tier, matar, rank, adm, socar, beijar, fechar, abrir, musica, desmute, mute, clima)
     // *Dica: Aplique o quoted: msg em todos os sock.sendMessage dentro desses blocos também!*
-    const comandosExistentes = ['!menu', '!rank', '!casar', '!casais', '!avisoadm', '!descasar', '!emoji', '!sortear', '!jogar', '!forca', '!link', '!tier', '!rankingemoji', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute'];
+    const comandosExistentes = ['!menu', '!rank', '!casar', '!casais', '!piada', '!avisoadm', '!descasar', '!emoji', '!sortear', '!jogar', '!forca', '!link', '!tier', '!rankingemoji', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute'];
 
 if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd))) {
     const autor = msg.key.participant || msg.key.remoteJid;
@@ -574,12 +579,12 @@ if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd)
 
         // 2. !MENU
         // 2. !MENU (ESTILO PERSONALIZADO BASEADO NA IMAGEM)
-        if (text === '!menu') {
+        // 2. !MENU (ESTILO PERSONALIZADO ATUALIZADO)
+if (text === '!menu') {
     const senderId = msg.key.participant || msg.key.remoteJid; 
     const dataAtual = new Date().toLocaleDateString('pt-BR');
     const horaAtual = new Date(new Date().getTime() - (3 * 60 * 60 * 1000)).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
-    // ID completo com o formato correto do seu número
     const meuId = '5527992997083@s.whatsapp.net'; 
 
     const menuTexto = `
@@ -587,37 +592,37 @@ if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd)
 │
 │ Fala, @${senderId.split('@')[0]}!
 │ 📅 ${dataAtual} | ⏰ ${horaAtual}
-│ 👑 Criador: @5527992997083
+│ 👑 Dono: @5527992997083
 │
-├──── 🎮 JOGOS ────
-│ 🔰 !rank   | ⌛ !sortear
-│ 🎇 !tier    | 🎮 !jogar
-│ 😵 !forca  | ⚽ !penalti
-│ 🎥 !emoji
+├──── 🎮 JOGOS & DIVERSÃO ────
+│ 🔰 !rank     | ⌛ !sortear
+│ 🎇 !tier     | 🎮 !jogar
+│ 😵 !forca    | ⚽ !penalti
+│ 🎥 !emoji    | 🤡 !piada
+│ 💍 !casar    | 💔 !descasar
+│ 👥 !casais
 │
 ├──── 😂 ZUEIRA ────
-│ 🤜 !socar  | 😘 !beijar
-│ 🗡️ !matar  | 🤳 !f
+│ 🤜 !socar    | 😘 !beijar
+│ 🗡️ !matar    | 🤳 !f
 │
 ├──── 🚨 ADMIN ────
-│ ❌ !ban     | ❇️ !adm
-│ 🚫 !fechar | 🔓 !abrir
+│ ❌ !ban      | ❇️ !adm
+│ 🚫 !fechar   | 🔓 !abrir
+│ 🔇 !mute     | 🔊 !desmute
+│ 📣 !avisoadm
 │
-├──── ⚙️ UTIL ────
-│ 📛 !menu   | 🌤️ !clima
+├──── ⚙️ UTIL & SUPORTE ────
+│ 📛 !menu     | 🌤️ !clima
+│ 🎵 !musica   | 🔗 !link
 │
-├──── 🛠️ SUPORTE ────
-│ Problemas no BOT?
-│ Chame @5527992997083
-│ Ou um dos ADMs           
 ╰━━━━━━━━━━━━━━━╯
-🤖 *Bot em evolução! Toda semana tem novas funções e jogos.*`.trim();
+🤖 *Bot em constante evolução!*`.trim();
 
     await sock.sendMessage(sender, { 
         video: { url: 'https://media.tenor.com/WV_2tGerThoAAAPo/farming-aura-farming.mp4' },
         gifPlayback: true, 
         caption: menuTexto,
-        // O WhatsApp vai substituir o número @5527992997083 pelo seu nome de perfil: Caio SRN🔴⚫
         mentions: [senderId, meuId] 
     }, { quoted: msg });
 }
@@ -664,7 +669,57 @@ if (text.startsWith('!jogar')) {
     }
 }
 
+// --- COMANDO !PIADA ---
+// --- COMANDO !PIADA ---
+if (text === '!piada') {
+    const piadas = [
+        { pergunta: "O que o pato disse para a pata? (Dica: é um trocadilho amoroso)", resposta: "vem quá" },
+        { pergunta: "Por que a plantinha não vai ao médico? (Dica: ela é...)", resposta: "porque ela já tem plantão" },
+        { pergunta: "O que o tijolo disse para o outro tijolo? (Dica: é uma relação profissional)", resposta: "há um tijolo entre nós" },
+        { pergunta: "Qual é a cidade que não tem luz? (Dica: é um trocadilho)", resposta: "luziania" },
+        { pergunta: "Por que o computador foi preso? (Dica: ele fez algo ilegal com a internet)", resposta: "porque ele rodou um programa" },
+        { pergunta: "Qual o animal que mais gosta de música? (Dica: é um animal de fazenda)", resposta: "o porquinho" },
+        { pergunta: "Por que o livro de matemática se suicidou? (Dica: ele tinha muitos...)", resposta: "porque ele tinha muitos problemas" },
+        { pergunta: "Qual a diferença entre a lagoa e a padaria? (Dica: um tem peixe, o outro tem...)", resposta: "na lagoa há sapos, na padaria há pães" },
+        { pergunta: "Por que a aranha é muito rica? (Dica: ela tem várias delas)", resposta: "porque ela tem muitas teias" },
+        { pergunta: "Como se chama o cão que trabalha no circo? (Dica: ele é um...)", resposta: "cão-palhaço" },
+        { pergunta: "Qual é o cúmulo da paciência? (Dica: tem a ver com algo muito pequeno)", resposta: "esperar um mosquito fazer xixi" },
+        { pergunta: "O que o zero disse para o oito? (Dica: é sobre o cinto)", resposta: "que cinto apertado você usa" },
+        { pergunta: "Por que a girafa se dá bem com todo mundo? (Dica: ela é...)", resposta: "porque ela é muito alta" },
+        { pergunta: "Por que a geladeira é burra? (Dica: ela sempre esquece de...)", resposta: "porque ela só sabe guardar as coisas" },
+        { pergunta: "O que o sal disse para o açúcar? (Dica: é sobre ser doce)", resposta: "você é muito doce para mim" }
+    ];
 
+    const sorteada = piadas[Math.floor(Math.random() * piadas.length)];
+
+    // Reage na mensagem de quem pediu
+    await sock.sendMessage(sender, { react: { text: '🤡', key: msg.key } });
+
+    // Envia o desafio com GIF e menção implícita no quoted
+    const msgPiada = await sock.sendMessage(sender, { 
+        video: { url: 'https://media.tenor.com/TK5ohR8zXzAAAAPo/o-livro-dos-insultos-the-noite-com-danilo-gentili.mp4' },
+        gifPlayback: true,
+        caption: `🤡 *DESAFIO DA PIADA RUIM!* 🤡\n\n${sorteada.pergunta}\n\n*Responda em cima desta mensagem com a resposta correta!*`, 
+    }, { quoted: msg });
+
+    jogoPiada.ativo = true;
+    jogoPiada.resposta = sorteada.resposta;
+    jogoPiada.idMensagem = msgPiada.key.id;
+}
+
+// Lógica de validação
+if (jogoPiada.ativo && msg.message?.extendedTextMessage?.contextInfo?.stanzaId === jogoPiada.idMensagem) {
+    const respostaUsuario = text.toLowerCase().trim();
+
+    if (respostaUsuario === jogoPiada.resposta) {
+        jogoPiada.ativo = false;
+        await sock.sendMessage(sender, { react: { text: '🏆', key: msg.key } });
+        await sock.sendMessage(sender, { text: `🎉 BOA! @${participant.split('@')[0]} é um mestre das piadas sem graça! A resposta era mesmo: *${jogoPiada.resposta.toUpperCase()}*`, mentions: [participant], quoted: msg });
+    } else {
+        await sock.sendMessage(sender, { react: { text: '❌', key: msg.key } });
+        await sock.sendMessage(sender, { text: `❌ Errou feio! Continua tentando aí, o grupo agradece o esforço.`, quoted: msg });
+    }
+}
 
 if (text.startsWith('!penalti')) {
     // Reação de bola de futebol
