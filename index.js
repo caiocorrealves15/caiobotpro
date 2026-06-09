@@ -12,48 +12,7 @@ const ARQUIVO_PLACAR_EMOJI = './placar_emoji.json';
 const infrações = {};
 const ultimaMensagem = {};
 const contagemFlood = {};
-const axios = require('axios');
-async function buscarETocar(nomeMusica) {
-    const host = 'yt-search-and-download-mp3.p.rapidapi.com';
-    const key = '2b70843e46msh714109c6e6c48d3p1b34e5jsn51f85b76c0c6';
-
-    try {
-        // 1. Busca: vamos usar o parâmetro 'query' exatamente como a documentação da API pede
-        const resBusca = await axios.get(`https://${host}/search`, {
-            headers: { 
-                'x-rapidapi-key': key, 
-                'x-rapidapi-host': host 
-            },
-            params: {
-                query: nomeMusica // A API usa 'query' para o termo de busca
-            }
-        });
-
-        console.log("DEBUG API BUSCA:", JSON.stringify(resBusca.data, null, 2));
-
-        // Acessa o primeiro vídeo dentro do array 'videos' que vimos no seu JSON
-        if (!resBusca.data.videos || resBusca.data.videos.length === 0) {
-            throw new Error("Nenhum vídeo encontrado");
-        }
-        const videoId = resBusca.data.videos[0].id;
-        
-        // 2. Download: usando o ID que acabamos de pegar
-        const resDownload = await axios.get(`https://${host}/mp3`, {
-            headers: { 
-                'x-rapidapi-key': key, 
-                'x-rapidapi-host': host 
-            },
-            params: {
-                id: videoId
-            }
-        });
-
-        return resDownload.data.link;
-    } catch (e) {
-        console.error("ERRO FINAL:", e.message);
-        return null;
-    }
-}
+// ... (seus outros requires)
 let listaCasais = [];
 
 // Função de salvamento (mantenha como está)
@@ -145,7 +104,7 @@ Você acaba de entrar no grupo mais zueiro do Zap!
 
 🚀 *O QUE ROLA POR AQUI?*
 🎮 *JOGOS:* Emoji, RPG, Forca, Ranking de mensagens, Pênalti e mais!
-🎶 Músicas via comando !tocar.
+🎶 Músicas via comando !musica.
 🥊 Muita interação e resenha.
 🏆 Ranking de membros ativos.
 
@@ -597,7 +556,7 @@ if (lowerText.includes('bebida') || lowerText.includes('cerveja') || lowerText.i
 
     // 9. Comandos extras (ban, tier, matar, rank, adm, socar, beijar, fechar, abrir, musica, desmute, mute, clima)
     // *Dica: Aplique o quoted: msg em todos os sock.sendMessage dentro desses blocos também!*
-    const comandosExistentes = ['!menu', '!rank', '!casar', '!casais', '!avisoadm', '!descasar', '!emoji', '!sortear', '!jogar', '!forca', '!link', '!tier', '!rankingemoji', '!penalti', '!tocar', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute'];
+    const comandosExistentes = ['!menu', '!rank', '!casar', '!casais', '!avisoadm', '!descasar', '!emoji', '!sortear', '!jogar', '!forca', '!link', '!tier', '!rankingemoji', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute'];
 
 if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd))) {
     const autor = msg.key.participant || msg.key.remoteJid;
@@ -988,15 +947,26 @@ if (text.startsWith('!casar')) {
     const p1 = participant.split('@')[0];
     const p2 = mention.split('@')[0];
     
-    // Aqui pegamos o nome da pessoa que está casando
+    // Captura o nome de quem enviou (pushName)
     const nome1 = msg.pushName || "Alguém"; 
-    // Como não temos o pushName do mencionado fácil, vamos salvar o ID ou um placeholder
-    const nome2 = "Mencionado"; 
+    
+    // Captura o nome de quem foi mencionado buscando no grupo
+    let nome2 = "Mencionado";
+    try {
+        const metadata = await sock.groupMetadata(sender);
+        const participanteMencionado = metadata.participants.find(p => p.id === mention);
+        if (participanteMencionado) {
+            // Tenta pegar o nome do perfil (se disponível)
+            nome2 = participanteMencionado.notify || participanteMencionado.pushName || "Mencionado";
+        }
+    } catch (e) {
+        console.error("Erro ao buscar nome do mencionado:", e);
+    }
 
     const jaCasado = listaCasais.find(c => (c.p1 === p1 && c.p2 === p2) || (c.p1 === p2 && c.p2 === p1));
     if (jaCasado) return await sock.sendMessage(sender, { text: "❌ Vocês já são casados!", quoted: msg });
 
-    // SALVANDO O NOME NO JSON
+    // SALVANDO O NOME CORRETO NO JSON
     listaCasais.push({ p1, p2, nome1, nome2 });
     salvarCasais(); 
 
@@ -1033,7 +1003,7 @@ if (text === '!casais') {
         return await sock.sendMessage(sender, { text: "❌ Ninguém casou ainda! Estão todos encalhados.", quoted: msg });
     }
 
-    // 2. Frases zueiras para o cabeçalho
+    // 2. Sorteia uma frase engraçada para o cabeçalho
     const frasesZueiras = [
         "🏆 *CARTÓRIO DO CAOS - CASAIS DO MOMENTO* 🏆",
         "🔥 *OS LOUCOS QUE DECIDIRAM SOFRER JUNTOS* 🔥",
@@ -1049,18 +1019,24 @@ if (text === '!casais') {
 
     let listaMentions = [];
 
+    // 3. Monta a lista
     listaCasais.forEach((c, i) => {
-        // Se existir nome1 no arquivo, usa ele, senão usa o @ID
-        const n1 = c.nome1 ? c.nome1 : `@${c.p1}`;
-        texto += `${i + 1}. ${n1} ❤️ @${c.p2}\n`;
+        const n1 = c.nome1 || `@${c.p1}`;
+        const n2 = c.nome2 || `@${c.p2}`;
         
-        listaMentions.push(c.p1 + "@s.whatsapp.net");
-        listaMentions.push(c.p2 + "@s.whatsapp.net");
+        texto += `${i + 1}. ${n1} ❤️ ${n2}\n`;
+        
+        // Garante que o ID tenha o sufixo para menção funcionar
+        if (!c.p1.includes('@')) listaMentions.push(c.p1 + "@s.whatsapp.net");
+        if (!c.p2.includes('@')) listaMentions.push(c.p2 + "@s.whatsapp.net");
     });
     
-    texto += "\n🤡 Quem será o próximo trouxa a cair na armadilha? Digite !casar @alguém";
+    texto += "\n🤡 Quem será o próximo trouxa? Digite !casar @alguém";
 
-    // 3. Envio com a lista tratada
+    // 4. Reação no comando
+    await sock.sendMessage(sender, { react: { text: '💍', key: msg.key } });
+
+    // 5. Envio final
     await sock.sendMessage(sender, { 
         text: texto, 
         mentions: listaMentions,
@@ -1193,25 +1169,29 @@ if (text === '!avisoadm') {
 }
         // Substitua seu bloco !musica por este:
 // Você precisará instalar: npm install ytsr (para buscar) e usar uma API que entregue o stream direto
-if (text.startsWith('!tocar')) {
-    const nome = text.replace('!tocar', '').trim();
-    if (!nome) return await sock.sendMessage(sender, { text: "❌ Qual música, meu rei?" }, { quoted: msg });
-
-    await sock.sendMessage(sender, { react: { text: '🔍', key: msg.key } });
-
+// Como o YouTube é a fonte de quase tudo, vou manter a busca, mas forçar o envio como ÁUDIO.
+if (text.startsWith('!musica ')) {
+    const busca = text.replace('!musica ', '');
     try {
-        const linkMp3 = await buscarETocar(nome);
-        if (linkMp3) {
-            await sock.sendMessage(sender, { 
-                audio: { url: linkMp3 }, 
-                mimetype: 'audio/mp4',
-                ptt: false 
-            }, { quoted: msg });
-        } else {
-            throw new Error();
-        }
+        await sock.sendMessage(sender, { text: "Calma aí apressado, 🔍 Buscando sua música..." });
+        
+
+        const searchResults = await ytsr(busca, { limit: 1 });
+        const video = searchResults.items[0];
+        
+        if (!video) return await sock.sendMessage(sender, { text: "❌ Não encontrado." });
+
+        // Enviamos apenas o link. É seguro, não bloqueia o bot e não exige processamento pesado do Render.
+        const mensagem = `🎵 *Música Encontrada!*\n\n` +
+                         `🎤 *Título:* ${video.title}\n` +
+                         `🔗 *Link:* ${video.url}\n\n` +
+                         `🤖 *Dica:* Como o YouTube bloqueia tentativas de extrair áudio direto, estou te mandando o link para você ouvir com tranquilidade!`;
+
+        await sock.sendMessage(sender, { text: mensagem }, { quoted: msg });
+
     } catch (e) {
-        await sock.sendMessage(sender, { text: "❌ Deu erro! Não achei essa música." }, { quoted: msg });
+        console.error(e);
+        await sock.sendMessage(sender, { text: "❌ O YouTube está protegendo demais o conteúdo agora. Tente novamente mais tarde." });
     }
 }
        
