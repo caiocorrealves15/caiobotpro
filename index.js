@@ -1205,17 +1205,15 @@ if (text === '!rank') {
         .slice(0, 10);
 
     let res = "🏆 *RANKING DE QUEM VIVE NO ZAP*\n\n";
+    let listaMentions = []; // Lista que vai carregar os IDs para o WhatsApp mencionar
 
     ranking.forEach((entry, index) => {
         const [id, count] = entry;
+        listaMentions.push(id); // Adiciona o ID completo na lista de menções
         
-        // Tenta pegar o nome do contato pelo Baileys
-        // Se o nome não existir, usa os últimos 4 dígitos do número para ficar bonito
-        const numeroLimpo = id.split('@')[0];
-        const nomeExibicao = (sock.contacts && sock.contacts[id]) ? sock.contacts[id].notify || nomeLimpo : `Membro ${numeroLimpo.slice(-4)}`;
-        
-        let cargoDisplay = cargos[id] ? `💎 *${cargos[id].toUpperCase()}*` : "👤 Membro";
-        res += `${index + 1}. ${nomeExibicao} | ${cargoDisplay} | ${count} msg\n`;
+        // Aqui usamos o @ + o ID cortado. O WhatsApp vai buscar o nome pelo ID na lista de mentions.
+        let cargoDisplay = cargos[id] ? `💎 *${cargos[id].toUpperCase()}*` : "👤 *Membro*";
+        res += `${index + 1}. @${id.split('@')[0]} | ${cargoDisplay} | ${count} msg\n`;
     });
 
     res += "\n━━━━━━━━━━━━━━━━━━\n\n👑 *HIERARQUIA DE PODER (ELITE):*\n";
@@ -1223,63 +1221,25 @@ if (text === '!rank') {
     const cargosExistentes = ["Lenda", "Rei da Zueira", "Gado Supremo", "Fofoqueiro(a)"];
     const icones = { "Lenda": "👑", "Rei da Zueira": "🔥", "Gado Supremo": "🐂", "Fofoqueiro(a)": "🤫" };
 
-    let encontrouAlguem = false;
     cargosExistentes.forEach(cargo => {
         const membros = Object.entries(cargos)
             .filter(([id, nomeCargo]) => nomeCargo === cargo)
             .map(([id]) => {
-                // Tenta buscar o nome, se não achar, usa o número limpo
-                return sock.contacts && sock.contacts[id] ? sock.contacts[id].notify : id.split('@')[0];
+                listaMentions.push(id); // Adiciona também na lista de menções da hierarquia
+                return `@${id.split('@')[0]}`;
             });
         
         if (membros.length > 0) {
             res += `${icones[cargo] || "⭐"} *${cargo.toUpperCase()}*: ${membros.join(', ')}\n`;
-            encontrouAlguem = true;
         }
     });
 
-    if (!encontrouAlguem) res += "Ninguém atingiu o status de Elite ainda! 🤡";
-
     res += "\n🤖 *Dica: Seja ativo e compre seu cargo!*";
 
-    await sock.sendMessage(sender, { text: res }, { quoted: msg });
-}
-        // 5.3 !ADM (COM GIF E FRASES DEBOCHADAS)
-if (text.startsWith('!adm')) {
-    if (!isAdmin) {
-        await sock.sendMessage(sender, { text: "Tentando furar as regras, né?? HAHAHHAHA 👀👀👀\n\nSabe que um ADM está de olho em você agora né?" }, { quoted: msg });
-    } else {
-        const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
-        if (mention) {
-            try {
-                await sock.groupParticipantsUpdate(sender, [mention], 'promote');
-                
-                // Frases debochadas para a promoção
-                const frasesAdm = [
-                    `👑 O @${mention.split('@')[0]} foi promovido a administrador! Agora aguenta a responsabilidade, parceiro! 😂`,
-                    `🚨 Atenção! O @${mention.split('@')[0]} agora tem poder. Se verem ele fazendo besteira, a culpa é de quem promoveu! 🤡`,
-                    `😎 Agora o @${mention.split('@')[0]} é adm. Não deixa o poder subir à cabeça, hein?! 👑`,
-                    `🔥 @${mention.split('@')[0]} recebeu a coroa! Vamos ver se ele dura mais de uma semana ou se vai banir todo mundo! 🤣`,
-                    `📢 Habemus Administrador! @${mention.split('@')[0]} agora manda (ou finge que manda) nesta bagunça. Parabéns! 🎉`
-                ];
-                
-                const sorteioAdm = frasesAdm[Math.floor(Math.random() * frasesAdm.length)];
-                const linkGifAdm = "https://media.tenor.com/ASV7XuWQLXwAAAPo/alligator-crocodile.mp4";
-
-                await sock.sendMessage(sender, { 
-                    video: { url: linkGifAdm },
-                    gifPlayback: true,
-                    caption: sorteioAdm, 
-                    mentions: [mention] 
-                }, { quoted: msg }); // Adicionado quoted aqui também
-                
-            } catch (e) {
-                await sock.sendMessage(sender, { text: "❌ Não consegui promover. Verifique se o bot é administrador do grupo.", quoted: msg });
-            }
-        } else {
-            await sock.sendMessage(sender, { text: "❌ Você precisa mencionar alguém para tornar administrador!", quoted: msg });
-        }
-    }
+    await sock.sendMessage(sender, { 
+        text: res, 
+        mentions: listaMentions // A mágica acontece aqui: passando a lista de IDs, ele vira @Nome
+    }, { quoted: msg });
 }
 
 // 5. !SOCAR (Com Reply e Frases Aleatórias)
