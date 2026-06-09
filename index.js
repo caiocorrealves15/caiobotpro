@@ -20,6 +20,10 @@ let jogoPiada = {
     idMensagem: ""
 };
 let jogosLiberados = true;
+let jogoPerguntas = {
+    ativo: false,
+    idMensagem: ""
+};
 
 // Função de salvamento (mantenha como está)
 const salvarCasais = () => {
@@ -237,7 +241,7 @@ O bot monitora automaticamente:
     }
 
     // --- 4. Trava de segurança para jogos (COM EXCEÇÃO PARA ADM) ---
-const comandosDeJogo = ['!piada', '!casar', '!descasar', '!forca', '!penalti', '!sortear', '!emoji', '!jogar'];
+const comandosDeJogo = ['!piada', '!casar', '!descasar', '!forca', '!penalti', '!sortear', '!emoji', '!jogar', '!perguntas'];
 
 if (!jogosLiberados && comandosDeJogo.some(cmd => text.startsWith(cmd))) {
     if (isAdmin) {
@@ -259,6 +263,54 @@ if (!jogosLiberados && comandosDeJogo.some(cmd => text.startsWith(cmd))) {
             text: "❌ *Os jogos estão desativados por um ADM.* Aguarde a liberação para brincar, seu apressado! 🤐", 
             quoted: msg 
         });
+    }
+}
+
+// --- COMANDO !PERGUNTAS (QUIZ MEDIANO/DIFÍCIL) ---
+if (text === '!perguntas') {
+    const quiz = [
+        { q: "Qual é o único metal que é líquido em temperatura ambiente? 🌡️", r: "mercurio" },
+        { q: "Quantos dentes tem um ser humano adulto (incluindo o siso)? 🦷", r: "32" },
+        { q: "Qual é o menor país do mundo? 🌍", r: "vaticano" },
+        { q: "Qual o nome do fenômeno que faz o arco-íris aparecer? 🌈", r: "refracao" },
+        { q: "Qual é o país que mais consome café no mundo? ☕", r: "finlandia" },
+        { q: "Qual foi o primeiro animal a ser clonado com sucesso? 🐑", r: "dolly" },
+        { q: "Qual a língua mais falada no mundo (nativa)? 🗣️", r: "mandarim" },
+        { q: "Quem inventou a lâmpada elétrica (o mais famoso)? 💡", r: "edison" },
+        { q: "Qual o maior deserto do mundo (excluindo a Antártida)? 🌵", r: "saara" },
+        { q: "Qual é a montanha mais alta do mundo? 🏔️", r: "everest" },
+        { q: "Qual elemento químico é o diamante? 💎", r: "carbono" },
+        { q: "Quantos ossos tem o corpo humano adulto? 🦴", r: "206" }
+    ];
+
+    const sorteada = quiz[Math.floor(Math.random() * quiz.length)];
+
+    await sock.sendMessage(sender, { react: { text: '🤔', key: msg.key } });
+
+    const msgQuiz = await sock.sendMessage(sender, { 
+        video: { url: 'https://media.tenor.com/OoxmND1_sEMAAAPo/batman-doubt.mp4' }, // GIF de alguém pensando
+        gifPlayback: true,
+        caption: `🧠 *QUIZ DE NÍVEL: COÇA-CABEÇA* 🧠\n\n${sorteada.q}\n\n*Responda em cima desta mensagem!*`, 
+    }, { quoted: msg });
+
+    jogoPerguntas.ativo = true;
+    jogoPerguntas.resposta = sorteada.r;
+    jogoPerguntas.idMensagem = msgQuiz.key.id;
+}
+
+// Lógica de validação do Quiz (Mantém igual!)
+if (jogoPerguntas.ativo && msg.message?.extendedTextMessage?.contextInfo?.stanzaId === jogoPerguntas.idMensagem) {
+    // Tira acentos e deixa minúsculo para facilitar
+    const respostaUsuario = text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "").trim();
+    const respostaCerta = jogoPerguntas.resposta.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "");
+
+    if (respostaUsuario === respostaCerta) {
+        jogoPerguntas.ativo = false;
+        await sock.sendMessage(sender, { react: { text: '🏆', key: msg.key } });
+        await sock.sendMessage(sender, { text: `🎉 BRABO! @${participant.split('@')[0]} provou que não dormiu na escola!`, mentions: [participant], quoted: msg });
+    } else {
+        await sock.sendMessage(sender, { react: { text: '❌', key: msg.key } });
+        await sock.sendMessage(sender, { text: `❌ Errou! Essa não era tão óbvia, né? 😂`, quoted: msg });
     }
 }
 
@@ -610,7 +662,7 @@ if (lowerText.includes('bebida') || lowerText.includes('cerveja') || lowerText.i
 
     // 9. Comandos extras (ban, tier, matar, rank, adm, socar, beijar, fechar, abrir, musica, desmute, mute, clima)
     // *Dica: Aplique o quoted: msg em todos os sock.sendMessage dentro desses blocos também!*
-    const comandosExistentes = ['!menu', '!rank', '!casar', '!casais', '!piada', '!avisoadm', '!descasar', '!emoji', '!sortear', '!jogar', '!forca', '!jogosoff', '!jogoson', '!link', '!tier', '!rankingemoji', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute'];
+    const comandosExistentes = ['!menu', '!rank', '!casar', '!casais', '!piada', '!avisoadm', '!descasar', '!emoji', '!sortear', '!sortear', '!perguntas', '!forca', '!jogosoff', '!jogoson', '!link', '!tier', '!rankingemoji', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute'];
 
 if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd))) {
     const autor = msg.key.participant || msg.key.remoteJid;
@@ -630,6 +682,7 @@ if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd)
         // 2. !MENU
         // 2. !MENU (ESTILO PERSONALIZADO BASEADO NA IMAGEM)
         // 2. !MENU (ESTILO PERSONALIZADO ATUALIZADO)
+// 2. !MENU (MENU COMPLETO E ORGANIZADO)
 if (text === '!menu') {
     const senderId = msg.key.participant || msg.key.remoteJid; 
     const dataAtual = new Date().toLocaleDateString('pt-BR');
@@ -649,6 +702,7 @@ if (text === '!menu') {
 │ 🎇 !tier     | 🎮 !jogar
 │ 😵 !forca    | ⚽ !penalti
 │ 🎥 !emoji    | 🤡 !piada
+│ 🧠 !perguntas| 🏆 !rankingemoji
 │ 💍 !casar    | 💔 !descasar
 │ 👥 !casais
 │
@@ -660,14 +714,14 @@ if (text === '!menu') {
 │ ❌ !ban      | ❇️ !adm
 │ 🚫 !fechar   | 🔓 !abrir
 │ 🔇 !mute     | 🔊 !desmute
-│ 📣 !avisoadm
+│ 📣 !avisoadm | 🕹️ !jogoson/off
 │
 ├──── ⚙️ UTIL & SUPORTE ────
 │ 📛 !menu     | 🌤️ !clima
 │ 🎵 !musica   | 🔗 !link
 │
 ╰━━━━━━━━━━━━━━━╯
-🤖 *Bot em constante evolução!*`.trim();
+🤖 *Bot em constante evolução! Toda semana tem jogos novos e novidades.*`.trim();
 
     await sock.sendMessage(sender, { 
         video: { url: 'https://media.tenor.com/WV_2tGerThoAAAPo/farming-aura-farming.mp4' },
