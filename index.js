@@ -1001,7 +1001,7 @@ if (text === '!casais') {
         return await sock.sendMessage(sender, { text: "❌ Ninguém casou ainda! Estão todos encalhados.", quoted: msg });
     }
 
-    // 2. Sorteia uma frase engraçada para o cabeçalho
+    // 2. Frases zueiras para o cabeçalho
     const frasesZueiras = [
         "🏆 *CARTÓRIO DO CAOS - CASAIS DO MOMENTO* 🏆",
         "🔥 *OS LOUCOS QUE DECIDIRAM SOFRER JUNTOS* 🔥",
@@ -1017,24 +1017,24 @@ if (text === '!casais') {
 
     let listaMentions = [];
 
-    // 3. Monta a lista
+    // 3. Monta a lista garantindo as menções
     listaCasais.forEach((c, i) => {
-        const n1 = c.nome1 || `@${c.p1}`;
-        const n2 = c.nome2 || `@${c.p2}`;
+        // Criamos a string com o @ para ser mencionada
+        const mencao1 = `@${c.p1}`;
+        const mencao2 = `@${c.p2}`;
         
-        texto += `${i + 1}. ${n1} ❤️ ${n2}\n`;
+        texto += `${i + 1}. ${mencao1} ❤️ ${mencao2}\n`;
         
-        // Garante que o ID tenha o sufixo para menção funcionar
-        if (!c.p1.includes('@')) listaMentions.push(c.p1 + "@s.whatsapp.net");
-        if (!c.p2.includes('@')) listaMentions.push(c.p2 + "@s.whatsapp.net");
+        // Adiciona os IDs completos na lista de menções para o WhatsApp processar
+        listaMentions.push(c.p1 + "@s.whatsapp.net");
+        listaMentions.push(c.p2 + "@s.whatsapp.net");
     });
     
-    texto += "\n🤡 Quem será o próximo trouxa? Digite !casar @alguém";
+    texto += "\n🤡 Quem será o próximo trouxa a cair na armadilha? Digite !casar @alguém";
 
-    // 4. Reação no comando
+    // 4. Reação e Envio
     await sock.sendMessage(sender, { react: { text: '💍', key: msg.key } });
-
-    // 5. Envio final
+    
     await sock.sendMessage(sender, { 
         text: texto, 
         mentions: listaMentions,
