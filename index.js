@@ -246,8 +246,7 @@ O bot monitora automaticamente:
 // --- LÓGICA DO ANTI-LINK COM AUTO BAN ---
 const isLink = /https?:\/\/[^\s]+/.test(text);
 if (isLink) {
-    const getIsAdmin = async () => { if (!sender.endsWith('@g.us')) return false; try { const metadata = await sock.groupMetadata(sender); return metadata.participants.find(p => p.id === participant)?.admin !== null; } catch { return false; } };
-isAdmin = await getIsAdmin();
+
     
     if (!isAdmin) {
         infrações[participant] = (infrações[participant] || 0) + 1;
@@ -284,8 +283,7 @@ isAdmin = await getIsAdmin();
 }
     // --- INÍCIO DO ANTI-TRAVA ---
     if (text.length > 5000) {
-        const getIsAdmin = async () => { if (!sender.endsWith('@g.us')) return false; try { const metadata = await sock.groupMetadata(sender); return metadata.participants.find(p => p.id === participant)?.admin !== null; } catch { return false; } };
-        const isAdmin = await getIsAdmin();
+    
 
         if (!isAdmin) {
             const metadata = await sock.groupMetadata(sender);
@@ -350,8 +348,6 @@ if (contagemFlood[participant].length >= 5) {
     contagemMensagens[participant] = (contagemMensagens[participant] || 0) + 1;
     fs.writeFileSync(ARQUIVO_RANK, JSON.stringify(contagemMensagens));
     
-    const getIsAdmin = async () => { if (!sender.endsWith('@g.us')) return false; try { const metadata = await sock.groupMetadata(sender); return metadata.participants.find(p => p.id === participant)?.admin !== null; } catch { return false; } };
-    const isAdmin = await getIsAdmin();
 
     if (text.startsWith('!emoji')) {
     const desafios = [
