@@ -920,57 +920,30 @@ if (text.startsWith('!adm')) {
         }
 
 
-
-
 if (text.startsWith('!descasar')) {
     const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
     if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione o seu ex-amor para divorciar!", quoted: msg });
 
-    const p1 = participant.split('@')[0];
-    const p2 = mention.split('@')[0];
+    // Usamos os IDs completos conforme salvamos no !casar
+    const p1 = participant;
+    const p2 = mention;
 
+    // Busca o casal comparando os IDs completos
     const index = listaCasais.findIndex(c => (c.p1 === p1 && c.p2 === p2) || (c.p1 === p2 && c.p2 === p1));
-    if (index === -1) return await sock.sendMessage(sender, { text: "❌ Vocês nem casados estão! 😂", quoted: msg });
+    
+    if (index === -1) {
+        return await sock.sendMessage(sender, { text: "❌ Vocês nem casados estão! 😂", quoted: msg });
+    }
 
     listaCasais.splice(index, 1);
-    salvarCasais(); // Salva a remoção no arquivo
-
-    await sock.sendMessage(sender, { react: { text: '💔', key: msg.key } });
-    await sock.sendMessage(sender, { text: `💔 O divórcio saiu! @${p1} e @${p2} não estão mais juntos. Cada um pro seu lado! 🥂`, mentions: [participant, mention], quoted: msg });
-}
-
-if (text.startsWith('!casar')) {
-    const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
-    if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione alguém!", quoted: msg });
-
-    // Salva o ID completo (ex: 552799999999@s.whatsapp.net)
-    const p1 = participant; 
-    const p2 = mention; 
-
-    const jaCasado = listaCasais.find(c => (c.p1 === p1 && c.p2 === p2) || (c.p1 === p2 && c.p2 === p1));
-    if (jaCasado) return await sock.sendMessage(sender, { text: "❌ Vocês já são casados!", quoted: msg });
-
-    listaCasais.push({ p1, p2 }); 
     salvarCasais(); 
 
-    const frases = [
-        `💍 O @${p1.split('@')[0]} casou com @${p2.split('@')[0]}!`,
-        `💒 Alerta de união duvidosa! @${p1.split('@')[0]} e @${p2.split('@')[0]} casaram.`,
-        `💘 O amor venceu! @${p1.split('@')[0]} e @${p2.split('@')[0]} agora formam o casal mais improvável do grupo! 😂`,
-        `🥂 A vida de solteiro acabou para o @${p1.split('@')[0]}! @${p2.split('@')[0]}, prepara o divórcio que a gente já vai começar a contar o tempo! 🤡`,
-        `💍 O @${p1.split('@')[0]} cansou da vida de solteiro e fisgou o @${p2.split('@')[0]}! Agora é oficial, bora pro churrasco de comemoração! 🥩`,
-        `🤵👰 Alguém avisa o cartório que o @${p1.split('@')[0]} e o @${p2.split('@')[0]} perderam o juízo e casaram! 💒`,
-        `🔥 O @${p1.split('@')[0]} não aguentou a pressão e pediu o @${p2.split('@')[0]} em casamento. O mico é grande, mas a união é sagrada! 🤣`,
-        `💖 É oficial: @${p1.split('@')[0]} e @${p2.split('@')[0]} decidiram dividir a conta de luz (e a paciência)! Casaram! ⚡`
-    ];
-    
-    await sock.sendMessage(sender, { react: { text: '💍', key: msg.key } });
+    await sock.sendMessage(sender, { react: { text: '💔', key: msg.key } });
     await sock.sendMessage(sender, { 
-        video: { url: "https://media.tenor.com/h981yJykAXYAAAPo/la-haut-dessin-anime.mp4" }, 
-        gifPlayback: true,
-        caption: frases[Math.floor(Math.random() * frases.length)], 
-        mentions: [p1, p2] 
-    }, { quoted: msg });
+        text: `💔 O divórcio saiu! @${p1.split('@')[0]} e @${p2.split('@')[0]} não estão mais juntos. Cada um pro seu lado! 🥂`, 
+        mentions: [p1, p2], 
+        quoted: msg 
+    });
 }
 
 
@@ -1329,70 +1302,60 @@ if (text.startsWith('!musica ')) {
         }
         // 8. COMANDO CLIMA (TRADUZIDO)
        // 8. COMANDO CLIMA (Forçando o Reply com variável constante)
-// 8. COMANDO CLIMA (Com frases engraçadas!)
+// 8. COMANDO CLIMA (Versão Debochada e Otimizada)
 if (text.startsWith('!clima')) {
     const cidade = text.replace('!clima', '').trim();
     if (!cidade) return await sock.sendMessage(sender, { text: "❌ Digite a cidade! Ex: !clima Cariacica", quoted: msg });
 
     const mensagemParaResponder = msg;
 
-    // Objeto com frases engraçadas por condição
+    // Frases novas, bem mais zueiras
     const piadasClima = {
         'sunny': [
-            "Tá um sol pra cada um, né? Não derrete não, hein! 😂",
-            "Céu limpo... perfeito pra ficar no ar-condicionado e não fazer nada. ☀️",
-            "Esse sol tá mais forte que minha vontade de ganhar na mega-sena. 🔥"
+            "Tá um sol que parece que o inferno abriu uma filial aqui! 🔥",
+            "Céu azul... ótimo dia para ficar mofando dentro de casa no computador. ☀️",
+            "Solzão de rachar mamona! Se você sair na rua, vai virar churrasco. 🥩",
+            "Tá mais quente que o banho que você nem tomou hoje. 🥵"
         ],
         'cloudy': [
-            "Tempo nublado... o clima perfeito pra uma depressão motivacional. ☁️",
-            "Tá nublado, mas minha alma continua brilhando... ou quase isso. 🤡",
-            "Céu cinza, igual à minha cara quando vejo o boleto chegando. 💸"
+            "Tempo nublado... bem deprimido, igual ao seu histórico de pesquisas. ☁️",
+            "Céu cinza... o clima perfeito para dormir até o ano que vem. 💤",
+            "Tá nublado, mas a feiura continua a mesma. 🤡",
+            "Parece que vai chover... ou não. Minha previsão é tão inútil quanto você. 🌩️"
         ],
         'rain': [
-            "Chuva? Ótimo, agora minha preguiça tem justificativa oficial! 🌧️",
-            "Tá chovendo, o clima perfeito pra dormir e esquecer da vida. 💤",
-            "Se molhar na chuva dá gripe, então fica em casa assistindo série! 📺"
+            "Chovendo? Ótimo, desculpa perfeita para não fazer nada o dia todo! 🌧️",
+            "Tempo de chuva... cuidado para não derreter, você é feito de açúcar? 🍭",
+            "Tá caindo o mundo lá fora e você aí preocupado com o clima? Vai arrumar um emprego! 💼",
+            "Chuva, café e tédio. O combo completo da vida adulta. ☕"
         ]
-    };
-
-    const traduzir = (condicao) => {
-        const manual = {
-            'light rain': 'Chuva leve', 'rain': 'Chuva', 'sunny': 'Ensolarado',
-            'mostly sunny': 'Predominância de sol', 'cloudy': 'Nublado',
-            'mostly cloudy': 'Predominância de nuvens', 'partly cloudy': 'Parcialmente nublado',
-            'clear': 'Céu limpo', 'thunderstorms': 'Tempestades'
-        };
-        return manual[condicao.toLowerCase()] || condicao;
     };
 
     weather.find({ search: cidade, degreeType: 'C' }, async (err, result) => {
         if (err || !result || result.length === 0) {
-            return await sock.sendMessage(sender, { text: "❌ Cidade não encontrada.", quoted: mensagemParaResponder });
+            // Tentativa de busca mais precisa
+            return await sock.sendMessage(sender, { text: "❌ Cidade não encontrada. Tente colocar o Estado junto, ex: !clima Cariacica, ES", quoted: mensagemParaResponder });
         }
         
         const current = result[0].current;
         const condicaoOriginal = current.skytext.toLowerCase();
-        const condicaoTraduzida = traduzir(current.skytext);
         
-        // Define uma frase engraçada baseada na condição
-        let fraseExtra = "";
-        if (condicaoOriginal.includes('sunny') || condicaoOriginal.includes('clear')) {
-            fraseExtra = piadasClima['sunny'][Math.floor(Math.random() * piadasClima['sunny'].length)];
-        } else if (condicaoOriginal.includes('cloudy')) {
-            fraseExtra = piadasClima['cloudy'][Math.floor(Math.random() * piadasClima['cloudy'].length)];
-        } else if (condicaoOriginal.includes('rain')) {
-            fraseExtra = piadasClima['rain'][Math.floor(Math.random() * piadasClima['rain'].length)];
-        }
+        // Melhora na tradução para identificar melhor a condição
+        let categoria = 'cloudy';
+        if (condicaoOriginal.includes('sunny') || condicaoOriginal.includes('clear')) categoria = 'sunny';
+        else if (condicaoOriginal.includes('rain') || condicaoOriginal.includes('storm')) categoria = 'rain';
+
+        const fraseExtra = piadasClima[categoria][Math.floor(Math.random() * piadasClima[categoria].length)];
 
         const msgClima = `🌤 *Tempo em: ${current.observationpoint}*\n` +
                          `🌡 Temperatura: ${current.temperature}°C\n` +
-                         `☁️ Condição: ${condicaoTraduzida}\n\n` +
-                         (fraseExtra ? `💬 *Bot:* ${fraseExtra}` : "");
+                         `☁️ Condição: ${current.skytext}\n\n` +
+                         `💬 *Bot:* ${fraseExtra}`;
         
-        // REAÇÃO
+        // Reação
         await sock.sendMessage(sender, { react: { text: '🌤', key: mensagemParaResponder.key } });
 
-        // RESPOSTA COM BALÃO (REPLY)
+        // Resposta
         await sock.sendMessage(sender, { text: msgClima }, { quoted: mensagemParaResponder });
     });
 }
