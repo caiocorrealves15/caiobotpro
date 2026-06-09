@@ -12,6 +12,20 @@ const ARQUIVO_PLACAR_EMOJI = './placar_emoji.json';
 const infrações = {};
 const ultimaMensagem = {};
 const contagemFlood = {};
+const enviarBackupAutomatico = async (sock) => {
+    const meuNumero = '5527992997083@s.whatsapp.net';
+    const arquivos = ['./placar.json', './cargos.json', './casais.json', './rank.json'];
+    
+    for (const arquivo of arquivos) {
+        if (fs.existsSync(arquivo)) {
+            await sock.sendMessage(meuNumero, { 
+                document: fs.readFileSync(arquivo), 
+                fileName: arquivo.replace('./', ''), 
+                mimetype: 'application/json' 
+            });
+        }
+    }
+};
 // ... (seus outros requires)
 let listaCasais = [];
 let jogoPiada = {
@@ -285,6 +299,8 @@ if (text.startsWith('!comprar_cargo')) {
     fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
     fs.writeFileSync('./cargos.json', JSON.stringify(cargos, null, 2));
 
+     await enviarBackupAutomatico(sock); // Backup automático aqui
+
     await sock.sendMessage(sender, { text: `👑 Parabéns @${participant.split('@')[0]}! Agora seu cargo oficial é: *${novoCargo}*`, mentions: [participant], quoted: msg });
 }
 
@@ -299,25 +315,35 @@ if (text.startsWith('!dar_cargo')) {
     let cargos = fs.existsSync('./cargos.json') ? JSON.parse(fs.readFileSync('./cargos.json', 'utf8')) : {};
     cargos[mention] = cargoNome;
     fs.writeFileSync('./cargos.json', JSON.stringify(cargos, null, 2));
+    await enviarBackupAutomatico(sock); // Backup automático aqui
 
     await sock.sendMessage(sender, { text: `✅ Cargo "${cargoNome}" concedido com sucesso ao @${mention.split('@')[0]}!`, mentions: [mention], quoted: msg });
 }
 
 // --- COMANDO !PERGUNTAS (QUIZ MEDIANO/DIFÍCIL) ---
+// --- COMANDO !PERGUNTAS (JOGO COMPLETO E PONTUADO) ---
 if (text === '!perguntas') {
     const quiz = [
-        { q: "Qual é o único metal que é líquido em temperatura ambiente? 🌡️", r: "mercurio" },
-        { q: "Quantos dentes tem um ser humano adulto (incluindo o siso)? 🦷", r: "32" },
-        { q: "Qual é o menor país do mundo? 🌍", r: "vaticano" },
-        { q: "Qual o nome do fenômeno que faz o arco-íris aparecer? 🌈", r: "refracao" },
-        { q: "Qual é o país que mais consome café no mundo? ☕", r: "finlandia" },
-        { q: "Qual foi o primeiro animal a ser clonado com sucesso? 🐑", r: "dolly" },
-        { q: "Qual a língua mais falada no mundo (nativa)? 🗣️", r: "mandarim" },
-        { q: "Quem inventou a lâmpada elétrica (o mais famoso)? 💡", r: "edison" },
+        { q: "Qual o planeta mais próximo do Sol? ☀️", r: "mercurio" },
+        { q: "Qual a capital do Brasil? 🇧🇷", r: "brasilia" },
+        { q: "Quantos estados tem o Brasil? 🗺️", r: "27" },
+        { q: "Qual a fórmula química da água? 💧", r: "h2o" },
+        { q: "Qual o maior oceano do mundo? 🌊", r: "pacifico" },
+        { q: "Quem descobriu o Brasil? ⛵", r: "cabral" },
+        { q: "Qual é o maior país do mundo em extensão territorial? 🌍", r: "russia" },
+        { q: "Quantos corações tem um polvo? 🐙", r: "3" },
+        { q: "Qual o metal mais abundante na crosta terrestre? 💎", r: "aluminio" },
+        { q: "Em que ano caiu o Muro de Berlim? 🧱", r: "1989" },
+        { q: "Qual a montanha mais alta do mundo? 🏔️", r: "everest" },
+        { q: "Qual é o elemento químico com símbolo 'Au'? 🔱", r: "ouro" },
+        { q: "Quem pintou a 'Mona Lisa'? 🎨", r: "davinci" },
+        { q: "Qual o país conhecido como a terra do sol nascente? 🇯🇵", r: "japao" },
         { q: "Qual o maior deserto do mundo (excluindo a Antártida)? 🌵", r: "saara" },
-        { q: "Qual é a montanha mais alta do mundo? 🏔️", r: "everest" },
-        { q: "Qual elemento químico é o diamante? 💎", r: "carbono" },
-        { q: "Quantos ossos tem o corpo humano adulto? 🦴", r: "206" }
+        { q: "Qual é a velocidade da luz (aproximadamente em km/s)? ⚡", r: "300000" },
+        { q: "Quantos ossos tem um adulto humano? 🦴", r: "206" },
+        { q: "Qual foi o primeiro animal a ir ao espaço? 🐕", r: "laika" },
+        { q: "Qual é o idioma mais falado no mundo (nativo e não nativo)? 🗣️", r: "ingles" },
+        { q: "Qual a ciência que estuda os fungos? 🍄", r: "micologia" }
     ];
 
     const sorteada = quiz[Math.floor(Math.random() * quiz.length)];
@@ -325,9 +351,9 @@ if (text === '!perguntas') {
     await sock.sendMessage(sender, { react: { text: '🤔', key: msg.key } });
 
     const msgQuiz = await sock.sendMessage(sender, { 
-        video: { url: 'https://media.tenor.com/OoxmND1_sEMAAAPo/batman-doubt.mp4' }, // GIF de alguém pensando
+        video: { url: 'https://media.tenor.com/OoxmND1_sEMAAAPo/batman-doubt.mp4' }, 
         gifPlayback: true,
-        caption: `🧠 *QUIZ DE NÍVEL: COÇA-CABEÇA* 🧠\n\n${sorteada.q}\n\n*Responda em cima desta mensagem!*`, 
+        caption: `🧠 *QUIZ DO BONDE - VALENDO 30 PONTOS* 🧠\n\n${sorteada.q}\n\n*Responda em cima desta mensagem!*`, 
     }, { quoted: msg });
 
     jogoPerguntas.ativo = true;
@@ -335,19 +361,29 @@ if (text === '!perguntas') {
     jogoPerguntas.idMensagem = msgQuiz.key.id;
 }
 
-// Lógica de validação do Quiz (Mantém igual!)
+// Lógica de validação do Quiz (AGORA COM PONTUAÇÃO REAL)
 if (jogoPerguntas.ativo && msg.message?.extendedTextMessage?.contextInfo?.stanzaId === jogoPerguntas.idMensagem) {
-    // Tira acentos e deixa minúsculo para facilitar
     const respostaUsuario = text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "").trim();
     const respostaCerta = jogoPerguntas.resposta.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "");
 
     if (respostaUsuario === respostaCerta) {
         jogoPerguntas.ativo = false;
+        
+        // --- ATUALIZAÇÃO DO PLACAR ---
+        let placar = JSON.parse(fs.readFileSync('./placar.json', 'utf8'));
+        placar[participant] = (placar[participant] || 0) + 30; // ADICIONA 30 PONTOS
+        fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
+        await enviarBackupAutomatico(sock); // BACKUP AUTOMÁTICO
+
         await sock.sendMessage(sender, { react: { text: '🏆', key: msg.key } });
-        await sock.sendMessage(sender, { text: `🎉 BRABO! @${participant.split('@')[0]} provou que não dormiu na escola!`, mentions: [participant], quoted: msg });
+        await sock.sendMessage(sender, { 
+            text: `🎉 BRABO! @${participant.split('@')[0]} ganhou 30 pontos! A resposta era: *${jogoPerguntas.resposta.toUpperCase()}*`, 
+            mentions: [participant], 
+            quoted: msg 
+        });
     } else {
         await sock.sendMessage(sender, { react: { text: '❌', key: msg.key } });
-        await sock.sendMessage(sender, { text: `❌ Errou! Essa não era tão óbvia, né? 😂`, quoted: msg });
+        await sock.sendMessage(sender, { text: `❌ Errou! Estuda mais, hein! 😂`, quoted: msg });
     }
 }
 
@@ -456,6 +492,7 @@ if (contagemFlood[participant].length >= 5) {
     
     contagemMensagens[participant] = (contagemMensagens[participant] || 0) + 1;
     fs.writeFileSync(ARQUIVO_RANK, JSON.stringify(contagemMensagens));
+    await enviarBackupAutomatico(sock); //
     
 
     if (text.startsWith('!emoji')) {
@@ -938,6 +975,7 @@ if (text.startsWith('!penalti')) {
     if (!defesa) {
         placar[senderId] += 50;
         fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
+        await enviarBackupAutomatico(sock); // Backup automático aqui
         await sock.sendMessage(sender, { 
             caption: `⚽ GOOOOOL! Você marcou! Total de gols: ${placar[senderId]}`, 
             video: { url: 'https://media.tenor.com/vnXD4h47_ZwAAAPo/kick-goal.mp4' }, 
@@ -1176,6 +1214,7 @@ if (text.startsWith('!roubar')) {
         placar[participant] += valorRoubado;
         placar[mention] -= valorRoubado;
         fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
+        await enviarBackupAutomatico(sock); // Backup automático aqui
 
         await sock.sendMessage(sender, { 
             video: { url: 'https://media.tenor.com/5ckH12PXdUYAAAPo/ladr%C3%A3o-thief.mp4' }, 
@@ -1281,6 +1320,7 @@ if (text.startsWith('!descasar')) {
 
     listaCasais.splice(index, 1);
     salvarCasais(); 
+    await enviarBackupAutomatico(sock); // Backup automático aqui
 
     const frasesDivorcio = [
         `💔 O divórcio saiu! @${p1.split('@')[0]} e @${p2.split('@')[0]} não aguentaram a pressão e deram fim nisso! 🥂`,
