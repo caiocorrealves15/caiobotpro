@@ -1208,24 +1208,29 @@ if (text === '!rank') {
 
     ranking.forEach((entry, index) => {
         const [id, count] = entry;
-        // Pega apenas o número (sem o @s.whatsapp.net)
-        const numero = id.split('@')[0];
-        // Cargo destacado
-        let cargoDisplay = cargos[id] ? `💎 *${cargos[id].toUpperCase()}*` : "👤 *Membro*";
-        res += `${index + 1}. 📞 ${numero} | ${cargoDisplay} | ${count} msg\n`;
+        
+        // Tenta pegar o nome do contato pelo Baileys
+        // Se o nome não existir, usa os últimos 4 dígitos do número para ficar bonito
+        const numeroLimpo = id.split('@')[0];
+        const nomeExibicao = (sock.contacts && sock.contacts[id]) ? sock.contacts[id].notify || nomeLimpo : `Membro ${numeroLimpo.slice(-4)}`;
+        
+        let cargoDisplay = cargos[id] ? `💎 *${cargos[id].toUpperCase()}*` : "👤 Membro";
+        res += `${index + 1}. ${nomeExibicao} | ${cargoDisplay} | ${count} msg\n`;
     });
 
     res += "\n━━━━━━━━━━━━━━━━━━\n\n👑 *HIERARQUIA DE PODER (ELITE):*\n";
     
-    // Lista de cargos para exibir
-    const cargosDisponiveis = ["Lenda", "Rei da Zueira", "Gado Supremo", "Fofoqueiro(a)"];
+    const cargosExistentes = ["Lenda", "Rei da Zueira", "Gado Supremo", "Fofoqueiro(a)"];
     const icones = { "Lenda": "👑", "Rei da Zueira": "🔥", "Gado Supremo": "🐂", "Fofoqueiro(a)": "🤫" };
 
     let encontrouAlguem = false;
-    cargosDisponiveis.forEach(cargo => {
+    cargosExistentes.forEach(cargo => {
         const membros = Object.entries(cargos)
             .filter(([id, nomeCargo]) => nomeCargo === cargo)
-            .map(([id]) => id.split('@')[0]); // Lista só os números
+            .map(([id]) => {
+                // Tenta buscar o nome, se não achar, usa o número limpo
+                return sock.contacts && sock.contacts[id] ? sock.contacts[id].notify : id.split('@')[0];
+            });
         
         if (membros.length > 0) {
             res += `${icones[cargo] || "⭐"} *${cargo.toUpperCase()}*: ${membros.join(', ')}\n`;
@@ -1237,10 +1242,7 @@ if (text === '!rank') {
 
     res += "\n🤖 *Dica: Seja ativo e compre seu cargo!*";
 
-    await sock.sendMessage(sender, { 
-        text: res, 
-        mentions: Object.keys(cargos) 
-    }, { quoted: msg });
+    await sock.sendMessage(sender, { text: res }, { quoted: msg });
 }
         // 5.3 !ADM (COM GIF E FRASES DEBOCHADAS)
 if (text.startsWith('!adm')) {
