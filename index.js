@@ -247,7 +247,7 @@ O bot monitora automaticamente:
 const isLink = /https?:\/\/[^\s]+/.test(text);
 if (isLink) {
     const getIsAdmin = async () => { if (!sender.endsWith('@g.us')) return false; try { const metadata = await sock.groupMetadata(sender); return metadata.participants.find(p => p.id === participant)?.admin !== null; } catch { return false; } };
-    const isAdmin = await getIsAdmin();
+isAdmin = await getIsAdmin();
     
     if (!isAdmin) {
         infrações[participant] = (infrações[participant] || 0) + 1;
