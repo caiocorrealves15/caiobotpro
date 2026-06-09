@@ -524,17 +524,34 @@ if (jogoEmoji.ativo &&
     }
 }
 
-if (text === '!rankingemoji') {
-    const ranking = Object.entries(placarEmoji)
+// Substitua o seu bloco !rankingemoji por este:
+if (text === '!ranking' || text === '!placar') {
+    // Carrega o placar geral
+    const placar = JSON.parse(fs.readFileSync('./placar.json', 'utf8'));
+
+    // Transforma em array, ordena do maior para o menor e pega os 10 primeiros
+    const ranking = Object.entries(placar)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 10);
 
-    let res = `🏆 *TOP 10 - MESTRES DOS EMOJIS*\n\n`;
+    let res = `💎 *TOP 10 - RICOS DO BONDE*\n\n`;
+    res += `*Quem tem mais pontos acumulados nos jogos?*\n\n`;
+
     ranking.forEach((entry, i) => {
-        res += `${i + 1}. @${entry[0].split('@')[0]} - ${entry[1]} pontos\n`;
+        const [id, pontos] = entry;
+        const nome = id.split('@')[0];
+        // Adiciona um emoji especial para o Top 1
+        const medalha = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "🔹";
+        
+        res += `${medalha} ${i + 1}. @${nome} - *${pontos} pts*\n`;
     });
 
-    await sock.sendMessage(sender, { text: res, mentions: ranking.map(e => e[0]) }, { quoted: msg });
+    res += `\n🤖 *Dica: Jogue !penalti, !jogar ou !perguntas para subir na lista!*`;
+
+    await sock.sendMessage(sender, { 
+        text: res, 
+        mentions: ranking.map(e => e[0]) 
+    }, { quoted: msg });
 }
 
 // --- COMANDO !link ---
@@ -699,7 +716,7 @@ const comandosExistentes = [
     '!menu', '!rank', '!casar', '!casais', '!piada', '!avisoadm', 
     '!descasar', '!emoji', '!sortear', '!perguntas', '!jogar', 
     '!forca', '!jogosoff', '!jogoson', '!link', '!tier', 
-    '!rankingemoji', '!penalti', '!musica', '!socar', '!beijar', 
+    '!ranking', '!penalti', '!musica', '!socar', '!beijar', 
     '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', 
     '!clima', '!desmute', '!mute', '!gado', '!corno', 
     '!fofoca', '!roubar', '!cargos', '!comprar_cargo', '!dar_cargo' // Adicionei aqui
@@ -732,38 +749,38 @@ if (text === '!menu') {
     const meuId = '5527992997083@s.whatsapp.net'; 
 
     const menuTexto = `
-╭━━━ 🇧🇷 BONDE DO BRASIL 🇧🇷 ━━━╮
+╭━━━ 🇧🇷 BONDE DO BRASIL 🇧🇷
 │
 │ 👤 Fala, @${senderId.split('@')[0]}!
 │ 📅 ${dataAtual} | ⏰ ${horaAtual}
 │ 👑 Dono: @5527992997083
 │
-├──── 💎 STATUS & CARGOS ────
+├────💎 STATUS & CARGOS────
 │ 🛍️ !cargos  | 💳 !comprar_cargo
 │ 🎖️ !dar_cargo (ADM)
 │
-├──── 🎮 JOGOS & ECONOMIA ────
+├────🎮 JOGOS & ECONOMIA────
 │ 🔰 !rank      | ⌛ !sortear
 │ 🎮 !jogar    | 💰 !roubar
 │ 😵 !forca    | ⚽ !penalti
 │ 🎥 !emoji    | 🤡 !piada
-│ 🧠 !perguntas| 🏆 !rankingemoji
+│ 🧠 !perguntas| 🏆 !ranking
 │ 💍 !casar    | 💔 !descasar
 │ 👥 !casais
 │
-├──── 😂 ZUEIRA ────
+├────😂 ZUEIRA────
 │ 🤜 !socar    | 😘 !beijar
 │ 🗡️ !matar    | 🤳 !f
 │ 🐂 !gado     | 🦌 !corno
 │ 🤫 !fofoca
 │
-├──── 🚨 ADMIN ────
+├────🚨 ADMIN────
 │ ❌ !ban      | ❇️ !adm
 │ 🚫 !fechar   | 🔓 !abrir
 │ 🔇 !mute     | 🔊 !desmute
 │ 📣 !avisoadm | 🕹️ !jogoson/off
 │
-├──── ⚙️ UTIL & SUPORTE ────
+├────⚙️ UTIL & SUPORTE────
 │ 📛 !menu     | 🌤️ !clima
 │ 🎵 !musica   | 🔗 !link
 │
@@ -1179,49 +1196,43 @@ if (text.startsWith('!roubar')) {
 }
         // 1. !RANK (ORGANIZADO E DEBOCHADO)
 // Substitua o seu bloco !rank atual por este:
-// Substitua o seu bloco !rank atual por este código completo:
 if (text === '!rank') {
     let cargos = fs.existsSync('./cargos.json') ? JSON.parse(fs.readFileSync('./cargos.json', 'utf8')) : {};
+
     const ranking = Object.entries(contagemMensagens)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 10);
 
     let res = "🏆 *RANKING DE QUEM VIVE NO ZAP*\n\n";
 
-    // 1. LISTA PRINCIPAL
     ranking.forEach((entry, index) => {
         const [id, count] = entry;
-        let cargoUser = cargos[id] ? `[${cargos[id]}] ` : "👤 ";
-        res += `${index + 1}. ${cargoUser}@${id.split('@')[0]} - ${count} mens.\n`;
+        // Se tem cargo, mostra com emoji de diamante, se não, um bonequinho simples
+        let cargoDisplay = cargos[id] ? `💎 *${cargos[id].toUpperCase()}*` : "👤 Usuário Comum";
+        res += `${index + 1}. @${id.split('@')[0]} | ${cargoDisplay} | ${count} mensagens\n`;
     });
 
-    // 2. HIERARQUIA DE CARGOS (Destacada abaixo)
-    res += "\n━━━━━━━━━━━━━━━━━━\n👑 *HIERARQUIA DE PODER:*\n";
+    res += "\n━━━━━━━━━━━━━━━━━━\n\n👑 *HIERARQUIA DE PODER (ELITE):*\n";
     
-    const iconesCargos = {
-        "Lenda": "👑",
-        "Rei da Zueira": "🔥",
-        "Gado Supremo": "🐂",
-        "Fofoqueiro(a)": "🤫"
-    };
+    // Lista fixa dos cargos para garantir que apareça sempre
+    const cargosExistentes = ["Lenda", "Rei da Zueira", "Gado Supremo", "Fofoqueiro(a)"];
+    const icones = { "Lenda": "👑", "Rei da Zueira": "🔥", "Gado Supremo": "🐂", "Fofoqueiro(a)": "🤫" };
 
-    // Agrupa usuários por cargo
-    const gruposCargos = {};
-    for (const [id, cargo] of Object.entries(cargos)) {
-        if (!gruposCargos[cargo]) gruposCargos[cargo] = [];
-        gruposCargos[cargo].push(`@${id.split('@')[0]}`);
-    }
+    cargosExistentes.forEach(cargo => {
+        const membros = Object.entries(cargos)
+            .filter(([id, nomeCargo]) => nomeCargo === cargo)
+            .map(([id]) => `@${id.split('@')[0]}`);
+        
+        if (membros.length > 0) {
+            res += `${icones[cargo] || "⭐"} *${cargo.toUpperCase()}*: ${membros.join(', ')}\n`;
+        }
+    });
 
-    for (const [cargo, usuarios] of Object.entries(gruposCargos)) {
-        const icone = iconesCargos[cargo] || "⭐";
-        res += `${icone} *${cargo}*: ${usuarios.join(', ')}\n`;
-    }
-
-    res += "\n🤖 *Dica: Suba no ranking para comprar cargos!*";
+    res += "\n🤖 *Dica: Seja ativo e compre seu cargo!*";
 
     await sock.sendMessage(sender, { 
         text: res, 
-        mentions: Object.keys(cargos) // Menciona todos que têm cargo
+        mentions: Object.keys(cargos) 
     }, { quoted: msg });
 }
 
