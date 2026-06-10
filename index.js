@@ -15,7 +15,6 @@ const { Sticker, StickerTypes } = require('wa-sticker-formatter');
 const ytsr = require('ytsr');
 const qrcode = require('qrcode-terminal');
 const ytdl = require('ytdl-core'); // Requisito movido para o topo
-const ARQUIVO_PLACAR_EMOJI = '/var/data/placar_emoji.json';
 const infrações = {};
 const ultimaMensagem = {};
 const contagemFlood = {};
