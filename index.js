@@ -1925,27 +1925,31 @@ if (text.startsWith('!musica ')) {
         }
         // 4. COMANDO !MUTE (CORRIGIDO)
         // 4. COMANDO !MUTE (CORRIGIDO E PROTEGIDO)
-        if (text.startsWith('!mute')) {
-            if (!isAdmin) return await sock.sendMessage(sender, { text: "Tentando furar as regras, né?? HAHAHHAHA 👀👀👀\n\nSabe que um ADM está de olho em você agora né?" });
-            
-            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
-            
-            
-            // --- PROTEÇÃO DO CRIADOR ---
-            const meuNumero = "96057379803159"; // ALTERE AQUI!
-            if (mention === meuNumero) {
-                return await sock.sendMessage(sender, { text: "❌ Não posso mutar o criador, respeita o chefe! 👑" });
-            }
-            // ---------------------------
+if (text.startsWith('!mute')) {
+    if (!isAdmin) return await sock.sendMessage(sender, { text: "Tentando furar as regras, né?? HAHAHHAHA 👀👀👀\n\nSabe que um ADM está de olho em você agora né?" });
+    
+    const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+    
+    // --- PROTEÇÃO REFORÇADA ---
+    // Coloquei o seu ID completo e também uma verificação extra caso você seja ADM
+    const meuID = "5527992997083@s.whatsapp.net"; 
+    
+    if (!mention) return await sock.sendMessage(sender, { text: "Mencione quem você quer mutar." });
 
-            if (!mention) return await sock.sendMessage(sender, { text: "Mencione quem você quer mutar." });
+    if (mention === meuID || mention.includes("5527992997083")) {
+        return await sock.sendMessage(sender, { text: "❌ Nem tenta! O criador é intocável! 👑" });
+    }
+    // ---------------------------
 
-            const tempo = text.includes('h') ? 3600000 : 1800000;
-            mutados[mention] = Date.now() + tempo;
-            
-            fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
-            await sock.sendMessage(sender, { text: "Você está falando demais, dá um tempo seu rabugento.😂❌", mentions: [mention] });
-        }
+    const tempo = text.includes('h') ? 3600000 : 1800000;
+    mutados[mention] = Date.now() + tempo;
+    
+    fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
+    await sock.sendMessage(sender, { 
+        text: "Você está falando demais, dá um tempo seu rabugento.😂❌", 
+        mentions: [mention] 
+    });
+}
         // 8. COMANDO CLIMA (TRADUZIDO)
        // 8. COMANDO CLIMA (Forçando o Reply com variável constante)
 // 8. COMANDO CLIMA (Versão Debochada e Otimizada)
