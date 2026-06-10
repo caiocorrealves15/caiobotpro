@@ -1861,4 +1861,3 @@ if (text.startsWith('!clima')) {
 } // <--- ESTE FECHA A function connectToWhatsApp()
 
 connectToWhatsApp();
-connectToWhatsApp();
