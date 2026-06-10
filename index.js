@@ -120,10 +120,7 @@ let jogoEmoji = {
 };
 
 // Definição dos arquivos de dados
-const ARQUIVO_RANK = arquivoRank; 
 const ARQUIVO_MUTADOS = arquivoMutados;
-const ARQUIVO_PLACAR_EMOJI = arquivoPlacarEmoji;
-
 // Carregamento dos dados (se existirem)
 let contagemMensagens = fs.existsSync(ARQUIVO_RANK) ? JSON.parse(fs.readFileSync(ARQUIVO_RANK)) : {};
 let mutados = fs.existsSync(ARQUIVO_MUTADOS) ? JSON.parse(fs.readFileSync(ARQUIVO_MUTADOS)) : {};
