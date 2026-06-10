@@ -12,6 +12,13 @@ const ARQUIVO_PLACAR_EMOJI = './placar_emoji.json';
 const infrações = {};
 const ultimaMensagem = {};
 const contagemFlood = {};
+let membrosPendentes = {}; // { jid: timestamp }
+let raidBoss = {
+    ativo: false,
+    hp: 0,
+    maxHp: 0,
+    idMensagem: ""
+};
 const enviarBackupAutomatico = async (sock) => {
     const meuNumero = '5527992997083@s.whatsapp.net';
     const arquivos = ['./placar.json', './cargos.json', './casais.json', './rank.json'];
@@ -52,15 +59,25 @@ if (!fs.existsSync(ARQUIVO_PLACAR_EMOJI)) {
 if (!fs.existsSync('./placar.json')) {
     fs.writeFileSync('./placar.json', JSON.stringify({}));
 }
-// CARREGAMENTO SEGURO
+// --- CARREGAMENTO SEGURO DE CASAIS ---
 try {
     if (fs.existsSync('./casais.json')) {
         const dados = fs.readFileSync('./casais.json', 'utf8');
-        listaCasais = JSON.parse(dados);
-        console.log("✅ Lista de casais carregada com sucesso.");
+        // Verifica se o arquivo não está vazio ou apenas com espaços em branco
+        if (dados && dados.trim().length > 0) {
+            listaCasais = JSON.parse(dados);
+            console.log(`✅ Lista de casais carregada com sucesso (${listaCasais.length} casais).`);
+        } else {
+            console.log("⚠️ casais.json estava vazio, iniciando lista limpa.");
+            listaCasais = [];
+        }
+    } else {
+        console.log("ℹ️ Arquivo casais.json não encontrado, criando um novo.");
+        listaCasais = [];
+        fs.writeFileSync('./casais.json', JSON.stringify([], null, 2));
     }
 } catch (e) {
-    console.error("❌ Erro ao ler casais.json, iniciando vazio:", e);
+    console.error("❌ Erro fatal ao ler casais.json, reiniciando lista:", e);
     listaCasais = [];
 }
 
@@ -126,43 +143,44 @@ async function connectToWhatsApp() {
     
     if (action === 'add') {
         const userId = typeof participants[0] === 'string' ? participants[0] : participants[0].id;
+        membrosPendentes[userId] = Date.now(); // Salva a hora que entrou
         
         const textoBoasVindas = 
 `━━━━━━━━━━━━━━━━━━━━━━━━━━
-        🌟 BONDE DO BRASIL 🌟        
+🔥 *BEM-VINDO AO CAOS: BONDE DO BRASIL* 🔥
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Fala aí, @${userId.split('@')[0]}! 🎉 
-Você acaba de ser convocado para a elite da zueira!
+Você acaba de ser convocado para a elite da zueira! 🚀
 
-👑 *A ORDEM DO BONDE:*
-Aqui, seu nome vale ouro e sua posição no ranking define sua moral.
-Não somos apenas um grupo, somos uma hierarquia de lendas! 🏆
+👑 **A ORDEM DO BONDE:**
+Esquece aqueles grupos parados que só mandam bom dia. Aqui seu nome vale ouro, seu ranking define sua moral e o bot não perdoa ninguém! 🏆
 
-💎 *SISTEMA DE STATUS (CARGOS DE ELITE)*
-Mostre quem manda aqui e suba na nossa hierarquia:
-• 👑 *LENDA:* O topo da pirâmide.
+💎 **SISTEMA DE STATUS (OS CARGOS DE LUXO)**
+Mostre que você não é NPC e suba de nível:
+• 👑 *LENDA:* O dono da verdade.
 • 🔥 *REI DA ZUEIRA:* O caos personificado.
 • 🐂 *GADO SUPREMO:* O posto mais disputado.
 • 🤫 *FOFOQUEIRO(A):* O olho que tudo vê.
-👉 Use *!cargos* para ver os preços e *!comprar_cargo* para ostentar.
+👉 Use *!cargos* e *!comprar_cargo* para ostentar sua superioridade.
 
-📜 *REGULAMENTO DO BONDE (LEI É LEI)*
+📜 **REGULAMENTO DO BONDE (OU A LEI DO MAIS FORTE)**
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
-① *Respeito acima de tudo:* Sem brigas, ofensas ou preconceito.
-② *Privacidade:* Proibido invadir PV sem permissão.
-③ *Segurança:* Proibido conteúdo adulto.
-④ *Zero Tolerância:* Links suspeitos, spam ou travas resultam em BAN imediato.
+① *Respeito acima de tudo:* Sem brigas ou mimimi.
+② *Privacidade:* PV alheio sem permissão = BAN.
+③ *Segurança:* Nada de conteúdo adulto ou você vaza.
+④ *Zero Tolerância:* Link suspeito, spam ou trava? É BAN direto sem direito a apelação! 🚫
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-📝 *REGISTRO OBRIGATÓRIO:*
-Envie sua *FOTO | CIDADE | IDADE | NOME* para ser registrado no nosso sistema.
+📝 **REGISTRO OBRIGATÓRIO (NÃO SEJA UM FANTASMA):**
+Envie: *FOTO | CIDADE | IDADE | NOME*. 
+Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
 
-🤖 *DICA:* Digite *!menu* para acessar todos os comandos e divirta-se!`;
+🤖 **DICA:** Digite *!menu* AGORA para começar a brincadeira. Se não digitar, já entra perdendo pontos! 💸`;
 
 await sock.sendMessage(id, { 
     text: textoBoasVindas, 
-    mentions: [userId] 
+    mentions: [userId]
          });
     } 
 });
@@ -243,6 +261,64 @@ await sock.sendMessage(id, {
         await sock.sendMessage(sender, { delete: msg.key });
         return; 
     }
+
+    // Verifica se a pessoa mandou o formato FOTO | CIDADE | IDADE | NOME
+// --- AUTO-APROVAÇÃO POR FOTO OU APRESENTAÇÃO ---
+// --- SISTEMA DE CADASTRO (AUTO-APROVAÇÃO E COBRANÇA) ---
+if (membrosPendentes[participant]) {
+    const isImage = msg.message?.imageMessage || msg.message?.viewOnceMessage?.message?.imageMessage;
+    const padraoApresentacao = /\|/g;
+    const enviouTextoCorreto = (text.match(padraoApresentacao) || []).length >= 3;
+
+    if (isImage || enviouTextoCorreto) {
+        // Aprovado!
+        await sock.sendMessage(sender, { 
+            text: `✅ Cadastro confirmado, @${participant.split('@')[0]}! Bem-vindo ao Bonde!`, 
+            mentions: [participant] 
+        }, { quoted: msg });
+        delete membrosPendentes[participant];
+    } else {
+        // Não mandou foto nem o formato correto, dá a bronca
+        await sock.sendMessage(sender, { 
+            text: `⚠️ Ei, @${participant.split('@')[0]}, cadê a foto ou os dados no formato correto? Só aceito o cadastro com FOTO ou FOTO | CIDADE | IDADE | NOME! 📸`, 
+            mentions: [participant] 
+        }, { quoted: msg });
+    }
+}
+
+// --- COMANDO PARA ADM LISTAR OS ATRASADOS ---
+// --- COMANDO PARA ADMS LISTAR OS ATRASADOS ---
+if (text === '!cadastros') {
+    // 1. Verifica se quem enviou é um administrador
+    if (!isAdmin) {
+        const frasesErro = [
+            "❌ Opa, @${participant.split('@')[0]}, você não é ADM! Fica na sua que quem fiscaliza aqui sou eu e os chefes! 🤡",
+            "🚫 Tentando dar uma de fiscal, @${participant.split('@')[0]}? Esse comando é só pros ADMs, senta lá! 😂",
+            "🧐 Eita, querendo mandar no grupo sem ter cargo? Volta pro seu lugar, esse comando é exclusivo da Elite! 👑"
+        ];
+        const msgErro = frasesErro[Math.floor(Math.random() * frasesErro.length)];
+        
+        return await sock.sendMessage(sender, { 
+            text: msgErro, 
+            mentions: [participant] 
+        }, { quoted: msg });
+    }
+
+    // 2. Lógica para os ADMs
+    const pendentes = Object.keys(membrosPendentes);
+    if (pendentes.length === 0) return await sock.sendMessage(sender, { text: "✅ Todos já se apresentaram! O grupo está limpo. 😇" });
+    
+    let msgLista = "🕵️‍♂️ *Atenção, ADMs! O radar detectou novos membros que ainda não tomaram vergonha na cara para se registrar!*\n\n";
+    msgLista += "👻 *LISTA DE FANTASMAS (NÃO APRESENTADOS):*\n\n";
+    
+    pendentes.forEach(p => {
+        msgLista += `• @${p.split('@')[0]}\n`;
+    });
+    
+    msgLista += "\n_Se apresentem logo (mandem a FOTO ou DADOS) ou serão expulsos sem aviso prévio! 🤡_";
+    
+    await sock.sendMessage(sender, { text: msgLista, mentions: pendentes }, { quoted: msg });
+}
 
     // 3. Comando de Controle de Jogos (Ativar/Desativar)
     if (text === '!jogosoff') {
@@ -383,7 +459,6 @@ if (jogoPerguntas.ativo && msg.message?.extendedTextMessage?.contextInfo?.stanza
     }
 }
 
-    // --- LÓGICA DO ANTI-LINK COM AUTO BAN ---
 // --- LÓGICA DO ANTI-LINK COM AUTO BAN ---
 const isLink = /https?:\/\/[^\s]+/.test(text);
 if (isLink) {
@@ -746,8 +821,8 @@ if (lowerText.includes('bebida') || lowerText.includes('cerveja') || lowerText.i
 
     // Ache essa linha no seu código e adicione o '!cargos' nela:
 const comandosExistentes = [
-    '!menu', '!comprar', '!loja', '!rank', '!casar', '!casais', '!piada', '!avisoadm', 
-    '!descasar', '!emoji', '!sortear', '!perguntas', '!jogar', 
+    '!menu', '!comprar', '!loja', '!backup', '!atacar', '!boss', '!rank', '!casar', '!casais', '!piada', '!avisoadm', 
+    '!descasar', '!emoji', '!sortear', '!cadastro', '!perguntas', '!jogar', 
     '!forca', '!jogosoff', '!jogoson', '!link', '!tier', 
     '!ranking', '!penalti', '!musica', '!socar', '!beijar', 
     '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', 
@@ -794,6 +869,9 @@ if (text === '!menu') {
 │ 💳 !comprar_cargo [nome]
 │ 🤫 !comprar mute @mencao
 │
+├────🔥 EVENTOS & RAIDS────
+│ 👹 !boss      | ⚔️ !atacar
+│
 ├────💎 STATUS & CARGOS────
 │ 🛍️ !cargos    | 🎖️ !dar_cargo (ADM)
 │ 🔰 !rank      | 🏆 !ranking
@@ -822,7 +900,7 @@ if (text === '!menu') {
 │ 🎵 !musica    | 🔗 !link
 │
 ╰━━━━━━━━━━━━━━━━━━━━━━╯
-🤖 *Acumule pontos, ostente seu cargo e não seja um NPC.*`.trim();
+🤖 *Acumule pontos, derrote os Bosses e não seja um NPC.*`.trim();
 
     await sock.sendMessage(sender, { 
         video: { url: 'https://media.tenor.com/WV_2tGerThoAAAPo/farming-aura-farming.mp4' },
@@ -1516,10 +1594,80 @@ if (text === '!casais') {
         }
 
        if (text === '!backup') {
+    console.log("Comando !backup recebido!");
     const meuNumero = '5527992997083@s.whatsapp.net';
-    if (participant !== meuNumero) return; // Só você pode pedir
-    await enviarBackupAutomatico(sock);
-    await sock.sendMessage(sender, { text: "✅ Backups enviados com sucesso!" });
+    if (participant !== meuNumero) return;
+    
+    try {
+        const arquivos = ['./placar.json', './cargos.json', './casais.json', './rank.json'];
+        for (const arquivo of arquivos) {
+            if (fs.existsSync(arquivo)) {
+                await sock.sendMessage(sender, { 
+                    document: fs.readFileSync(arquivo), 
+                    fileName: arquivo.replace('./', ''), 
+                    mimetype: 'application/json' 
+                });
+            }
+        }
+        await sock.sendMessage(sender, { text: "✅ Backup enviado com sucesso!" });
+    } catch (e) {
+        await sock.sendMessage(sender, { text: "❌ Erro ao enviar backup: " + e.message });
+    }
+}
+
+// 2. COMANDO !BOSS (INVOCAR MONSTRO)
+// --- COMANDO !BOSS (COMPLETÃO E DEBOCHADO) ---
+if (text === '!boss') {
+    if (raidBoss.ativo) {
+        const frasesDeboche = [
+            "⚠️ O chefe já tá na área, seu cego! Quer que eu chame dois pra você perder mais rápido? 😂",
+            "😤 Já tem um monstro destruindo tudo! Pega sua espada e ataca o que já tá aqui, preguiçoso!",
+            "🚫 Tá achando que é festa? Só pode um monstro por vez! Ataca o atual logo! 🗡️",
+            "🤡 Dois chefes ao mesmo tempo? Nem em anime ruim acontece isso! Ataca o que tá aí!"
+        ];
+        return await sock.sendMessage(sender, { 
+            text: frasesDeboche[Math.floor(Math.random() * frasesDeboche.length)], 
+            quoted: msg 
+        });
+    }
+    
+    raidBoss.ativo = true;
+    raidBoss.hp = 500;
+    raidBoss.maxHp = 500;
+    
+    const msgBoss = await sock.sendMessage(sender, { 
+        video: { url: 'https://media.tenor.com/CGTSjjR7FIIAAAPo/game-interface-video-game.mp4' }, 
+        gifPlayback: true,
+        caption: `👹 *BOSS INVOCADO!* 👹\n\nHP: ${raidBoss.hp}/${raidBoss.maxHp}\n\nTodos ataquem com *!atacar* antes que ele destrua o grupo!` 
+    }, { quoted: msg });
+    
+    raidBoss.idMensagem = msgBoss.key.id;
+}
+
+// 3. COMANDO !ATACAR (O CORAÇÃO DO JOGO)
+if (text === '!atacar') {
+    if (!raidBoss.ativo) return await sock.sendMessage(sender, { text: "❌ Não tem monstro aqui. Tá batendo no vento?" });
+    
+    const dano = Math.floor(Math.random() * 50) + 10;
+    raidBoss.hp -= dano;
+
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    if (raidBoss.hp <= 0) {
+        raidBoss.ativo = false;
+        let placar = JSON.parse(fs.readFileSync('./placar.json', 'utf8'));
+        placar[participant] = (placar[participant] || 0) + 200;
+        fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
+        
+        await sock.sendMessage(sender, { 
+            video: { url: 'https://media.tenor.com/NgTSh0Bq5lYAAAPo/wearwolfwere-werewolfwhere.mp4' }, 
+            gifPlayback: true,
+            caption: `🎉 VITÓRIA! O Boss foi derrotado! @${participant.split('@')[0]} deu o golpe final e ganhou 200 pontos!`,
+            mentions: [participant]
+        }, { quoted: msg });
+    } else {
+        await sock.sendMessage(sender, { text: `⚔️ Você causou ${dano} de dano! HP do Boss: ${raidBoss.hp}/${raidBoss.maxHp}` });
+    }
 }
 
         // 6. Admin Fechar/Abrir (Com Reply e Frases Aleatórias)
