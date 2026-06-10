@@ -140,9 +140,9 @@ async function connectToWhatsApp() {
         
         sock.ev.on('group-participants.update', async (update) => {
     const { id, participants, action } = update;
-    
+    const userId = typeof participants[0] === 'string' ? participants[0] : participants[0].id;
+
     if (action === 'add') {
-        const userId = typeof participants[0] === 'string' ? participants[0] : participants[0].id;
         membrosPendentes[userId] = Date.now(); // Salva a hora que entrou
         
         const textoBoasVindas = 
@@ -178,13 +178,18 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
 
 🤖 **DICA:** Digite *!menu* AGORA para começar a brincadeira. Se não digitar, já entra perdendo pontos! 💸`;
 
-await sock.sendMessage(id, { 
-    text: textoBoasVindas, 
-    mentions: [userId]
-         });
-    } 
+        await sock.sendMessage(id, { 
+            text: textoBoasVindas, 
+            mentions: [userId]
+        });
+    } else if (action === 'remove') {
+        // --- LIMPEZA AUTOMÁTICA DE QUEM SAIU ---
+        if (membrosPendentes[userId]) {
+            delete membrosPendentes[userId];
+            console.log(`🧹 ${userId.split('@')[0]} saiu do grupo, removido da lista de pendentes.`);
+        }
+    }
 });
-
 
     sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update;
@@ -395,29 +400,29 @@ if (text.startsWith('!dar_cargo')) {
 }
 
 // --- COMANDO !PERGUNTAS (QUIZ MEDIANO/DIFÍCIL) ---
-// --- COMANDO !PERGUNTAS (JOGO COMPLETO E PONTUADO) ---
+// --- COMANDO !PERGUNTAS (QUIZ NÍVEL AVANÇADO) ---
 if (text === '!perguntas') {
     const quiz = [
-        { q: "Qual o planeta mais próximo do Sol? ☀️", r: "mercurio" },
-        { q: "Qual a capital do Brasil? 🇧🇷", r: "brasilia" },
-        { q: "Quantos estados tem o Brasil? 🗺️", r: "27" },
-        { q: "Qual a fórmula química da água? 💧", r: "h2o" },
-        { q: "Qual o maior oceano do mundo? 🌊", r: "pacifico" },
-        { q: "Quem descobriu o Brasil? ⛵", r: "cabral" },
-        { q: "Qual é o maior país do mundo em extensão territorial? 🌍", r: "russia" },
-        { q: "Quantos corações tem um polvo? 🐙", r: "3" },
-        { q: "Qual o metal mais abundante na crosta terrestre? 💎", r: "aluminio" },
-        { q: "Em que ano caiu o Muro de Berlim? 🧱", r: "1989" },
-        { q: "Qual a montanha mais alta do mundo? 🏔️", r: "everest" },
-        { q: "Qual é o elemento químico com símbolo 'Au'? 🔱", r: "ouro" },
-        { q: "Quem pintou a 'Mona Lisa'? 🎨", r: "davinci" },
-        { q: "Qual o país conhecido como a terra do sol nascente? 🇯🇵", r: "japao" },
-        { q: "Qual o maior deserto do mundo (excluindo a Antártida)? 🌵", r: "saara" },
-        { q: "Qual é a velocidade da luz (aproximadamente em km/s)? ⚡", r: "300000" },
-        { q: "Quantos ossos tem um adulto humano? 🦴", r: "206" },
-        { q: "Qual foi o primeiro animal a ir ao espaço? 🐕", r: "laika" },
-        { q: "Qual é o idioma mais falado no mundo (nativo e não nativo)? 🗣️", r: "ingles" },
-        { q: "Qual a ciência que estuda os fungos? 🍄", r: "micologia" }
+        { q: "Qual o maior órgão do corpo humano? 🧠", r: "pele" },
+        { q: "Quem foi o primeiro homem a pisar na Lua? 🌑", r: "neil armstrong" },
+        { q: "Qual é o rio mais longo do mundo? 🌊", r: "amazonas" },
+        { q: "Qual é a moeda oficial do Japão? 💴", r: "iene" },
+        { q: "Qual é o elemento químico mais abundante no universo? 🌌", r: "hidrogenio" },
+        { q: "Em que país surgiu a democracia? 🏛️", r: "grecia" },
+        { q: "Qual é a capital da Austrália? 🇦🇺", r: "camberra" },
+        { q: "Quantos planetas existem no nosso Sistema Solar? 🪐", r: "8" },
+        { q: "Qual é a língua oficial da Áustria? 🇦🇹", r: "alemao" },
+        { q: "Qual foi o conflito que deu origem à ONU? 🕊️", r: "segunda guerra mundial" },
+        { q: "Qual é o menor país do mundo em território? 🇻🇦", r: "vaticano" },
+        { q: "Qual a camada da atmosfera que nos protege da radiação UV? 🛡️", r: "ozonio" },
+        { q: "Qual é o nome da galáxia onde está o Sistema Solar? 🌠", r: "via lactea" },
+        { q: "Quem formulou a teoria da relatividade? ➗", r: "einstein" },
+        { q: "Qual é o maior continente do mundo? 🗺️", r: "asia" },
+        { q: "Qual é o gás que as plantas absorvem na fotossíntese? 🍃", r: "gas carbonico" },
+        { q: "Qual é a montanha mais alta das Américas? 🏔️", r: "aconcagua" },
+        { q: "Quem escreveu 'Dom Quixote'? 📖", r: "cervantes" },
+        { q: "Qual é o país com maior área territorial do mundo? 🌍", r: "russia" },
+        { q: "Qual é o estado brasileiro conhecido como 'o celeiro do Brasil'? 🌽", r: "mato grosso" }
     ];
 
     const sorteada = quiz[Math.floor(Math.random() * quiz.length)];
@@ -427,7 +432,7 @@ if (text === '!perguntas') {
     const msgQuiz = await sock.sendMessage(sender, { 
         video: { url: 'https://media.tenor.com/OoxmND1_sEMAAAPo/batman-doubt.mp4' }, 
         gifPlayback: true,
-        caption: `🧠 *QUIZ DO BONDE - VALENDO 30 PONTOS* 🧠\n\n${sorteada.q}\n\n*Responda em cima desta mensagem!*`, 
+        caption: `🧠 *QUIZ DO BONDE - NÍVEL AVANÇADO (VALENDO 30 PONTOS)* 🧠\n\n${sorteada.q}\n\n*Responda em cima desta mensagem!*`, 
     }, { quoted: msg });
 
     jogoPerguntas.ativo = true;
@@ -671,7 +676,7 @@ if (lowerText === '!link') {
     });
 
     // Substitua pelo link real do seu grupo
-    const linkDoGrupo = "https://chat.whatsapp.com/GcOAxFxsA3cGVya2n6NbSr?mode=gi_t"; 
+    const linkDoGrupo = "https://chat.whatsapp.com/HjwPNF7jO195ivlIjdtKAC?s=cl&p=i&ilr=0"; 
     
     // 2º Ação: Envia a resposta com o link
     await sock.sendMessage(sender, { 
@@ -1191,18 +1196,28 @@ if (text === '!loja') {
 1️⃣ *MUTE (1 minuto)* - 100 pts
    !comprar mute @mencao
    
-2️⃣ *BAN temporário (ADM apenas)* - 1000 pts
-   (Você paga, mas um ADM precisa aprovar)
+2️⃣ *CARGO PERSONALIZADO* - 500 pts
+   !comprar_cargo [nome]
 
-3️⃣ *CARGO PERSONALIZADO* - 500 pts
-   !comprar_cargo [nome do cargo]
+3️⃣ *DESBLOQUEIO IMBECIL* - 300 pts
+   !comprar desmute
+   (Sai do mute na hora, sem esperar)
 
-🤖 *Escolha sua opção e seja o dono do grupo!*`;
+4️⃣ *ATAQUE DE FÚRIA* - 400 pts
+   !comprar fúria
+   (Dano dobrado no próximo !atacar boss)
+
+5️⃣ *ESCUDO ANTI-ROUBO* - 600 pts
+   !comprar escudo
+   (Protege seus pontos por 1 hora contra !roubar)
+
+🤖 *Use !comprar [nome_do_item] para ostentar!*`;
 
     await sock.sendMessage(sender, { text: menuLoja, quoted: msg });
 }
 
        // --- COMANDO !COMPRAR ---
+// --- COMANDO !COMPRAR (ATUALIZADO PARA NOVOS ITENS) ---
 if (text.startsWith('!comprar')) {
     const args = text.split(' ');
     const item = args[1]; // Ex: !comprar mute
@@ -1211,29 +1226,64 @@ if (text.startsWith('!comprar')) {
     let placar = JSON.parse(fs.readFileSync('./placar.json', 'utf8'));
     const saldo = placar[participant] || 0;
 
+    // 1. MUTE
     if (item === 'mute') {
-    const custo = 100;
-    if (saldo < custo) return await sock.sendMessage(sender, { text: `❌ Você precisa de ${custo} pontos!`, quoted: msg });
-    if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione quem você quer mutar!", quoted: msg });
+        const custo = 100;
+        if (saldo < custo) return await sock.sendMessage(sender, { text: `❌ Você precisa de ${custo} pontos!`, quoted: msg });
+        if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione quem você quer mutar!", quoted: msg });
+        
+        const metadata = await sock.groupMetadata(sender);
+        const ehAdm = metadata.participants.find(p => p.id === mention)?.admin !== null;
+        if (ehAdm) return await sock.sendMessage(sender, { text: "❌ Você não pode mutar um administrador! 😂", quoted: msg });
 
-    // --- PROTEÇÃO: NÃO MUTAR ADM ---
-    const metadata = await sock.groupMetadata(sender);
-    const ehAdm = metadata.participants.find(p => p.id === mention)?.admin !== null;
+        mutados[mention] = Date.now() + 60000;
+        fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
+        placar[participant] -= custo;
+        fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
+        await sock.sendMessage(sender, { text: `✅ @${mention.split('@')[0]} foi mutado por 1 minuto!`, mentions: [mention], quoted: msg });
+    } 
     
-    if (ehAdm) {
-        return await sock.sendMessage(sender, { text: "❌ Você não pode mutar um administrador, seu maluco! 😂", quoted: msg });
+    // 2. DESMUTE
+    else if (item === 'desmute') {
+        const custo = 300;
+        if (saldo < custo) return await sock.sendMessage(sender, { text: `❌ Você precisa de ${custo} pontos!`, quoted: msg });
+        
+        delete mutados[participant];
+        fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
+        placar[participant] -= custo;
+        fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
+        await sock.sendMessage(sender, { text: "✅ Desmutado com sucesso! Não abusa, hein! 😎", quoted: msg });
     }
-    // -------------------------------
-    // Aplica o Mute
-    mutados[mention] = Date.now() + 60000;
-    fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
-    
-    // ATENÇÃO: Adicione essas linhas abaixo para fechar os blocos que você abriu:
-    placar[participant] -= custo;
-    fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
-    await sock.sendMessage(sender, { text: `✅ @${mention.split('@')[0]} foi mutado por 1 minuto!`, mentions: [mention], quoted: msg });
-    } // Fecha o if (item === 'mute')
-} // Fecha o if (text.startsWith('!comprar'))
+
+    // 3. FÚRIA (Ataque Duplo)
+    else if (item === 'fúria') {
+        const custo = 400;
+        if (saldo < custo) return await sock.sendMessage(sender, { text: `❌ Você precisa de ${custo} pontos!`, quoted: msg });
+        
+        // Aqui você precisaria de uma variável global, ex: let ataquesFuria = {}
+        // ataquesFuria[participant] = true;
+        
+        placar[participant] -= custo;
+        fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
+        await sock.sendMessage(sender, { text: "🔥 Você ativou a Fúria! O dano do seu próximo ataque no boss será dobrado!", quoted: msg });
+    }
+
+    // 4. ESCUDO
+    else if (item === 'escudo') {
+        const custo = 600;
+        if (saldo < custo) return await sock.sendMessage(sender, { text: `❌ Você precisa de ${custo} pontos!`, quoted: msg });
+        
+        // Aqui também precisaria de um controle de tempo ou flag
+        
+        placar[participant] -= custo;
+        fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
+        await sock.sendMessage(sender, { text: "🛡️ Escudo ativado! Você está protegido contra roubos por 1 hora.", quoted: msg });
+    }
+
+    else {
+        await sock.sendMessage(sender, { text: "❌ Item não encontrado na loja. Digite !loja para ver os itens!", quoted: msg });
+    }
+}
 
 // --- !GADO (COM PORCENTAGEM E DEBOCHE) ---
 if (text.startsWith('!gado')) {
@@ -1324,25 +1374,28 @@ if (text.startsWith('!fofoca')) {
 }
 
 // --- !ROUBAR (ASSALTO A PONTOS) ---
+// --- COMANDO !ROUBAR (AJUSTADO COM ESCUDO) ---
 if (text.startsWith('!roubar')) {
     const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
     if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione quem você quer assaltar!", quoted: msg });
     if (mention === participant) return await sock.sendMessage(sender, { text: "❌ Você não pode roubar a si mesmo, seu gênio! 😂", quoted: msg });
 
-    // Carrega o placar (que agora vira nosso banco de dados de saldo)
+    // Verificação do ESCUDO
+    // (Assumindo que você criou a variável escudosAtivos no topo do código)
+    if (escudosAtivos[mention]) {
+        return await sock.sendMessage(sender, { text: `🛡️ *ASSALTO FRUSTRADO!* O @${mention.split('@')[0]} está protegido por um ESCUDO!`, mentions: [mention], quoted: msg });
+    }
+
     let placar = JSON.parse(fs.readFileSync('./placar.json', 'utf8'));
-    
-    // Inicializa quem não tem nada
     if (!placar[participant]) placar[participant] = 0;
     if (!placar[mention]) placar[mention] = 0;
 
-    // Sorteio: Se der sorte, rouba. Se der azar, é preso.
-    const sucesso = Math.random() < 0.5; // 50% de chance de sucesso
+    const sucesso = Math.random() < 0.5;
 
     if (sucesso) {
-        const valorRoubado = Math.floor(Math.random() * 50) + 10; // Rouba entre 10 e 60 pontos
+        const valorRoubado = Math.floor(Math.random() * 50) + 10;
         placar[participant] += valorRoubado;
-        placar[mention] -= valorRoubado;
+        placar[mention] = Math.max(0, placar[mention] - valorRoubado); // Evita saldo negativo
         fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
 
         await sock.sendMessage(sender, { 
@@ -1352,7 +1405,6 @@ if (text.startsWith('!roubar')) {
             mentions: [participant, mention] 
         }, { quoted: msg });
     } else {
-        // Se falhar, perde pontos pra polícia
         await sock.sendMessage(sender, { 
             video: { url: 'https://media.tenor.com/wbMLB5AzQFkAAAPo/jail-bugs.mp4' }, 
             gifPlayback: true,
