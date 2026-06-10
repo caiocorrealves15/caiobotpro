@@ -1925,22 +1925,29 @@ if (text.startsWith('!musica ')) {
         }
         // 4. COMANDO !MUTE (CORRIGIDO)
         // 4. COMANDO !MUTE (CORRIGIDO E PROTEGIDO)
+// --- COMANDO !MUTE (PROTEÇÃO TOTAL) ---
 if (text.startsWith('!mute')) {
-    if (!isAdmin) return await sock.sendMessage(sender, { text: "Tentando furar as regras, né?? HAHAHHAHA 👀👀👀\n\nSabe que um ADM está de olho em você agora né?" });
-    
-    const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
-    
-    // --- PROTEÇÃO REFORÇADA ---
-    // Coloquei o seu ID completo e também uma verificação extra caso você seja ADM
-    const meuID = "5527992997083@s.whatsapp.net"; 
-    
-    if (!mention) return await sock.sendMessage(sender, { text: "Mencione quem você quer mutar." });
-
-    if (mention === meuID || mention.includes("5527992997083")) {
-        return await sock.sendMessage(sender, { text: "❌ Nem tenta! O criador é intocável! 👑" });
+    // 1. Verifica se quem mandou o comando é ADM
+    if (!isAdmin) {
+        return await sock.sendMessage(sender, { 
+            text: "Tentando furar as regras, né?? HAHAHHAHA 👀👀👀\n\nSabe que um ADM está de olho em você agora né?",
+            quoted: msg 
+        });
     }
-    // ---------------------------
 
+    const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+    if (!mention) return await sock.sendMessage(sender, { text: "Mencione quem você quer mutar.", quoted: msg });
+
+    // 2. Proteção do seu ID (O dono/criador é intocável)
+    const seuID = "5527992997083@s.whatsapp.net"; 
+    if (mention === seuID) {
+        return await sock.sendMessage(sender, { 
+            text: "❌ Nem tenta! O criador é intocável e ninguém muta ele! 👑", 
+            quoted: msg 
+        });
+    }
+
+    // 3. Aplica o Mute (só se passou pelas travas acima)
     const tempo = text.includes('h') ? 3600000 : 1800000;
     mutados[mention] = Date.now() + tempo;
     
@@ -1948,7 +1955,7 @@ if (text.startsWith('!mute')) {
     await sock.sendMessage(sender, { 
         text: "Você está falando demais, dá um tempo seu rabugento.😂❌", 
         mentions: [mention] 
-    });
+    }, { quoted: msg });
 }
         // 8. COMANDO CLIMA (TRADUZIDO)
        // 8. COMANDO CLIMA (Forçando o Reply com variável constante)
