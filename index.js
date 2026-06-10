@@ -1944,8 +1944,8 @@ if (text.startsWith('!mute')) {
     if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione o alvo do seu silenciamento, ô lerdo!", quoted: msg });
 
     // 2. Proteção do seu ID (O dono/criador é intocável)
-    const seuID = "5527992997083@s.whatsapp.net"; 
-    if (mention === seuID) {
+    const seuNumero = "5527992997083"; 
+    if (mention.includes(seuNumero)) {
         const frasesTraicao = [
             "❌ Nem tenta! O criador é intocável e ninguém muta o patrão! 👑",
             "⚠️ Opa! Traição? O dono do sistema não pode ser mutado, seu infiel! 🚩",
