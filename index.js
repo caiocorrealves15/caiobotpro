@@ -3,12 +3,19 @@ const { execSync } = require('child_process');
 const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, downloadContentFromMessage } = require('@whiskeysockets/baileys');
 const pino = require('pino');
 const fs = require('fs');
+const arquivoPlacar = '/var/data/placar.json';
+const arquivoPlacarEmoji = '/var/data/placar_emoji.json';
+const arquivoCargos = '/var/data/cargos.json';
+const arquivoCasais = '/var/data/casais.json';
+const arquivoRank = '/var/data/rank.json'; // O código já tinha isso, ótimo!
+const ARQUIVO_RANK = '/var/data/rank.json'; // ADICIONE ESTA LINHA TAMBÉM para garantir
+const ARQUIVO_MUTADOS = '/var/data/mutados.json'; // ADICIONE AQUI TAMBÉM
 const cookies = process.env.COOKIES_JSON ? JSON.parse(process.env.COOKIES_JSON) : [];
 const { Sticker, StickerTypes } = require('wa-sticker-formatter');
 const ytsr = require('ytsr');
 const qrcode = require('qrcode-terminal');
 const ytdl = require('ytdl-core'); // Requisito movido para o topo
-const ARQUIVO_PLACAR_EMOJI = './placar_emoji.json';
+const ARQUIVO_PLACAR_EMOJI = '/var/data/placar_emoji.json';
 const infrações = {};
 const ultimaMensagem = {};
 const contagemFlood = {};
@@ -21,13 +28,13 @@ let raidBoss = {
 };
 const enviarBackupAutomatico = async (sock) => {
     const meuNumero = '5527992997083@s.whatsapp.net';
-    const arquivos = ['./placar.json', './cargos.json', './casais.json', './rank.json'];
+    const arquivos = [arquivoPlacar, arquivoCargos, arquivoCasais, arquivoRank];
     
     for (const arquivo of arquivos) {
         if (fs.existsSync(arquivo)) {
             await sock.sendMessage(meuNumero, { 
                 document: fs.readFileSync(arquivo), 
-                fileName: arquivo.replace('./', ''), 
+                fileName: arquivo.split('/').pop(), 
                 mimetype: 'application/json' 
             });
         }
@@ -48,7 +55,7 @@ let jogoPerguntas = {
 
 // Função de salvamento (mantenha como está)
 const salvarCasais = () => {
-    fs.writeFileSync('./casais.json', JSON.stringify(listaCasais, null, 2));
+    fs.writeFileSync(arquivoCasais, JSON.stringify(listaCasais, null, 2));
 };
 
 // Garante que o arquivo exista antes de qualquer coisa
@@ -56,13 +63,13 @@ if (!fs.existsSync(ARQUIVO_PLACAR_EMOJI)) {
     fs.writeFileSync(ARQUIVO_PLACAR_EMOJI, JSON.stringify({}));
 }
 // Faça o mesmo para o placar.json se necessário:
-if (!fs.existsSync('./placar.json')) {
-    fs.writeFileSync('./placar.json', JSON.stringify({}));
+if (!fs.existsSync(arquivoPlacar)) {
+    fs.writeFileSync(arquivoPlacar, JSON.stringify({}));
 }
 // --- CARREGAMENTO SEGURO DE CASAIS ---
 try {
-    if (fs.existsSync('./casais.json')) {
-        const dados = fs.readFileSync('./casais.json', 'utf8');
+    if (fs.existsSync(arquivoCasais)) {
+        const dados = fs.readFileSync(arquivoCasais, 'utf8');
         // Verifica se o arquivo não está vazio ou apenas com espaços em branco
         if (dados && dados.trim().length > 0) {
             listaCasais = JSON.parse(dados);
@@ -74,7 +81,7 @@ try {
     } else {
         console.log("ℹ️ Arquivo casais.json não encontrado, criando um novo.");
         listaCasais = [];
-        fs.writeFileSync('./casais.json', JSON.stringify([], null, 2));
+        fs.writeFileSync(arquivoCasais, JSON.stringify([], null, 2));
     }
 } catch (e) {
     console.error("❌ Erro fatal ao ler casais.json, reiniciando lista:", e);
@@ -114,8 +121,8 @@ let jogoEmoji = {
 };
 
 // Definição dos arquivos de dados
-const ARQUIVO_RANK = './rank.json';
-const ARQUIVO_MUTADOS = './mutados.json';
+const ARQUIVO_RANK = arquivoRank;
+const ARQUIVO_MUTADOS = arquivoMutados;
 
 // Carregamento dos dados (se existirem)
 let contagemMensagens = fs.existsSync(ARQUIVO_RANK) ? JSON.parse(fs.readFileSync(ARQUIVO_RANK)) : {};
@@ -369,8 +376,11 @@ if (text.startsWith('!comprar_cargo')) {
     const novoCargo = text.replace('!comprar_cargo', '').trim();
     if (!novoCargo) return await sock.sendMessage(sender, { text: "❌ Qual cargo você quer? Ex: !comprar_cargo Rei da Zueira", quoted: msg });
 
-    let placar = JSON.parse(fs.readFileSync('./placar.json', 'utf8'));
-    let cargos = fs.existsSync('./cargos.json') ? JSON.parse(fs.readFileSync('./cargos.json', 'utf8')) : {};
+    let placar = {};
+if (fs.existsSync(arquivoPlacar)) {
+    placar = JSON.parse(fs.readFileSync(arquivoPlacar, 'utf8'));
+}
+    let cargos = fs.existsSync(arquivoCargos) ? JSON.parse(fs.readFileSync(arquivoCargos, 'utf8')) : {};
     
     const custo = 500; // Preço do luxo
     if ((placar[participant] || 0) < custo) return await sock.sendMessage(sender, { text: `❌ Você não tem ${custo} pontos! Vai trabalhar! 😂`, quoted: msg });
@@ -378,8 +388,8 @@ if (text.startsWith('!comprar_cargo')) {
     placar[participant] -= custo;
     cargos[participant] = novoCargo;
     
-    fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
-    fs.writeFileSync('./cargos.json', JSON.stringify(cargos, null, 2));
+    fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
+    fs.writeFileSync(arquivoCargos, JSON.stringify(cargos, null, 2));
 
     await sock.sendMessage(sender, { text: `👑 Parabéns @${participant.split('@')[0]}! Agora seu cargo oficial é: *${novoCargo}*`, mentions: [participant], quoted: msg });
 }
@@ -392,9 +402,9 @@ if (text.startsWith('!dar_cargo')) {
     
     if (!mention || !cargoNome) return await sock.sendMessage(sender, { text: "❌ Use: !dar_cargo @mencao [nome do cargo]", quoted: msg });
 
-    let cargos = fs.existsSync('./cargos.json') ? JSON.parse(fs.readFileSync('./cargos.json', 'utf8')) : {};
+    let cargos = fs.existsSync('arquivoCargos') ? JSON.parse(fs.readFileSync(arquivoCargos, 'utf8')) : {};
     cargos[mention] = cargoNome;
-    fs.writeFileSync('./cargos.json', JSON.stringify(cargos, null, 2));
+    fs.writeFileSync(arquivoCargos, JSON.stringify(cargos, null, 2));
 
     await sock.sendMessage(sender, { text: `✅ Cargo "${cargoNome}" concedido com sucesso ao @${mention.split('@')[0]}!`, mentions: [mention], quoted: msg });
 }
@@ -449,9 +459,9 @@ if (jogoPerguntas.ativo && msg.message?.extendedTextMessage?.contextInfo?.stanza
         jogoPerguntas.ativo = false;
         
         // --- ATUALIZAÇÃO DO PLACAR ---
-        let placar = JSON.parse(fs.readFileSync('./placar.json', 'utf8'));
+        let placar = fs.existsSync(arquivoPlacar) ? JSON.parse(fs.readFileSync(arquivoPlacar, 'utf8')) : {};
         placar[participant] = (placar[participant] || 0) + 30; // ADICIONA 30 PONTOS
-        fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
+        fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
 
         await sock.sendMessage(sender, { react: { text: '🏆', key: msg.key } });
         await sock.sendMessage(sender, { 
@@ -620,7 +630,7 @@ if (jogoEmoji.ativo &&
         // --- ATUALIZAÇÃO DO PLACAR ---
         const pId = msg.key.participant;
         placarEmoji[pId] = (placarEmoji[pId] || 0) + 100;
-        fs.writeFileSync(ARQUIVO_PLACAR_EMOJI, JSON.stringify(placarEmoji, null, 2));
+        fs.writeFileSync(arquivoPlacarEmoji, JSON.stringify(placarEmoji, null, 2));
 
         await sock.sendMessage(sender, { 
             video: { url: jogoEmoji.gifResposta }, 
@@ -641,7 +651,7 @@ if (jogoEmoji.ativo &&
 // Substitua o seu bloco !rankingemoji por este:
 if (text === '!ranking' || text === '!placar') {
     // Carrega o placar geral
-    const placar = JSON.parse(fs.readFileSync('./placar.json', 'utf8'));
+    const placar = fs.existsSync(arquivoPlacar) ? JSON.parse(fs.readFileSync(arquivoPlacar, 'utf8')) : {};
 
     // Transforma em array, ordena do maior para o menor e pega os 10 primeiros
     const ranking = Object.entries(placar)
@@ -960,9 +970,9 @@ if (text.startsWith('!jogar')) {
 
     if (escolha === caminhoVencedor) {
         // Premiação no placar
-        let placar = JSON.parse(fs.readFileSync('./placar.json', 'utf8'));
+        let placar = fs.existsSync(arquivoPlacar) ? JSON.parse(fs.readFileSync(arquivoPlacar, 'utf8')) : {};
         placar[participant] = (placar[participant] || 0) + 150;
-        fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
+        fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
 
         await sock.sendMessage(sender, { 
             video: { url: 'https://media.tenor.com/FCtDCj3ihF8AAAPo/bugs-bunny-looney-tunes.mp4' }, 
@@ -1020,9 +1030,9 @@ if (jogoPiada.ativo && msg.message?.extendedTextMessage?.contextInfo?.stanzaId =
     const respostaUsuario = text.toLowerCase().trim();
     if (respostaUsuario === jogoPiada.resposta) {
         jogoPiada.ativo = false;
-        let placar = JSON.parse(fs.readFileSync('./placar.json', 'utf8'));
+        let placar = fs.existsSync(arquivoPlacar) ? JSON.parse(fs.readFileSync(arquivoPlacar, 'utf8')) : {};
         placar[participant] = (placar[participant] || 0) + 75; // Premiação piada
-        fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
+        fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
         await sock.sendMessage(sender, { react: { text: '🏆', key: msg.key } });
         await sock.sendMessage(sender, { text: `🎉 BOA! @${participant.split('@')[0]} ganhou 75 pontos! A resposta era: *${jogoPiada.resposta.toUpperCase()}*`, mentions: [participant], quoted: msg });
     } else {
@@ -1041,7 +1051,7 @@ if (text.startsWith('!penalti')) {
     const senderId = msg.key.remoteJid;
 
     // Carrega o placar atual
-    let placar = JSON.parse(fs.readFileSync('./placar.json', 'utf8'));
+    let placar = fs.existsSync(arquivoPlacar) ? JSON.parse(fs.readFileSync(arquivoPlacar, 'utf8')) : {};
     if (!placar[senderId]) placar[senderId] = 0;
 
     // Mensagem inicial com GIF e respondendo a quem chamou
@@ -1056,7 +1066,7 @@ if (text.startsWith('!penalti')) {
     const defesa = Math.random() < 0.5;
     if (!defesa) {
         placar[senderId] += 50;
-        fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
+        fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
         await sock.sendMessage(sender, { 
             caption: `⚽ GOOOOOL! Você marcou! Total de gols: ${placar[senderId]}`, 
             video: { url: 'https://media.tenor.com/vnXD4h47_ZwAAAPo/kick-goal.mp4' }, 
@@ -1188,7 +1198,7 @@ if (text.startsWith('!matar')) {
 
        // --- COMANDO !LOJA ---
 if (text === '!loja') {
-    const placar = JSON.parse(fs.readFileSync('./placar.json', 'utf8'));
+    const placar = fs.existsSync(arquivoPlacar) ? JSON.parse(fs.readFileSync(arquivoPlacar, 'utf8')) : {};
     const saldo = placar[participant] || 0;
 
     const menuLoja = `🛍️ *LOJA DO BONDE - SEU SALDO: ${saldo} pts*
@@ -1223,7 +1233,7 @@ if (text.startsWith('!comprar')) {
     const item = args[1]; // Ex: !comprar mute
     const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
     
-    let placar = JSON.parse(fs.readFileSync('./placar.json', 'utf8'));
+    let placar = fs.existsSync(arquivoPlacar) ? JSON.parse(fs.readFileSync(arquivoPlacar, 'utf8')) : {};
     const saldo = placar[participant] || 0;
 
     // 1. MUTE
@@ -1239,7 +1249,7 @@ if (text.startsWith('!comprar')) {
         mutados[mention] = Date.now() + 60000;
         fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
         placar[participant] -= custo;
-        fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
+        fs.writeFileSync('arquivoPlacar', JSON.stringify(placar, null, 2));
         await sock.sendMessage(sender, { text: `✅ @${mention.split('@')[0]} foi mutado por 1 minuto!`, mentions: [mention], quoted: msg });
     } 
     
@@ -1251,7 +1261,7 @@ if (text.startsWith('!comprar')) {
         delete mutados[participant];
         fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
         placar[participant] -= custo;
-        fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
+        fs.writeFileSync('arquivoPlacar', JSON.stringify(placar, null, 2));
         await sock.sendMessage(sender, { text: "✅ Desmutado com sucesso! Não abusa, hein! 😎", quoted: msg });
     }
 
@@ -1264,7 +1274,7 @@ if (text.startsWith('!comprar')) {
         // ataquesFuria[participant] = true;
         
         placar[participant] -= custo;
-        fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
+        fs.writeFileSync('arquivoPlacar', JSON.stringify(placar, null, 2));
         await sock.sendMessage(sender, { text: "🔥 Você ativou a Fúria! O dano do seu próximo ataque no boss será dobrado!", quoted: msg });
     }
 
@@ -1276,7 +1286,7 @@ if (text.startsWith('!comprar')) {
         // Aqui também precisaria de um controle de tempo ou flag
         
         placar[participant] -= custo;
-        fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
+        fs.writeFileSync('arquivoPlacar', JSON.stringify(placar, null, 2));
         await sock.sendMessage(sender, { text: "🛡️ Escudo ativado! Você está protegido contra roubos por 1 hora.", quoted: msg });
     }
 
@@ -1386,7 +1396,7 @@ if (text.startsWith('!roubar')) {
         return await sock.sendMessage(sender, { text: `🛡️ *ASSALTO FRUSTRADO!* O @${mention.split('@')[0]} está protegido por um ESCUDO!`, mentions: [mention], quoted: msg });
     }
 
-    let placar = JSON.parse(fs.readFileSync('./placar.json', 'utf8'));
+    let placar = fs.existsSync(arquivoPlacar) ? JSON.parse(fs.readFileSync(arquivoPlacar, 'utf8')) : {};
     if (!placar[participant]) placar[participant] = 0;
     if (!placar[mention]) placar[mention] = 0;
 
@@ -1396,7 +1406,7 @@ if (text.startsWith('!roubar')) {
         const valorRoubado = Math.floor(Math.random() * 50) + 10;
         placar[participant] += valorRoubado;
         placar[mention] = Math.max(0, placar[mention] - valorRoubado); // Evita saldo negativo
-        fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
+        fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
 
         await sock.sendMessage(sender, { 
             video: { url: 'https://media.tenor.com/5ckH12PXdUYAAAPo/ladr%C3%A3o-thief.mp4' }, 
@@ -1413,12 +1423,12 @@ if (text.startsWith('!roubar')) {
         }, { quoted: msg });
         
         placar[participant] = Math.max(0, placar[participant] - 20);
-        fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
+        fs.writeFileSync('arquivoPlacar', JSON.stringify(placar, null, 2));
     }
 }
         // 1. !RANK (ORGANIZADO E DEBOCHADO)
 if (text === '!rank') {
-    let cargos = fs.existsSync('./cargos.json') ? JSON.parse(fs.readFileSync('./cargos.json', 'utf8')) : {};
+    let cargos = fs.existsSync('arquivoCargos') ? JSON.parse(fs.readFileSync(arquivoCargos, 'utf8')) : {};
 
     const ranking = Object.entries(contagemMensagens)
         .sort((a, b) => b[1] - a[1])
@@ -1524,9 +1534,9 @@ if (text.startsWith('!casar')) {
 
     // AJUSTE: Força a leitura do arquivo atualizado antes de qualquer verificação
     try {
-        if (fs.existsSync('./casais.json')) {
-            listaCasais = JSON.parse(fs.readFileSync('./casais.json', 'utf8'));
-        }
+        if (fs.existsSync(arquivoCasais)) {
+    listaCasais = JSON.parse(fs.readFileSync(arquivoCasais, 'utf8'));
+}
     } catch (e) {
         listaCasais = [];
     }
@@ -1570,8 +1580,8 @@ if (text.startsWith('!casar')) {
 if (text === '!casais') {
     // AJUSTE: Força a leitura do arquivo toda vez que o comando é chamado
     try {
-        if (fs.existsSync('./casais.json')) {
-            listaCasais = JSON.parse(fs.readFileSync('./casais.json', 'utf8'));
+        if (fs.existsSync('arquivoCasais')) {
+            listaCasais = JSON.parse(fs.readFileSync(arquivoCasais, 'utf8'));
         } else {
             listaCasais = [];
         }
@@ -1652,7 +1662,7 @@ if (text === '!casais') {
     if (participant !== meuNumero) return;
     
     try {
-        const arquivos = ['./placar.json', './cargos.json', './casais.json', './rank.json'];
+        const arquivos = ['arquivoPlacar', 'arquivoCargos', 'arquivoCasais', 'arquivoRank'];
         for (const arquivo of arquivos) {
             if (fs.existsSync(arquivo)) {
                 await sock.sendMessage(sender, { 
@@ -1704,13 +1714,19 @@ if (text === '!atacar') {
     const dano = Math.floor(Math.random() * 50) + 10;
     raidBoss.hp -= dano;
 
+    if (raidBoss.hp <= 0) {
+        raidBoss.ativo = false;
+        let placar = fs.existsSync(arquivoPlacar) ? JSON.parse(fs.readFileSync(arquivoPlacar, 'utf8')) : {};
+        placar[participant] = (placar[participant] || 0) + 200;
+        fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2)); }
+
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     if (raidBoss.hp <= 0) {
         raidBoss.ativo = false;
-        let placar = JSON.parse(fs.readFileSync('./placar.json', 'utf8'));
+        let placar = JSON.parse(fs.readFileSync('arquivoPlacar', 'utf8'));
         placar[participant] = (placar[participant] || 0) + 200;
-        fs.writeFileSync('./placar.json', JSON.stringify(placar, null, 2));
+        fs.writeFileSync('arquivoPlacar', JSON.stringify(placar, null, 2));
         
         await sock.sendMessage(sender, { 
             video: { url: 'https://media.tenor.com/NgTSh0Bq5lYAAAPo/wearwolfwere-werewolfwhere.mp4' }, 
@@ -1825,27 +1841,47 @@ if (text === '!avisoadm') {
 // Você precisará instalar: npm install ytsr (para buscar) e usar uma API que entregue o stream direto
 // Como o YouTube é a fonte de quase tudo, vou manter a busca, mas forçar o envio como ÁUDIO.
 if (text.startsWith('!musica ')) {
-    const busca = text.replace('!musica ', '');
-    try {
-        await sock.sendMessage(sender, { text: "Calma aí apressado, 🔍 Buscando sua música..." });
-        
+    const busca = text.replace('!musica ', '').trim();
+    if (!busca) return await sock.sendMessage(sender, { text: "❌ Qual música você quer buscar?" }, { quoted: msg });
 
+    try {
+        await sock.sendMessage(sender, { text: "🔍 Buscando e preparando sua música..." }, { quoted: msg });
+
+        // 1. Busca o vídeo
         const searchResults = await ytsr(busca, { limit: 1 });
         const video = searchResults.items[0];
-        
-        if (!video) return await sock.sendMessage(sender, { text: "❌ Não encontrado." });
+        if (!video) return await sock.sendMessage(sender, { text: "❌ Não encontrei essa música." }, { quoted: msg });
 
-        // Enviamos apenas o link. É seguro, não bloqueia o bot e não exige processamento pesado do Render.
-        const mensagem = `🎵 *Música Encontrada!*\n\n` +
-                         `🎤 *Título:* ${video.title}\n` +
-                         `🔗 *Link:* ${video.url}\n\n` +
-                         `🤖 *Dica:* Como o YouTube bloqueia tentativas de extrair áudio direto, estou te mandando o link para você ouvir com tranquilidade!`;
+        // 2. Prepara o stream de áudio
+        const stream = ytdl(video.url, { 
+            filter: 'audioonly', 
+            quality: 'highestaudio',
+            highWaterMark: 1 << 25 // Aumenta o buffer para evitar travamentos
+        });
 
-        await sock.sendMessage(sender, { text: mensagem }, { quoted: msg });
+        // 3. Define um caminho temporário para o áudio
+        const audioPath = `./temp_audio_${Date.now()}.mp3`;
+
+        // 4. Salva e converte (se necessário)
+        // O FFmpeg é chamado aqui para garantir que o formato seja aceito pelo WhatsApp
+        execSync(`ffmpeg -i pipe:0 -vn -acodec libmp3lame -q:a 2 "${audioPath}"`, {
+            input: stream,
+            stdio: 'pipe'
+        });
+
+        // 5. Envia o áudio
+        await sock.sendMessage(sender, { 
+            audio: fs.readFileSync(audioPath), 
+            mimetype: 'audio/mp4',
+            ptt: false // false = arquivo de música, true = áudio gravado
+        }, { quoted: msg });
+
+        // 6. Limpa o arquivo temporário
+        fs.unlinkSync(audioPath);
 
     } catch (e) {
-        console.error(e);
-        await sock.sendMessage(sender, { text: "❌ O YouTube está protegendo demais o conteúdo agora. Tente novamente mais tarde." });
+        console.error("Erro no comando !musica:", e);
+        await sock.sendMessage(sender, { text: "❌ Erro ao baixar a música. Tente outra ou tente mais tarde." }, { quoted: msg });
     }
 }
        
