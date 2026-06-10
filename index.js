@@ -241,6 +241,7 @@ await sock.sendMessage(id, {
         
         const sender = msg.key.remoteJid;
         const participant = msg.key.participant || sender;
+        console.log("DEBUG ID DO PARTICIPANTE: " + participant);
         const isGroup = sender.endsWith('@g.us');
         
         const text = msg.message.conversation || msg.message.extendedTextMessage?.text || msg.message.imageMessage?.caption || msg.message.videoMessage?.caption || "";
@@ -1923,46 +1924,52 @@ if (text.startsWith('!musica ')) {
                 await sock.sendMessage(sender, { text: "Fala agora, mas com cuidado, ok? To doidinho pra mutar de novo😎😂", mentions: [mention] });
             }
         }
-        // 4. COMANDO !MUTE (CORRIGIDO)
-        // 4. COMANDO !MUTE (CORRIGIDO E PROTEGIDO)
-// --- COMANDO !MUTE (PROTEÇÃO TOTAL) ---
+
 if (text.startsWith('!mute')) {
     // 1. Verifica se quem mandou o comando é ADM
     if (!isAdmin) {
+        const frasesAdm = [
+            "Tentando furar as regras, né?? HAHAHHAHA 👀👀👀\n\nSabe que um ADM está de olho em você agora né?",
+            "Tá achando que é dono do pedaço? Acesso negado, amigão! 🚫",
+            "Negativo! Só ADM manda aqui, volta pra sua cadeira! 😂",
+            "Quer mutar alguém? Primeiro vira ADM, depois a gente conversa! 🤡"
+        ];
         return await sock.sendMessage(sender, { 
-            text: "Tentando furar as regras, né?? HAHAHHAHA 👀👀👀\n\nSabe que um ADM está de olho em você agora né?",
+            text: frasesAdm[Math.floor(Math.random() * frasesAdm.length)], 
             quoted: msg 
         });
     }
 
     const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
-    if (!mention) return await sock.sendMessage(sender, { text: "Mencione quem você quer mutar.", quoted: msg });
+    if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione o alvo do seu silenciamento, ô lerdo!", quoted: msg });
 
     // 2. Proteção do seu ID (O dono/criador é intocável)
     const seuID = "5527992997083@s.whatsapp.net"; 
     if (mention === seuID) {
+        const frasesTraicao = [
+            "❌ Nem tenta! O criador é intocável e ninguém muta o patrão! 👑",
+            "⚠️ Opa! Traição? O dono do sistema não pode ser mutado, seu infiel! 🚩",
+            "🤡 Engraçadinho... quer mutar o criador? Vai ser banido se tentar de novo! 💀",
+            "🤣 Tentativa frustrada! O criador tem imunidade diplomática! 🥂"
+        ];
         return await sock.sendMessage(sender, { 
-            text: "❌ Nem tenta! O criador é intocável e ninguém muta ele! 👑", 
+            text: frasesTraicao[Math.floor(Math.random() * frasesTraicao.length)], 
             quoted: msg 
         });
     }
 
-    // 3. Aplica o Mute (só se passou pelas travas acima)
+    // 3. Aplica o Mute
     const tempo = text.includes('h') ? 3600000 : 1800000;
     mutados[mention] = Date.now() + tempo;
-    
     fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
+    
     await sock.sendMessage(sender, { 
         text: "Você está falando demais, dá um tempo seu rabugento.😂❌", 
         mentions: [mention] 
     }, { quoted: msg });
 }
-        // 8. COMANDO CLIMA (TRADUZIDO)
-       // 8. COMANDO CLIMA (Forçando o Reply com variável constante)
-// 8. COMANDO CLIMA (Versão Debochada e Otimizada)
-// 8. COMANDO CLIMA (Versão Debochada e Otimizada)
-// --- COMANDO !CLIMA (VERSÃO DEBOCHADA E OTIMIZADA) ---
-// --- 8. COMANDO CLIMA (VERSÃO DEBOCHADA E OTIMIZADA) ---
+
+// --- COMANDO !CLIMA (AJUSTADO E LIMPO) ---
 if (text.startsWith('!clima')) {
     const cidade = text.replace('!clima', '').trim();
     if (!cidade) return await sock.sendMessage(sender, { text: "❌ Digite a cidade! Ex: !clima Cariacica", quoted: msg });
@@ -2012,11 +2019,10 @@ if (text.startsWith('!clima')) {
         await sock.sendMessage(sender, { react: { text: '🌤', key: mensagemParaResponder.key } });
         await sock.sendMessage(sender, { text: msgClima }, { quoted: mensagemParaResponder });
     }); 
-} // <--- FECHA O IF DO !CLIMA (APENAS UM AQUI)
+} 
 
-
-
-    }); // <--- ESTE FECHA O sock.ev.on('messages.upsert', ...)
-} // <--- ESTE FECHA A function connectToWhatsApp()
+// --- FECHAMENTO DO BOT ---
+}); 
+}
 
 connectToWhatsApp();
