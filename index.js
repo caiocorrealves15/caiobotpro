@@ -1942,10 +1942,11 @@ if (text.startsWith('!mute')) {
 
     const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
     if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione o alvo do seu silenciamento, ô lerdo!", quoted: msg });
-
     // 2. Proteção do seu ID (O dono/criador é intocável)
-    const seuNumero = "5527992997083"; 
-    if (mention.includes(seuNumero)) {
+    const MEU_ID_REAL = "96057379803159@lid"; 
+    const meuNumero = "5527992997083";
+
+    if (mention === MEU_ID_REAL || (mention && String(mention).includes(meuNumero))) {
         const frasesTraicao = [
             "❌ Nem tenta! O criador é intocável e ninguém muta o patrão! 👑",
             "⚠️ Opa! Traição? O dono do sistema não pode ser mutado, seu infiel! 🚩",
