@@ -9,10 +9,9 @@ const placarPath = path.join(dataPath, 'placar_emoji.json');
 const ARQUIVO_RANK = path.join(dataPath, 'rank.json');
 const arquivoMutados = path.join(dataPath, 'mutados.json');
 const arquivoPlacar = path.join(dataPath, 'placar.json');
-const ARQUIVO_PLACAR_EMOJI = path.join(dataPath, 'placar_emoji.json');
+const arquivoPlacarEmoji = path.join(dataPath, 'placar_emoji.json');
 const arquivoCargos = path.join(dataPath, 'cargos.json');
 const arquivoCasais = path.join(dataPath, 'casais.json');
-const ARQUIVO_MUTADOS = path.join(dataPath, 'mutados.json'); // ADICIONE ESTA LINHA TAMBÉM para garantir
 const cookies = process.env.COOKIES_JSON ? JSON.parse(process.env.COOKIES_JSON) : [];
 const { Sticker, StickerTypes } = require('wa-sticker-formatter');
 const ytSearch = require('yt-search'); 
@@ -143,7 +142,7 @@ let mutados = lerArquivoSeguro(ARQUIVO_MUTADOS);
 // --- FUNÇÃO DE CONEXÃO ---
 async function connectToWhatsApp() {
     console.log("--- FUNÇÃO DE CONEXÃO INICIADA ---");
-    const { state, saveCreds } = await useMultiFileAuthState('/var/data/auth_info');
+    const { state, saveCreds } = await useMultiFileAuthState('./auth_info');
 
     const sock = makeWASocket({
         logger: pino({ level: 'silent' }),
