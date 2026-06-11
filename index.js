@@ -128,7 +128,7 @@ let mutados = fs.existsSync(ARQUIVO_MUTADOS) ? JSON.parse(fs.readFileSync(ARQUIV
 // --- FUNÇÃO DE CONEXÃO ---
 async function connectToWhatsApp() {
     console.log("--- FUNÇÃO DE CONEXÃO INICIADA ---");
-    const { state, saveCreds } = await useMultiFileAuthState('auth_info');
+    const { state, saveCreds } = await useMultiFileAuthState('/var/data/auth_info')
 
     const sock = makeWASocket({
         logger: pino({ level: 'silent' }),
