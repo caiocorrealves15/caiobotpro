@@ -497,7 +497,18 @@ if (text === '!perguntas') {
         { q: "Qual é a montanha mais alta das Américas? 🏔️", r: "aconcagua" },
         { q: "Quem escreveu 'Dom Quixote'? 📖", r: "cervantes" },
         { q: "Qual é o país com maior área territorial do mundo? 🌍", r: "russia" },
-        { q: "Qual é o estado brasileiro conhecido como 'o celeiro do Brasil'? 🌽", r: "mato grosso" }
+        { q: "Qual é o estado brasileiro conhecido como 'o celeiro do Brasil'? 🌽", r: "mato grosso" },
+        // NOVAS PERGUNTAS MAIS DIFÍCEIS:
+        { q: "Qual o nome do fenômeno que faz com que a luz se curve ao passar perto de um objeto massivo? 🌌", r: "lente gravitacional" },
+        { q: "Qual é a capital do Cazaquistão? 🇰🇿", r: "astana" },
+        { q: "Qual metal é líquido à temperatura ambiente? 🌡️", r: "mercurio" },
+        { q: "Quem pintou o teto da Capela Sistina? 🎨", r: "michelangelo" },
+        { q: "Qual foi o primeiro elemento da tabela periódica? 🧪", r: "hidrogenio" },
+        { q: "Qual é a unidade de medida para a intensidade sonora? 🔊", r: "decibel" },
+        { q: "Quantos ossos tem o corpo humano adulto? 🦴", r: "206" },
+        { q: "Qual é o oceano que banha a costa leste da Austrália? 🌊", r: "pacifico" },
+        { q: "Em qual cidade fica a sede da União Europeia? 🇪🇺", r: "bruxelas" },
+        { q: "Qual o nome do maior deserto quente do mundo? 🏜️", r: "saara" }
     ];
 
     const sorteada = quiz[Math.floor(Math.random() * quiz.length)];
