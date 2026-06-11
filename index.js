@@ -936,7 +936,7 @@ if (lowerText.includes('bebida') || lowerText.includes('cerveja') || lowerText.i
 
     // Ache essa linha no seu código e adicione o '!cargos' nela:
 const comandosExistentes = [
-    '!menu', '!comprar', '!loja', '!backup', '!atacar', '!boss', '!rank', '!casar', '!casais', '!piada', '!avisoadm', 
+    '!menu', '!comprar', '!loja', '!backup', '!dar_pontos', '!atacar', '!boss', '!rank', '!casar', '!casais', '!piada', '!avisoadm', 
     '!descasar', '!emoji', '!sortear', '!cadastros', '!perguntas', '!jogar', 
     '!forca', '!jogosoff', '!jogoson', '!link', '!tier', 
     '!ranking', '!penalti', '!musica', '!socar', '!beijar', 

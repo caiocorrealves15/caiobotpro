@@ -1,2 +1,5 @@
 node_modules
 cookies.json
+auth_info/
+sessao.tar
+sessao.txtp
