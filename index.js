@@ -275,21 +275,25 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
 // --- AUTO-APROVAÇÃO POR FOTO OU APRESENTAÇÃO ---
 // --- SISTEMA DE CADASTRO (AUTO-APROVAÇÃO E COBRANÇA) ---
 if (membrosPendentes[participant]) {
-    const isImage = msg.message?.imageMessage || msg.message?.viewOnceMessage?.message?.imageMessage;
+    // Busca a imagem em qualquer um dos dois formatos (normal ou viewOnce)
+    const imagem = msg.message?.imageMessage || 
+                   msg.message?.viewOnceMessage?.message?.imageMessage || 
+                   msg.message?.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage ||
+                   msg.message?.extendedTextMessage?.contextInfo?.quotedMessage?.viewOnceMessage?.message?.imageMessage;
+
     const padraoApresentacao = /\|/g;
     const enviouTextoCorreto = (text.match(padraoApresentacao) || []).length >= 3;
 
-    if (isImage || enviouTextoCorreto) {
-        // Aprovado!
+    // Se tiver imagem (qualquer tipo) OU enviou o texto correto, aprovamos
+    if (imagem || enviouTextoCorreto) {
         await sock.sendMessage(sender, { 
             text: `✅ Cadastro confirmado, @${participant.split('@')[0]}! Bem-vindo ao Bonde!`, 
             mentions: [participant] 
         }, { quoted: msg });
         delete membrosPendentes[participant];
     } else {
-        // Não mandou foto nem o formato correto, dá a bronca
         await sock.sendMessage(sender, { 
-            text: `⚠️ Ei, @${participant.split('@')[0]}, cadê a foto ou os dados no formato correto? Só aceito o cadastro com FOTO ou FOTO | CIDADE | IDADE | NOME! 📸`, 
+            text: `⚠️ Ei, @${participant.split('@')[0]}, cadê a apresentação, você não seguiu o padrão! \n\nEnvie uma FOTO ou o formato: FOTO | CIDADE | IDADE | NOME. 📸`, 
             mentions: [participant] 
         }, { quoted: msg });
     }
