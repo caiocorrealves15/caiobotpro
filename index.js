@@ -943,6 +943,7 @@ if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd)
         // 2. !MENU (ESTILO PERSONALIZADO ATUALIZADO)
 // 2. !MENU (MENU COMPLETO E ORGANIZADO)
 // 2. !MENU (MENU COMPLETO E ATUALIZADO)
+// 2. !MENU (MENU COMPLETO E ATUALIZADO)
 if (text === '!menu') {
     const senderId = msg.key.participant || msg.key.remoteJid; 
     const dataAtual = new Date().toLocaleDateString('pt-BR');
@@ -960,21 +961,23 @@ if (text === '!menu') {
 ├────🛍️ LOJA & ECONOMIA────
 │ 🛒 !loja      | 💰 !roubar
 │ 💳 !comprar_cargo [nome]
-│ 🤫 !comprar mute @mencao
+│ 💵 !dar_pontos @mencao [qtd]
+│ 🤫 !comprar [item]
 │
 ├────🔥 EVENTOS & RAIDS────
 │ 👹 !boss      | ⚔️ !atacar
 │
 ├────💎 STATUS & CARGOS────
-│ 🛍️ !cargos    | 🎖️ !dar_cargo (ADM)
+│ 🛍️ !cargos    | 🎖️ !dar_cargo @mencao
 │ 🔰 !rank      | 🏆 !ranking
 │
-├────🎮 JOGOS────
+├────🎮 JOGOS & DESAFIOS────
 │ ⌛ !sortear   | 🎮 !jogar
 │ 😵 !forca     | ⚽ !penalti
 │ 🎥 !emoji     | 🤡 !piada
+│ 🎤 !musica    | 👥 !casais
 │ 🧠 !perguntas | 💍 !casar
-│ 💔 !descasar  | 👥 !casais
+│ 💔 !descasar 
 │
 ├────😂 ZUEIRA────
 │ 🤜 !socar     | 😘 !beijar
@@ -987,10 +990,11 @@ if (text === '!menu') {
 │ 🚫 !fechar    | 🔓 !abrir
 │ 🔇 !mute      | 🔊 !desmute
 │ 📣 !avisoadm  | 🕹️ !jogoson/off
+│ 👻 !cadastros
 │
 ├────⚙️ UTIL & SUPORTE────
 │ 📛 !menu      | 🌤️ !clima
-│ 🎵 !musica    | 🔗 !link
+│ 🔗 !link      | 📦 !backup
 │
 ╰━━━━━━━━━━━━━━━━━━━━━━╯
 🤖 *Acumule pontos, derrote os Bosses e não seja um NPC.*`.trim();
@@ -1272,7 +1276,36 @@ if (text.startsWith('!matar')) {
         await sock.sendMessage(sender, { text: "❌ Mencione alguém para eliminar!", quoted: msg });
     }
 }
+// --- COMANDO !LOJA (COMPLETO) ---
+if (text === '!loja') {
+    let placar = lerArquivoSeguro(arquivoPlacar);
+    const saldo = placar[participant] || 0;
 
+    const menu = `💎 *LOJA DO PODER ABSOLUTO* 💎
+💰 *Seu Saldo:* ${saldo} pts
+
+*--- STATUS & PROTEÇÃO ---*
+1️⃣ *MUTE (1 min)* - 100 pts | !comprar mute @mencao
+2️⃣ *DESMUTE* - 300 pts | !comprar desmute
+3️⃣ *FÚRIA* - 400 pts | !comprar fúria
+4️⃣ *ESCUDO (1h)* - 600 pts | !comprar escudo
+5️⃣ *VIP (Cargo)* - 800 pts | !comprar vip
+
+*--- DOMÍNIO & ESTRATÉGIA ---*
+6️⃣ *⛓️ CORRENTE* - 900 pts | !comprar corrente
+7️⃣ *🔮 ORÁCULO* - 700 pts | !comprar oraculo @mencao
+
+*--- GESTÃO DE GRUPO (ELITE) ---*
+8️⃣ *👑 ADM DE FACHADA* - 3500 pts | !comprar adm
+   (Limpar mensagens, fixar, etc)
+9️⃣ *📅 SORTE (Bônus)* - 1500 pts | !comprar sorte
+🔟 *🔑 CHAVE MESTRA* - 2000 pts | !comprar chave
+
+━━━━━━━━━━━━━━━━━━
+🤖 *Use !comprar [item] e domine o ranking!*`.trim();
+
+    await sock.sendMessage(sender, { text: menu, quoted: msg });
+}
 // --- COMANDO !COMPRAR E GESTÃO (BLOCO UNIFICADO) ---
 if (text.startsWith('!comprar') || text.startsWith('!limpar') || text.startsWith('!fixar') || text.startsWith('!status')) {
     
@@ -1396,7 +1429,47 @@ if (text.startsWith('!corno')) {
         mentions: [mention] 
     }, { quoted: msg });
 }
+// --- COMANDO !CARGOS (LISTA DE OPÇÕES E CARGOS ATUAIS) ---
+if (text === '!cargos') {
+    let cargos = lerArquivoSeguro(arquivoCargos);
+    
+    // Lista de cargos disponíveis (Baseado na lógica da sua loja)
+    const opcoesDisponiveis = [
+        "👑 LENDA", 
+        "🔥 REI DA ZUEIRA", 
+        "🐂 GADO SUPREMO", 
+        "🤫 FOFOQUEIRO(A)", 
+        "💎 VIP", 
+        "🌟 ESTRELA DO BONDE"
+    ];
 
+    let texto = "👑 *SISTEMA DE CARGOS DE LUXO* 👑\n\n";
+    
+    texto += "*--- CARGOS DISPONÍVEIS PARA COMPRA ---*\n";
+    opcoesDisponiveis.forEach(c => texto += `• ${c}\n`);
+    texto += "\n_Use !comprar_cargo [nome do cargo] para se tornar um de nós!_\n\n";
+
+    // Lista de quem já comprou
+    const listaDeCargos = Object.entries(cargos);
+    
+    if (listaDeCargos.length > 0) {
+        texto += "*--- QUEM JÁ OSTENTA UM CARGO ---*\n";
+        let listaMentions = [];
+        listaDeCargos.forEach(([id, nomeCargo]) => {
+            listaMentions.push(id);
+            texto += `• @${id.split('@')[0]}: *${nomeCargo}*\n`;
+        });
+        
+        await sock.sendMessage(sender, { 
+            text: texto, 
+            mentions: listaMentions,
+            quoted: msg 
+        });
+    } else {
+        texto += "_Ninguém comprou um cargo ainda. Seja o primeiro!_";
+        await sock.sendMessage(sender, { text: texto, quoted: msg });
+    }
+}
 // --- !FOFOCA (BOMBA NO GRUPO) ---
 if (text.startsWith('!fofoca')) {
     if (!isGroup) return await sock.sendMessage(sender, { text: "❌ Isso só funciona em grupos, senão não tem graça!", quoted: msg });
@@ -1916,47 +1989,77 @@ if (text === '!avisoadm') {
         await sock.sendMessage(sender, { text: '❌ O sistema de alarme falhou... os ADMs estão soltos!', quoted: msg });
     }
 }
-// --- COMANDO !MUSICA (AJUSTADO COM YT-SEARCH) ---
-if (text.startsWith('!musica ')) {
-    const busca = text.replace('!musica ', '').trim();
-    if (!busca) return await sock.sendMessage(sender, { text: "❌ Qual música você quer buscar?" }, { quoted: msg });
+// --- COMANDO !MUSICA (JOGO DE COMPLETAR A LETRA - COMPLETO) ---
+// --- COMANDO !MUSICA (JOGO DE COMPLETAR A LETRA - NÍVEL MESTRE) ---
+if (text === '!musica') {
+    const desafios = [
+        // Clássicos Difíceis
+        { frase: "Numa folha qualquer eu desenho um sol amarelo, e com cinco ou seis retas é fácil fazer um...", resposta: "castelo" },
+        { frase: "Pela luz dos olhos teus, o que se vê, não é exatamente o que se vê, o que a gente vê, não é exatamente o que a gente...", resposta: "vê" },
+        { frase: "Eu não sou daqui, marinheiro só, eu não tenho amor, marinheiro...", resposta: "só" },
+        { frase: "Onde o rio encontra o mar, onde o sol encontra o luar, onde a gente se...", resposta: "encontra" },
+        { frase: "Vou deixar a vida me levar, vida leva eu, sou feliz e agradeço por tudo que...", resposta: "deus me deu" },
+        { frase: "Construção: Amou daquela vez como se fosse a última, beijou sua mulher como se fosse a...", resposta: "única" },
+        { frase: "Apenas um rapaz latino-americano sem dinheiro no bolso, sem parentes importantes e vindo do...", resposta: "interior" },
+        { frase: "O que é, o que é? É a vida, é bonita e é...", resposta: "bonita" },
+        { frase: "E no meio de tanta gente, eu encontrei você, e no meio de tanta gente, você me...", resposta: "escolheu" },
+        { frase: "Se você fosse um peixinho e soubesse nadar, eu tirava o nome do meu amor do fundo do...", resposta: "mar" },
+        { frase: "Eu quero ver você não chorar, não olhar pra trás, nem se arrepender do que...", resposta: "fez" },
+        { frase: "Alguma coisa acontece no meu coração, que só quando cruza a Ipiranga e a...", resposta: "avenida são joão" },
+        { frase: "O tempo não para, eu vejo o futuro repetir o...", resposta: "passado" },
+        { frase: "Na bruma leve das paixões que vêm de dentro, tu vens, tu vens, eu já escuto os teus...", resposta: "sinais" },
+        // Nível Pesado / Raiz
+        { frase: "Águas de março: É a vara, é o buraco, é o terreno, é o...", resposta: "lodo" },
+        { frase: "Aquarela: Numa folha qualquer eu desenho um sol amarelo, e com cinco ou seis retas é fácil fazer um...", resposta: "castelo" },
+        { frase: "Ouro de tolo: Eu devia estar contente porque eu tenho um emprego, sou um dito cidadão com...", resposta: "direito" },
+        { frase: "Metamorfose Ambulante: Eu prefiro ser essa metamorfose ambulante do que ter aquela velha opinião formada sobre...", resposta: "tudo" },
+        { frase: "Como nossos pais: Você diz que depois deles não apareceu mais ninguém, e você vive do que...", resposta: "já aconteceu" },
+        { frase: "Faroeste Caboclo: João de Santo Cristo era o seu nome, não tinha medo do perigo, ele era...", resposta: "lugar-tenente" },
+        { frase: "Cálice: Pai, afasta de mim esse...", resposta: "cálice" },
+        { frase: "O Bêbado e a Equilibrista: Chora a nossa pátria mãe gentil, choram Marias e...", resposta: "Clarisses" }
+    ];
 
-    try {
-        await sock.sendMessage(sender, { text: "🔍 Buscando e baixando o áudio..." }, { quoted: msg });
+    const sorteio = desafios[Math.floor(Math.random() * desafios.length)];
 
-        // 1. Busca usando a nova biblioteca yt-search
-        const search = await ytSearch(busca);
-        const video = search.videos[0];
-        if (!video) return await sock.sendMessage(sender, { text: "❌ Não encontrei essa música." }, { quoted: msg });
+    await sock.sendMessage(sender, { react: { text: '🎤', key: msg.key } });
+    
+    const msgJogo = await sock.sendMessage(sender, { 
+        caption: `🎤 *DESAFIO MESTRE (VALENDO 50 PONTOS)* 🎤\n\n"${sorteio.frase}..."\n\n*Responda EM CIMA desta mensagem!*`,
+        video: { url: 'https://media.tenor.com/8DDZDteRUFgAAAPo/muzeke.mp4' },
+        gifPlayback: true
+    }, { quoted: msg });
 
-        // 2. Cria o stream de áudio usando a URL encontrada
-        const stream = ytdl(video.url, { filter: 'audioonly', quality: 'highestaudio' });
+    jogoEmoji.ativo = true; 
+    jogoEmoji.resposta = sorteio.resposta;
+    jogoEmoji.idMensagem = msgJogo.key.id;
+}
 
-        // 3. Caminho temporário
-        const audioPath = `./temp_audio_${Date.now()}.mp3`;
+// Lógica de validação (dentro do seu loop de mensagens)
+if (jogoEmoji.ativo && msg.message?.extendedTextMessage?.contextInfo?.stanzaId === jogoEmoji.idMensagem) {
+    const respostaUsuario = text.toLowerCase().trim();
+    
+    if (respostaUsuario === jogoEmoji.resposta) {
+        jogoEmoji.ativo = false;
+        
+        let placar = lerArquivoSeguro(arquivoPlacar);
+        placar[participant] = (placar[participant] || 0) + 50;
+        fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
 
-        // 4. Converte e salva
-        await new Promise((resolve, reject) => {
-            stream.pipe(fs.createWriteStream(audioPath))
-                .on('finish', resolve)
-                .on('error', reject);
-        });
-
-        // 5. Envia o áudio
+        await sock.sendMessage(sender, { react: { text: '🔥', key: msg.key } });
         await sock.sendMessage(sender, { 
-            audio: fs.readFileSync(audioPath), 
-            mimetype: 'audio/mpeg' 
-        }, { quoted: msg });
-
-        // 6. Limpa o arquivo
-        fs.unlinkSync(audioPath);
-
-    } catch (e) {
-        console.error("Erro no comando !musica:", e);
-        await sock.sendMessage(sender, { text: "❌ Erro ao baixar a música. Tente novamente." }, { quoted: msg });
+            text: `🔥 *BRABO!* @${participant.split('@')[0]} é cultura pura! Ganhou 50 pontos!`, 
+            mentions: [participant], 
+            quoted: msg 
+        });
+    } else {
+        await sock.sendMessage(sender, { react: { text: '❌', key: msg.key } });
+        await sock.sendMessage(sender, { 
+            text: `❌ Errou! @${participant.split('@')[0]} tá precisando ouvir mais rádio, hein? 😂`, 
+            mentions: [participant],
+            quoted: msg 
+        });
     }
 }
-       
 // --- BLOCO DO JOGO DA FORCA ---
     // 1. Comando de Início
     if (text.startsWith('!forca')) {
