@@ -17,9 +17,22 @@ const ytdl = require('ytdl-core');
 const qrcode = require('qrcode-terminal');
 const infrações = {};
 const ultimaMensagem = {};
+let ataquesFuria = {}; // Adicione isso junto com as outras let no topo
 const contagemFlood = {};
+let admsTemporarios = {};
+let escudosAtivos = {};
 const cooldownRoubo = {}; // Armazena o timestamp do último roubo
 let membrosPendentes = {}; // { jid: timestamp }
+function lerArquivoSeguro(caminho) {
+    try {
+        if (!fs.existsSync(caminho)) return {};
+        const conteudo = fs.readFileSync(caminho, 'utf8');
+        return conteudo.trim() ? JSON.parse(conteudo) : {};
+    } catch (err) {
+        console.error(`Erro ao ler ${caminho}:`, err);
+        return {};
+    }
+}
 let raidBoss = {
     ativo: false,
     hp: 0,
@@ -55,7 +68,7 @@ let jogoPerguntas = {
 
 // Função de salvamento (mantenha como está)
 const salvarCasais = () => {
-    fs.writeFileSync(arquivoCasais, JSON.stringify(listaCasais, null, 2));
+    listaCasais = lerArquivoSeguro(arquivoCasais);
 };
 // Garante que o arquivo exista antes de qualquer coisa
 if (!fs.existsSync(ARQUIVO_PLACAR_EMOJI)) {
@@ -88,7 +101,7 @@ try {
 }
 
 
-let placarEmoji = fs.existsSync(ARQUIVO_PLACAR_EMOJI) ? JSON.parse(fs.readFileSync(ARQUIVO_PLACAR_EMOJI)) : {};
+let placarEmoji = lerArquivoSeguro(ARQUIVO_PLACAR_EMOJI);
 
 const isRender = process.env.RENDER === 'true';
 if (isRender) {
@@ -121,8 +134,8 @@ let jogoEmoji = {
 
 // Definição dos arquivos de dados
 // Carregamento dos dados (se existirem)
-let contagemMensagens = fs.existsSync(ARQUIVO_RANK) ? JSON.parse(fs.readFileSync(ARQUIVO_RANK)) : {};
-let mutados = fs.existsSync(ARQUIVO_MUTADOS) ? JSON.parse(fs.readFileSync(ARQUIVO_MUTADOS)) : {};
+let contagemMensagens = lerArquivoSeguro(ARQUIVO_RANK);
+let mutados = lerArquivoSeguro(ARQUIVO_MUTADOS);
 
 // --- FUNÇÃO DE CONEXÃO ---
 // --- FUNÇÃO DE CONEXÃO ---
@@ -380,7 +393,7 @@ if (text.startsWith('!comprar_cargo')) {
 if (fs.existsSync(arquivoPlacar)) {
     placar = JSON.parse(fs.readFileSync(arquivoPlacar, 'utf8'));
 }
-    let cargos = fs.existsSync(arquivoCargos) ? JSON.parse(fs.readFileSync(arquivoCargos, 'utf8')) : {};
+    let cargos = lerArquivoSeguro(arquivoCargos);
     
     const custo = 500; // Preço do luxo
     if ((placar[participant] || 0) < custo) return await sock.sendMessage(sender, { text: `❌ Você não tem ${custo} pontos! Vai trabalhar! 😂`, quoted: msg });
@@ -455,7 +468,7 @@ if (text.startsWith('!dar_cargo')) {
     
     if (!mention || !cargoNome) return await sock.sendMessage(sender, { text: "❌ Use: !dar_cargo @mencao [nome do cargo]", quoted: msg });
 
-    let cargos = fs.existsSync(arquivoCargos) ? JSON.parse(fs.readFileSync(arquivoCargos, 'utf8')) : {};
+    let cargos = lerArquivoSeguro(arquivoCargos);
     cargos[mention] = cargoNome;
     fs.writeFileSync(arquivoCargos, JSON.stringify(cargos, null, 2));
 
@@ -512,7 +525,7 @@ if (jogoPerguntas.ativo && msg.message?.extendedTextMessage?.contextInfo?.stanza
         jogoPerguntas.ativo = false;
         
         // --- ATUALIZAÇÃO DO PLACAR ---
-        let placar = fs.existsSync(arquivoPlacar) ? JSON.parse(fs.readFileSync(arquivoPlacar, 'utf8')) : {};
+        let placar = lerArquivoSeguro(arquivoPlacar);
         placar[participant] = (placar[participant] || 0) + 30; // ADICIONA 30 PONTOS
         fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
 
@@ -903,7 +916,7 @@ if (lowerText.includes('bebida') || lowerText.includes('cerveja') || lowerText.i
 const comandosExistentes = [
     '!menu', '!comprar', '!loja', '!backup', '!dar_pontos', '!atacar', '!boss', '!rank', '!casar', '!casais', '!piada', '!avisoadm', 
     '!descasar', '!emoji', '!sortear', '!cadastros', '!perguntas', '!jogar', 
-    '!forca', '!jogosoff', '!jogoson', '!link', '!tier', 
+    '!forca', '!jogosoff', '!jogoson', '!limpar', '!fixar', '!status', '!link', '!tier', 
     '!ranking', '!penalti', '!musica', '!socar', '!beijar', 
     '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', 
     '!clima', '!desmute', '!mute', '!gado', '!corno', 
@@ -1034,7 +1047,7 @@ if (text.startsWith('!jogar')) {
 
     if (escolha === caminhoVencedor) {
         // Premiação no placar
-        let placar = fs.existsSync(arquivoPlacar) ? JSON.parse(fs.readFileSync(arquivoPlacar, 'utf8')) : {};
+        let placar = lerArquivoSeguro(arquivoPlacar);
         placar[participant] = (placar[participant] || 0) + 150;
         fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
 
@@ -1094,7 +1107,7 @@ if (jogoPiada.ativo && msg.message?.extendedTextMessage?.contextInfo?.stanzaId =
     const respostaUsuario = text.toLowerCase().trim();
     if (respostaUsuario === jogoPiada.resposta) {
         jogoPiada.ativo = false;
-        let placar = fs.existsSync(arquivoPlacar) ? JSON.parse(fs.readFileSync(arquivoPlacar, 'utf8')) : {};
+        let placar = lerArquivoSeguro(arquivoPlacar);
         placar[participant] = (placar[participant] || 0) + 75; // Premiação piada
         fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
         await sock.sendMessage(sender, { react: { text: '🏆', key: msg.key } });
@@ -1115,7 +1128,7 @@ if (text.startsWith('!penalti')) {
     const senderId = msg.key.remoteJid;
 
     // Carrega o placar atual
-    let placar = fs.existsSync(arquivoPlacar) ? JSON.parse(fs.readFileSync(arquivoPlacar, 'utf8')) : {};
+    let placar = lerArquivoSeguro(arquivoPlacar);
     if (!placar[senderId]) placar[senderId] = 0;
 
     // Mensagem inicial com GIF e respondendo a quem chamou
@@ -1260,105 +1273,85 @@ if (text.startsWith('!matar')) {
     }
 }
 
-       // --- COMANDO !LOJA ---
-if (text === '!loja') {
-    const placar = fs.existsSync(arquivoPlacar) ? JSON.parse(fs.readFileSync(arquivoPlacar, 'utf8')) : {};
-    const saldo = placar[participant] || 0;
-
-    const menuLoja = `🛍️ *LOJA DO BONDE - SEU SALDO: ${saldo} pts*
-
-1️⃣ *MUTE (1 minuto)* - 100 pts
-   !comprar mute @mencao
-   
-2️⃣ *CARGO PERSONALIZADO* - 500 pts
-   !comprar_cargo [nome]
-
-3️⃣ *DESBLOQUEIO IMBECIL* - 300 pts
-   !comprar desmute
-   (Sai do mute na hora, sem esperar)
-
-4️⃣ *ATAQUE DE FÚRIA* - 400 pts
-   !comprar fúria
-   (Dano dobrado no próximo !atacar boss)
-
-5️⃣ *ESCUDO ANTI-ROUBO* - 600 pts
-   !comprar escudo
-   (Protege seus pontos por 1 hora contra !roubar)
-
-🤖 *Use !comprar [nome_do_item] para ostentar!*`;
-
-    await sock.sendMessage(sender, { text: menuLoja, quoted: msg });
-}
-
-       // --- COMANDO !COMPRAR ---
-// --- COMANDO !COMPRAR (ATUALIZADO PARA NOVOS ITENS) ---
-if (text.startsWith('!comprar')) {
-    const args = text.split(' ');
-    const item = args[1]; // Ex: !comprar mute
-    const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+// --- COMANDO !COMPRAR E GESTÃO (BLOCO UNIFICADO) ---
+if (text.startsWith('!comprar') || text.startsWith('!limpar') || text.startsWith('!fixar') || text.startsWith('!status')) {
     
-    let placar = fs.existsSync(arquivoPlacar) ? JSON.parse(fs.readFileSync(arquivoPlacar, 'utf8')) : {};
-    const saldo = placar[participant] || 0;
-
-    // 1. MUTE
-    if (item === 'mute') {
-        const custo = 100;
-        if (saldo < custo) return await sock.sendMessage(sender, { text: `❌ Você precisa de ${custo} pontos!`, quoted: msg });
-        if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione quem você quer mutar!", quoted: msg });
+    // LÓGICA DE COMPRA
+    if (text.startsWith('!comprar')) {
+        const args = text.split(' ');
+        const item = args[1];
+        const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
         
-        const metadata = await sock.groupMetadata(sender);
-        const ehAdm = metadata.participants.find(p => p.id === mention)?.admin !== null;
-        if (ehAdm) return await sock.sendMessage(sender, { text: "❌ Você não pode mutar um administrador! 😂", quoted: msg });
+        let placar = lerArquivoSeguro(arquivoPlacar);
+        let cargos = lerArquivoSeguro(arquivoCargos);
+        const saldo = placar[participant] || 0;
 
-        mutados[mention] = Date.now() + 60000;
-        fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
-        placar[participant] -= custo;
-        fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
-        await sock.sendMessage(sender, { text: `✅ @${mention.split('@')[0]} foi mutado por 1 minuto!`, mentions: [mention], quoted: msg });
+        const itens = {
+            'mute': 100, 'desmute': 300, 'fúria': 400, 'escudo': 600, 
+            'vip': 800, 'corrente': 900, 'oraculo': 700, 
+            'adm': 3500, 'sorte': 1500, 'chave': 2000
+        };
+
+        if (!itens[item]) return await sock.sendMessage(sender, { text: "❌ Item não encontrado!", quoted: msg });
+        if (saldo < itens[item]) return await sock.sendMessage(sender, { text: `❌ Você precisa de ${itens[item]} pontos!`, quoted: msg });
+
+        let sucesso = false;
+
+        if (item === 'mute') {
+            if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione o alvo!", quoted: msg });
+            mutados[mention] = Date.now() + 60000;
+            fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
+            sucesso = true;
+        } else if (item === 'desmute') {
+            delete mutados[participant];
+            fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
+            sucesso = true;
+        else if (item === 'fúria') {
+        ataquesFuria[participant] = true; 
+        
+        await sock.sendMessage(sender, { 
+            text: "🔥 *FÚRIA ATIVADA!* Seu próximo ataque no Boss será dobrado! Use !atacar logo antes que a fúria passe!",
+            quoted: msg 
+        });
+        sucesso = true; // O código já vai descontar os pontos automaticamente lá embaixo
+    }
+        } else if (item === 'escudo') {
+            escudosAtivos[participant] = Date.now() + 3600000;
+            sucesso = true;
+        } else if (item === 'vip') {
+            cargos[participant] = "VIP";
+            fs.writeFileSync(arquivoCargos, JSON.stringify(cargos, null, 2));
+            sucesso = true;
+        } else if (item === 'adm') {
+            admsTemporarios[participant] = Date.now() + 3600000;
+            await sock.sendMessage(sender, { text: "👑 ADM de Fachada ativado (1h)!" });
+            sucesso = true;
+        }
+
+        if (sucesso) {
+            placar[participant] -= itens[item];
+            fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
+            await sock.sendMessage(sender, { text: `✅ Compra de *${item.toUpperCase()}* realizada!`, quoted: msg });
+        }
     } 
-    
-    // 2. DESMUTE
-    else if (item === 'desmute') {
-        const custo = 300;
-        if (saldo < custo) return await sock.sendMessage(sender, { text: `❌ Você precisa de ${custo} pontos!`, quoted: msg });
-        
-        delete mutados[participant];
-        fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
-        placar[participant] -= custo;
-        fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
-        await sock.sendMessage(sender, { text: "✅ Desmutado com sucesso! Não abusa, hein! 😎", quoted: msg });
-    }
-
-    // 3. FÚRIA (Ataque Duplo)
-    else if (item === 'fúria') {
-        const custo = 400;
-        if (saldo < custo) return await sock.sendMessage(sender, { text: `❌ Você precisa de ${custo} pontos!`, quoted: msg });
-        
-        // Aqui você precisaria de uma variável global, ex: let ataquesFuria = {}
-        // ataquesFuria[participant] = true;
-        
-        placar[participant] -= custo;
-        fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
-        await sock.sendMessage(sender, { text: "🔥 Você ativou a Fúria! O dano do seu próximo ataque no boss será dobrado!", quoted: msg });
-    }
-
-    // 4. ESCUDO
-    else if (item === 'escudo') {
-        const custo = 600;
-        if (saldo < custo) return await sock.sendMessage(sender, { text: `❌ Você precisa de ${custo} pontos!`, quoted: msg });
-        
-        // Aqui também precisaria de um controle de tempo ou flag
-        
-        placar[participant] -= custo;
-        fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
-        await sock.sendMessage(sender, { text: "🛡️ Escudo ativado! Você está protegido contra roubos por 1 hora.", quoted: msg });
-    }
-
+    // LÓGICA DE GESTÃO (ADM DE FACHADA)
     else {
-        await sock.sendMessage(sender, { text: "❌ Item não encontrado na loja. Digite !loja para ver os itens!", quoted: msg });
+        if (!admsTemporarios[participant] || admsTemporarios[participant] < Date.now()) 
+            return await sock.sendMessage(sender, { text: "❌ Você não tem o cargo de ADM de Fachada!", quoted: msg });
+
+        if (text.startsWith('!limpar')) {
+            const messages = await sock.fetchMessagesFromHistory(sender, 10);
+            for (let m of messages) await sock.sendMessage(sender, { delete: m.key });
+            await sock.sendMessage(sender, { text: "✅ Chat limpo!" });
+        } else if (text.startsWith('!fixar')) {
+            const msgFix = text.replace('!fixar', '').trim();
+            await sock.sendMessage(sender, { text: `📌 *FIXADO:*\n${msgFix}` });
+        } else if (text.startsWith('!status')) {
+            const totalMsg = Object.values(contagemMensagens).reduce((a, b) => a + b, 0);
+            await sock.sendMessage(sender, { text: `📊 *ESTATÍSTICAS:* ${totalMsg} msgs no total.` });
+        }
     }
 }
-
 // --- !GADO (COM PORCENTAGEM E DEBOCHE) ---
 if (text.startsWith('!gado')) {
     const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
@@ -1511,7 +1504,7 @@ if (text.startsWith('!roubar')) {
 
         // 1. !RANK (ORGANIZADO E DEBOCHADO)
 if (text === '!rank') {
-    let cargos = fs.existsSync(arquivoCargos) ? JSON.parse(fs.readFileSync(arquivoCargos, 'utf8')) : {};
+    let cargos = lerArquivoSeguro(arquivoCargos);
 
     const ranking = Object.entries(contagemMensagens)
         .sort((a, b) => b[1] - a[1])
@@ -1618,7 +1611,7 @@ if (text.startsWith('!casar')) {
     // AJUSTE: Força a leitura do arquivo atualizado antes de qualquer verificação
     try {
         if (fs.existsSync(arquivoCasais)) {
-    listaCasais = JSON.parse(fs.readFileSync(arquivoCasais, 'utf8'));
+    listaCasais = lerArquivoSeguro(arquivoCasais);
 }
     } catch (e) {
         listaCasais = [];
@@ -1664,7 +1657,7 @@ if (text === '!casais') {
     // AJUSTE: Força a leitura do arquivo toda vez que o comando é chamado
     try {
         if (fs.existsSync(arquivoCasais)) {
-            listaCasais = JSON.parse(fs.readFileSync(arquivoCasais, 'utf8'));
+            listaCasais = lerArquivoSeguro(arquivoCasais);
         } else {
             listaCasais = [];
         }
@@ -1794,20 +1787,24 @@ if (text === '!boss') {
 if (text === '!atacar') {
     if (!raidBoss.ativo) return await sock.sendMessage(sender, { text: "❌ Não tem monstro aqui. Tá batendo no vento?" });
     
-    const dano = Math.floor(Math.random() * 50) + 10;
-    raidBoss.hp -= dano;
+    // --- LÓGICA DA FÚRIA ---
+    let dano = Math.floor(Math.random() * 50) + 10;
+    let mensagemFuria = "";
 
-    if (raidBoss.hp <= 0) {
-        raidBoss.ativo = false;
-        let placar = fs.existsSync(arquivoPlacar) ? JSON.parse(fs.readFileSync(arquivoPlacar, 'utf8')) : {};
-        placar[participant] = (placar[participant] || 0) + 200;
-        fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2)); }
+    if (ataquesFuria[participant]) {
+        dano *= 2; // Dobra o dano
+        mensagemFuria = "\n🔥 *DANO CRÍTICO DE FÚRIA!*";
+        delete ataquesFuria[participant]; // Remove a fúria após o uso
+    }
+    // -----------------------
+
+    raidBoss.hp -= dano;
 
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     if (raidBoss.hp <= 0) {
         raidBoss.ativo = false;
-        let placar = JSON.parse(fs.readFileSync(arquivoPlacar, 'utf8'));
+        let placar = lerArquivoSeguro(arquivoPlacar);
         placar[participant] = (placar[participant] || 0) + 200;
         fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
         
@@ -1818,7 +1815,7 @@ if (text === '!atacar') {
             mentions: [participant]
         }, { quoted: msg });
     } else {
-        await sock.sendMessage(sender, { text: `⚔️ Você causou ${dano} de dano! HP do Boss: ${raidBoss.hp}/${raidBoss.maxHp}` });
+        await sock.sendMessage(sender, { text: `⚔️ Você causou ${dano} de dano!${mensagemFuria}\nHP do Boss: ${raidBoss.hp}/${raidBoss.maxHp}` });
     }
 }
 
