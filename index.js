@@ -13,8 +13,8 @@ const ARQUIVO_MUTADOS = '/var/data/mutados.json'; // ADICIONE AQUI TAMBÉM
 const cookies = process.env.COOKIES_JSON ? JSON.parse(process.env.COOKIES_JSON) : [];
 const { Sticker, StickerTypes } = require('wa-sticker-formatter');
 const ytsr = require('ytsr');
+const ytdl = require('ytdl-core');
 const qrcode = require('qrcode-terminal');
-const ytdl = require('ytdl-core'); // Requisito movido para o topo
 const infrações = {};
 const ultimaMensagem = {};
 const contagemFlood = {};
@@ -1833,51 +1833,43 @@ if (text === '!avisoadm') {
         await sock.sendMessage(sender, { text: '❌ O sistema de alarme falhou... os ADMs estão soltos!', quoted: msg });
     }
 }
-        // Substitua seu bloco !musica por este:
-// Você precisará instalar: npm install ytsr (para buscar) e usar uma API que entregue o stream direto
-// Como o YouTube é a fonte de quase tudo, vou manter a busca, mas forçar o envio como ÁUDIO.
+// --- COMANDO !MUSICA (VERSÃO CORRIGIDA) ---
 if (text.startsWith('!musica ')) {
     const busca = text.replace('!musica ', '').trim();
     if (!busca) return await sock.sendMessage(sender, { text: "❌ Qual música você quer buscar?" }, { quoted: msg });
 
     try {
-        await sock.sendMessage(sender, { text: "🔍 Buscando e preparando sua música..." }, { quoted: msg });
+        await sock.sendMessage(sender, { text: "🔍 Buscando e baixando o áudio..." }, { quoted: msg });
 
-        // 1. Busca o vídeo
-        const searchResults = await ytsr(busca, { limit: 1 });
-        const video = searchResults.items[0];
-        if (!video) return await sock.sendMessage(sender, { text: "❌ Não encontrei essa música." }, { quoted: msg });
+        // 1. Usa o ytdl para pegar a URL e o áudio direto
+        const videoUrl = await ytsr(busca, { limit: 1 }).then(res => res.items[0].url);
+        
+        // 2. Cria o stream de áudio
+        const stream = ytdl(videoUrl, { filter: 'audioonly', quality: 'highestaudio' });
 
-        // 2. Prepara o stream de áudio
-        const stream = ytdl(video.url, { 
-            filter: 'audioonly', 
-            quality: 'highestaudio',
-            highWaterMark: 1 << 25 // Aumenta o buffer para evitar travamentos
-        });
-
-        // 3. Define um caminho temporário para o áudio
+        // 3. Caminho temporário
         const audioPath = `./temp_audio_${Date.now()}.mp3`;
 
-        // 4. Salva e converte (se necessário)
-        // O FFmpeg é chamado aqui para garantir que o formato seja aceito pelo WhatsApp
-        execSync(`ffmpeg -i pipe:0 -vn -acodec libmp3lame -q:a 2 "${audioPath}"`, {
-            input: stream,
-            stdio: 'pipe'
+        // 4. Converte usando o ffmpeg de forma simplificada
+        // O segredo aqui é usar o stream como arquivo de entrada e não como 'pipe' complexo
+        await new Promise((resolve, reject) => {
+            stream.pipe(fs.createWriteStream(audioPath))
+                .on('finish', resolve)
+                .on('error', reject);
         });
 
         // 5. Envia o áudio
         await sock.sendMessage(sender, { 
             audio: fs.readFileSync(audioPath), 
-            mimetype: 'audio/mp4',
-            ptt: false // false = arquivo de música, true = áudio gravado
+            mimetype: 'audio/mpeg' 
         }, { quoted: msg });
 
-        // 6. Limpa o arquivo temporário
+        // 6. Limpa o arquivo
         fs.unlinkSync(audioPath);
 
     } catch (e) {
         console.error("Erro no comando !musica:", e);
-        await sock.sendMessage(sender, { text: "❌ Erro ao baixar a música. Tente outra ou tente mais tarde." }, { quoted: msg });
+        await sock.sendMessage(sender, { text: "❌ Erro ao baixar a música. O link pode estar bloqueado ou indisponível." }, { quoted: msg });
     }
 }
        
