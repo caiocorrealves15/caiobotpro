@@ -1380,6 +1380,7 @@ if (text === '!loja') {
     await sock.sendMessage(sender, { text: menu, quoted: msg });
 }
 // --- COMANDO !COMPRAR E GESTÃO (BLOCO UNIFICADO) ---
+// --- COMANDO !COMPRAR E GESTÃO (BLOCO UNIFICADO) ---
 if (text.startsWith('!comprar') || text.startsWith('!limpar') || text.startsWith('!fixar') || text.startsWith('!status')) {
     
     // LÓGICA DE COMPRA
@@ -1405,6 +1406,19 @@ if (text.startsWith('!comprar') || text.startsWith('!limpar') || text.startsWith
 
         if (item === 'mute') {
             if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione o alvo!", quoted: msg });
+            
+            // --- PROTEÇÃO: VERIFICA SE O ALVO É ADM ---
+            try {
+                const metadata = await sock.groupMetadata(sender);
+                const groupAdmins = metadata.participants.filter(p => p.admin !== null).map(p => p.id);
+                if (groupAdmins.includes(mention)) {
+                    return await sock.sendMessage(sender, { text: "❌ Não posso mutar um ADM, eles mandam no grupo! 😂", quoted: msg });
+                }
+            } catch (e) {
+                console.error("Erro ao verificar admins para o mute:", e);
+            }
+            // ------------------------------------------
+
             mutados[mention] = Date.now() + 60000;
             fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
             sucesso = true;
@@ -1435,6 +1449,7 @@ if (text.startsWith('!comprar') || text.startsWith('!limpar') || text.startsWith
 
         if (sucesso) {
             placar[participant] -= itens[item];
+            console.log("Salvando placar em: " + arquivoPlacar);
             fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
             await sock.sendMessage(sender, { text: `✅ Compra de *${item.toUpperCase()}* realizada!`, quoted: msg });
         }
