@@ -683,7 +683,6 @@ if (jogoEmoji.ativo &&
 // Substitua o seu bloco !rankingemoji por este:
 
 if (text === '!ranking' || text === '!placar') {
-    // 1. Carrega o placar com verificação de segurança
     let placar = {};
     try {
         if (fs.existsSync(arquivoPlacar)) {
@@ -694,17 +693,16 @@ if (text === '!ranking' || text === '!placar') {
         console.error("Erro ao ler placar.json:", e);
     }
 
-    // 2. Limpeza: Garante que todos os valores sejam números e remove IDs vazios
+    // Filtra APENAS quem tem o final @s.whatsapp.net (pessoas reais)
     const rankingProcessado = Object.entries(placar)
-        .filter(([id, pontos]) => id && typeof pontos === 'number')
+        .filter(([id, pontos]) => id && id.endsWith('@s.whatsapp.net') && typeof pontos === 'number')
         .sort((a, b) => b[1] - a[1])
         .slice(0, 10);
 
     if (rankingProcessado.length === 0) {
-        return await sock.sendMessage(sender, { text: "❌ O placar está vazio ou corrompido. Vamos jogar para acumular pontos! 🎮", quoted: msg });
+        return await sock.sendMessage(sender, { text: "❌ O placar está vazio ou corrompido. Jogue para acumular pontos! 🎮", quoted: msg });
     }
 
-    // 3. Monta o ranking
     let res = `💎 *TOP 10 - RICOS DO BONDE*\n\n`;
     res += `*Quem tem mais pontos acumulados nos jogos?*\n\n`;
 
@@ -712,23 +710,20 @@ if (text === '!ranking' || text === '!placar') {
 
     rankingProcessado.forEach((entry, i) => {
         const [id, pontos] = entry;
-
-        if (!id.includes('@s.whatsapp.net')) return;
         
-        // Adiciona o ID completo (com @s.whatsapp.net) na lista de menções
-        listaMentions.push(id);
-        
+        listaMentions.push(id); // Adiciona o ID completo para a menção funcionar
         const medalha = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "🔹";
         
-        // Pega apenas o número para o arroba (ex: 5521...)
+        // Pega apenas o número antes do @
         const numeroLimpo = id.split('@')[0];
         
+        // Formato correto para menção: @numero
         res += `${medalha} ${i + 1}. @${numeroLimpo} - *${pontos.toLocaleString('pt-BR')} pts*\n`;
     });
 
     res += `\n🤖 *Dica: Jogue !penalti, !jogar ou !perguntas para subir na lista!*`;
 
-    // 4. Envio com as menções corretas
+    // Envio forçando as menções
     await sock.sendMessage(sender, { 
         text: res, 
         mentions: listaMentions 
