@@ -18,6 +18,7 @@ const qrcode = require('qrcode-terminal');
 const infrações = {};
 const ultimaMensagem = {};
 const contagemFlood = {};
+const cooldownRoubo = {}; // Armazena o timestamp do último roubo
 let membrosPendentes = {}; // { jid: timestamp }
 let raidBoss = {
     ativo: false,
@@ -1447,25 +1448,43 @@ if (text.startsWith('!fofoca')) {
 // --- COMANDO !ROUBAR (AJUSTADO COM ESCUDO) ---
 if (text.startsWith('!roubar')) {
     const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+    
+    // 1. Validações básicas
     if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione quem você quer assaltar!", quoted: msg });
     if (mention === participant) return await sock.sendMessage(sender, { text: "❌ Você não pode roubar a si mesmo, seu gênio! 😂", quoted: msg });
 
-    // Verificação do ESCUDO
-    // (Assumindo que você criou a variável escudosAtivos no topo do código)
-    if (escudosAtivos[mention]) {
+    // 2. Sistema de Cooldown (3 horas = 10.800.000 milissegundos)
+    const agora = Date.now();
+    const tempoCooldown = 3 * 60 * 60 * 1000; 
+    if (cooldownRoubo[participant] && (agora - cooldownRoubo[participant]) < tempoCooldown) {
+        const tempoRestante = Math.ceil((tempoCooldown - (agora - cooldownRoubo[participant])) / (60 * 1000));
+        return await sock.sendMessage(sender, { text: `⏳ *CALMA LÁ, LADRÃO!* Você está sendo procurado pela polícia. Tente novamente daqui a ${tempoRestante} minutos.`, quoted: msg });
+    }
+
+    // 3. Verificação de ESCUDO
+    if (typeof escudosAtivos !== 'undefined' && escudosAtivos[mention]) {
         return await sock.sendMessage(sender, { text: `🛡️ *ASSALTO FRUSTRADO!* O @${mention.split('@')[0]} está protegido por um ESCUDO!`, mentions: [mention], quoted: msg });
     }
 
-    let placar = fs.existsSync(arquivoPlacar) ? JSON.parse(fs.readFileSync(arquivoPlacar, 'utf8')) : {};
+    // 4. Carrega e prepara o placar
+    let placar = {};
+    try {
+        if (fs.existsSync(arquivoPlacar)) {
+            placar = JSON.parse(fs.readFileSync(arquivoPlacar, 'utf8'));
+        }
+    } catch (e) { placar = {}; }
+
     if (!placar[participant]) placar[participant] = 0;
     if (!placar[mention]) placar[mention] = 0;
 
+    // 5. Execução do Assalto
     const sucesso = Math.random() < 0.5;
+    cooldownRoubo[participant] = agora; // Define o tempo do último roubo
 
     if (sucesso) {
         const valorRoubado = Math.floor(Math.random() * 50) + 10;
         placar[participant] += valorRoubado;
-        placar[mention] = Math.max(0, placar[mention] - valorRoubado); // Evita saldo negativo
+        placar[mention] = Math.max(0, placar[mention] - valorRoubado);
         fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
 
         await sock.sendMessage(sender, { 
@@ -1475,17 +1494,18 @@ if (text.startsWith('!roubar')) {
             mentions: [participant, mention] 
         }, { quoted: msg });
     } else {
+        placar[participant] = Math.max(0, placar[participant] - 20);
+        fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
+        
         await sock.sendMessage(sender, { 
             video: { url: 'https://media.tenor.com/wbMLB5AzQFkAAAPo/jail-bugs.mp4' }, 
             gifPlayback: true,
             caption: `🚓 *OPS! VOCÊ FOI PRESO!* 🚓\n\nO @${participant.split('@')[0]} tentou roubar o @${mention.split('@')[0]} e a polícia chegou! Perdeu 20 pontos de fiança!`, 
             mentions: [participant, mention] 
         }, { quoted: msg });
-        
-        placar[participant] = Math.max(0, placar[participant] - 20);
-        fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
     }
 }
+
         // 1. !RANK (ORGANIZADO E DEBOCHADO)
 if (text === '!rank') {
     let cargos = fs.existsSync(arquivoCargos) ? JSON.parse(fs.readFileSync(arquivoCargos, 'utf8')) : {};
