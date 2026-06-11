@@ -3,3 +3,4 @@ cookies.json
 auth_info/
 sessao.tar
 sessao.txtp
+*.json

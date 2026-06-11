@@ -102,6 +102,21 @@ try {
     listaCasais = [];
 }
 
+// Função para garantir que os arquivos existem no DISCO, não no repositório
+function garantirArquivo(caminho) {
+    if (!fs.existsSync(caminho)) {
+        console.log(`Criando arquivo inexistente no disco: ${caminho}`);
+        fs.writeFileSync(caminho, JSON.stringify({})); // Cria um JSON vazio
+    }
+}
+
+// Aplique para todos os seus arquivos
+garantirArquivo(arquivoPlacar);
+garantirArquivo(arquivoCargos);
+garantirArquivo(arquivoCasais);
+garantirArquivo(ARQUIVO_RANK);
+garantirArquivo(ARQUIVO_MUTADOS);
+
 
 let placarEmoji = lerArquivoSeguro(ARQUIVO_PLACAR_EMOJI);
 
@@ -134,10 +149,15 @@ let jogoEmoji = {
     idMensagem: "" // O ID único da mensagem do desafio
 };
 
-// Definição dos arquivos de dados
-// Carregamento dos dados (se existirem)
+
+// --- VARIÁVEIS DE ESTADO E ARQUIVOS ---
 let contagemMensagens = lerArquivoSeguro(ARQUIVO_RANK);
 let mutados = lerArquivoSeguro(ARQUIVO_MUTADOS);
+
+// Garante que os arquivos existam no disco
+if (!fs.existsSync(arquivoPlacar)) fs.writeFileSync(arquivoPlacar, JSON.stringify({}));
+if (!fs.existsSync(arquivoCargos)) fs.writeFileSync(arquivoCargos, JSON.stringify({}));
+if (!fs.existsSync(arquivoCasais)) fs.writeFileSync(arquivoCasais, JSON.stringify([], null, 2));
 
 // --- FUNÇÃO DE CONEXÃO ---
 // --- FUNÇÃO DE CONEXÃO ---
@@ -153,6 +173,8 @@ async function connectToWhatsApp() {
     });
 
     sock.ev.on('creds.update', saveCreds);
+    sock.ev.removeAllListeners('messages.upsert');
+    sock.ev.removeAllListeners('group-participants.update');
 
     // Boas-vindas (VERSÃO COMPLETA)
         
@@ -212,16 +234,10 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
     sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update;
         if (qr) qrcode.generate(qr, { small: true });
-        
-        if (connection === 'open') {
-            console.log("✅ Bot conectado!");
-        } else if (connection === 'close') {
+        if (connection === 'open') console.log("✅ Bot conectado!");
+        else if (connection === 'close') {
             const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
-            console.log('Conexão fechada, tentando reconectar:', shouldReconnect);
-            if (shouldReconnect) {
-                // A DIFERENÇA ESTÁ AQUI: Espera 5 segundos antes de tentar novamente
-                setTimeout(() => connectToWhatsApp(), 30000);
-            }
+            if (shouldReconnect) setTimeout(() => connectToWhatsApp(), 30000);
         }
     });
 
