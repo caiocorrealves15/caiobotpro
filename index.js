@@ -696,9 +696,9 @@ if (text === '!ranking' || text === '!placar') {
 
     // 2. Limpeza: Garante que todos os valores sejam números e remove IDs vazios
     const rankingProcessado = Object.entries(placar)
-        .filter(([id, pontos]) => id && typeof pontos === 'number') // Filtra só o que é válido
-        .sort((a, b) => b[1] - a[1]) // Ordena do maior para o menor
-        .slice(0, 10); // Pega os top 10
+        .filter(([id, pontos]) => id && typeof pontos === 'number')
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10);
 
     if (rankingProcessado.length === 0) {
         return await sock.sendMessage(sender, { text: "❌ O placar está vazio ou corrompido. Vamos jogar para acumular pontos! 🎮", quoted: msg });
@@ -713,14 +713,14 @@ if (text === '!ranking' || text === '!placar') {
     rankingProcessado.forEach((entry, i) => {
         const [id, pontos] = entry;
         
-        listaMentions.push(id); 
+        // Adiciona o ID completo (com @s.whatsapp.net) na lista de menções
+        listaMentions.push(id);
         
         const medalha = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "🔹";
         
-        // O PULO DO GATO: Use @ + o ID (sem o @s.whatsapp.net) no texto, 
-        // mas certifique-se que o id enviado em 'mentions' seja completo.
-        // O WhatsApp vai substituir o @numero pelo nome do contato.
+        // Pega apenas o número para o arroba (ex: 5521...)
         const numeroLimpo = id.split('@')[0];
+        
         res += `${medalha} ${i + 1}. @${numeroLimpo} - *${pontos.toLocaleString('pt-BR')} pts*\n`;
     });
 
@@ -1896,7 +1896,7 @@ if (text === '!avisoadm') {
 if (text.startsWith('!musica ')) {
     const busca = text.replace('!musica ', '').trim();
     if (!busca) return await sock.sendMessage(sender, { text: "❌ Qual música você quer buscar?" }, { quoted: msg });
-!
+
     try {
         await sock.sendMessage(sender, { text: "🔍 Buscando e baixando o áudio..." }, { quoted: msg });
 
