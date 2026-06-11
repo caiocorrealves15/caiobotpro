@@ -712,6 +712,8 @@ if (text === '!ranking' || text === '!placar') {
 
     rankingProcessado.forEach((entry, i) => {
         const [id, pontos] = entry;
+
+        if (!id.includes('@s.whatsapp.net')) return;
         
         // Adiciona o ID completo (com @s.whatsapp.net) na lista de menções
         listaMentions.push(id);
