@@ -1306,15 +1306,14 @@ if (text.startsWith('!comprar') || text.startsWith('!limpar') || text.startsWith
             delete mutados[participant];
             fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
             sucesso = true;
-        else if (item === 'fúria') {
-        ataquesFuria[participant] = true; 
-        
-        await sock.sendMessage(sender, { 
-            text: "🔥 *FÚRIA ATIVADA!* Seu próximo ataque no Boss será dobrado! Use !atacar logo antes que a fúria passe!",
-            quoted: msg 
-        });
-        sucesso = true; // O código já vai descontar os pontos automaticamente lá embaixo
-    }
+        } else if (item === 'fúria') {
+            ataquesFuria[participant] = true; 
+            
+            await sock.sendMessage(sender, { 
+                text: "🔥 *FÚRIA ATIVADA!* Seu próximo ataque no Boss será dobrado! Use !atacar logo antes que a fúria passe!",
+                quoted: msg 
+            });
+            sucesso = true; // O código já vai descontar os pontos automaticamente lá embaixo
         } else if (item === 'escudo') {
             escudosAtivos[participant] = Date.now() + 3600000;
             sucesso = true;
