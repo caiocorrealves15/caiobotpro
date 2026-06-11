@@ -13,7 +13,6 @@ const ARQUIVO_MUTADOS = '/var/data/mutados.json'; // ADICIONE AQUI TAMBÉM
 const cookies = process.env.COOKIES_JSON ? JSON.parse(process.env.COOKIES_JSON) : [];
 const { Sticker, StickerTypes } = require('wa-sticker-formatter');
 const ytSearch = require('yt-search'); 
-const google = require('google-it');
 const qrcode = require('qrcode-terminal');
 const infrações = {};
 const ultimaMensagem = {};
@@ -360,7 +359,7 @@ if (text === '!cadastros') {
     }
 
     // --- 4. Trava de segurança para jogos (COM EXCEÇÃO PARA ADM) ---
-const comandosDeJogo = ['!piada', '!casar', '!descasar', '!forca', '!penalti', '!sortear', '!emoji', '!jogar', '!perguntas'];
+const comandosDeJogo = ['!piada', '!casar', '!descasar', '!forca', '!penalti', '!sortear', '!emoji', '!jogar', '!musica', '!perguntas'];
 
 if (!jogosLiberados && comandosDeJogo.some(cmd => text.startsWith(cmd))) {
     if (isAdmin) {
@@ -914,7 +913,7 @@ if (lowerText.includes('bebida') || lowerText.includes('cerveja') || lowerText.i
 
     // Ache essa linha no seu código e adicione o '!cargos' nela:
 const comandosExistentes = [
-    '!menu', '!comprar', '!loja', '!!pesquisar', '!backup', '!dar_pontos', '!atacar', '!boss', '!rank', '!casar', '!casais', '!piada', '!avisoadm', 
+    '!menu', '!comprar', '!loja', '!pesquisar', '!backup', '!dar_pontos', '!atacar', '!boss', '!rank', '!casar', '!casais', '!piada', '!avisoadm', 
     '!descasar', '!emoji', '!sortear', '!cadastros', '!perguntas', '!jogar', 
     '!forca', '!jogosoff', '!jogoson', '!limpar', '!fixar', '!status', '!link', '!tier', 
     '!ranking', '!penalti', '!musica', '!socar', '!beijar', 
@@ -1197,6 +1196,7 @@ if (text.startsWith('!ban')) {
 }
 
       // --- COMANDO !PESQUISAR (VERSÃO GOOGLE-IT) ---
+// --- COMANDO !PESQUISAR (VERSÃO ROBUSTA SEM BIBLIOTECA) ---
 if (text.startsWith('!pesquisar ')) {
     const termo = text.replace('!pesquisar ', '').trim();
     if (!termo) return await sock.sendMessage(sender, { text: "❌ O que você quer pesquisar?", quoted: msg });
@@ -1204,23 +1204,29 @@ if (text.startsWith('!pesquisar ')) {
     await sock.sendMessage(sender, { react: { text: '🔍', key: msg.key } });
 
     try {
-        const resultados = await google({ 'query': termo });
-        
-        if (resultados.length === 0) {
-            return await sock.sendMessage(sender, { text: "❌ Não achei nada sobre isso!", quoted: msg });
+        // Usando a API do DuckDuckGo que é gratuita e não bloqueia
+        const res = await axios.get(`https://api.duckduckgo.com/?q=${encodeURIComponent(termo)}&format=json&pretty=1&no_redirect=1`);
+        const data = res.data;
+
+        if (data.AbstractText) {
+            const resposta = `🔍 *RESULTADO: ${termo.toUpperCase()}*\n\n` +
+                             `${data.AbstractText}\n\n` +
+                             `🔗 *Fonte:* ${data.AbstractURL || 'DuckDuckGo'}`;
+            await sock.sendMessage(sender, { text: resposta, quoted: msg });
+        } else if (data.RelatedTopics && data.RelatedTopics.length > 0) {
+            // Se não tiver resumo direto, pega o primeiro tópico relacionado
+            const topo = data.RelatedTopics[0];
+            const resposta = `🔍 *RESULTADO: ${termo.toUpperCase()}*\n\n` +
+                             `${topo.Text}\n\n` +
+                             `🔗 *Fonte:* ${topo.FirstURL}`;
+            await sock.sendMessage(sender, { text: resposta, quoted: msg });
+        } else {
+            await sock.sendMessage(sender, { text: "❌ Não encontrei nada sobre isso.", quoted: msg });
         }
-
-        const topo = resultados[0];
-        const resposta = `🔍 *RESULTADO: ${termo.toUpperCase()}*\n\n` +
-                         `*${topo.title}*\n\n` +
-                         `${topo.snippet}\n\n` + // O resumo na google-it chama snippet
-                         `🔗 ${topo.link}`;
-
-        await sock.sendMessage(sender, { text: resposta, quoted: msg });
 
     } catch (e) {
         console.error("Erro no comando !pesquisar:", e);
-        await sock.sendMessage(sender, { text: "❌ Erro ao buscar no Google.", quoted: msg });
+        await sock.sendMessage(sender, { text: "❌ O buscador deu ruim, tenta de novo!", quoted: msg });
     }
 }
         // 4. !TIER (Versão Debochada e com Resposta)
