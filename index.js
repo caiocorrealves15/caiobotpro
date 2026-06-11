@@ -13,7 +13,7 @@ const ARQUIVO_MUTADOS = '/var/data/mutados.json'; // ADICIONE AQUI TAMBÉM
 const cookies = process.env.COOKIES_JSON ? JSON.parse(process.env.COOKIES_JSON) : [];
 const { Sticker, StickerTypes } = require('wa-sticker-formatter');
 const ytSearch = require('yt-search'); 
-const google = require('google-this');
+const google = require('google-it');
 const qrcode = require('qrcode-terminal');
 const infrações = {};
 const ultimaMensagem = {};
@@ -1196,7 +1196,7 @@ if (text.startsWith('!ban')) {
     }
 }
 
-       // --- COMANDO !PESQUISAR (BUSCA RÁPIDA) ---
+      // --- COMANDO !PESQUISAR (VERSÃO GOOGLE-IT) ---
 if (text.startsWith('!pesquisar ')) {
     const termo = text.replace('!pesquisar ', '').trim();
     if (!termo) return await sock.sendMessage(sender, { text: "❌ O que você quer pesquisar?", quoted: msg });
@@ -1204,36 +1204,25 @@ if (text.startsWith('!pesquisar ')) {
     await sock.sendMessage(sender, { react: { text: '🔍', key: msg.key } });
 
     try {
-        // Busca o primeiro resultado no Google
-        const options = {
-            page: 0,
-            safe: false,
-            parse_ads: false,
-            additional_params: {
-                hl: 'pt'
-            }
-        };
+        const resultados = await google({ 'query': termo });
         
-        const resultados = await google.search(termo, options);
-        
-        if (resultados.results.length === 0) {
-            return await sock.sendMessage(sender, { text: "❌ Não achei nada sobre isso, tenta outra coisa!", quoted: msg });
+        if (resultados.length === 0) {
+            return await sock.sendMessage(sender, { text: "❌ Não achei nada sobre isso!", quoted: msg });
         }
 
-        const topo = resultados.results[0];
-        const resposta = `🔍 *RESULTADO DA BUSCA: ${termo.toUpperCase()}*\n\n` +
+        const topo = resultados[0];
+        const resposta = `🔍 *RESULTADO: ${termo.toUpperCase()}*\n\n` +
                          `*${topo.title}*\n\n` +
-                         `${topo.description}\n\n` +
-                         `🔗 *Fonte:* ${topo.link}`;
+                         `${topo.snippet}\n\n` + // O resumo na google-it chama snippet
+                         `🔗 ${topo.link}`;
 
         await sock.sendMessage(sender, { text: resposta, quoted: msg });
 
     } catch (e) {
         console.error("Erro no comando !pesquisar:", e);
-        await sock.sendMessage(sender, { text: "❌ Deu erro na busca, o Google tá de greve!", quoted: msg });
+        await sock.sendMessage(sender, { text: "❌ Erro ao buscar no Google.", quoted: msg });
     }
 }
-
         // 4. !TIER (Versão Debochada e com Resposta)
 if (text.startsWith('!tier')) {
     // 1. Reação imediata de quem solicitou
