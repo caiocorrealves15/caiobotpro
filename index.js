@@ -4,7 +4,7 @@ const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, download
 const pino = require('pino');
 const fs = require('fs');
 const path = require('path');
-const dataPath = fs.existsSync('/var/data') ? '/var/data' : './';
+const dataPath = '/var/data';
 const arquivoPlacarEmoji = path.join(dataPath, 'placar_emoji.json');
 const ARQUIVO_PLACAR_EMOJI = arquivoPlacarEmoji; // Garante que ambos os nomes funcionem
 const ARQUIVO_RANK = path.join(dataPath, 'rank.json');
@@ -17,6 +17,7 @@ const cookies = process.env.COOKIES_JSON ? JSON.parse(process.env.COOKIES_JSON) 
 const { Sticker, StickerTypes } = require('wa-sticker-formatter');
 const ytSearch = require('yt-search'); 
 const qrcode = require('qrcode-terminal');
+const axios = require('axios');
 const infrações = {};
 const ultimaMensagem = {};
 let ataquesFuria = {}; // Adicione isso junto com as outras let no topo
@@ -419,6 +420,7 @@ if (fs.existsSync(arquivoPlacar)) {
     placar[participant] -= custo;
     cargos[participant] = novoCargo;
     
+    console.log("Tentando salvar no caminho: " + arquivoPlacar);
     fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
     fs.writeFileSync(arquivoCargos, JSON.stringify(cargos, null, 2));
 
@@ -746,24 +748,26 @@ if (jogoEmoji.ativo &&
 // Substitua o seu bloco !rankingemoji por este:
 
 if (text === '!ranking' || text === '!placar') {
+    // 1. Carregamento forçado e seguro do arquivo no disco
     let placar = {};
     try {
         if (fs.existsSync(arquivoPlacar)) {
             const conteudo = fs.readFileSync(arquivoPlacar, 'utf8');
-            placar = JSON.parse(conteudo);
+            placar = (conteudo && conteudo.trim().length > 0) ? JSON.parse(conteudo) : {};
         }
     } catch (e) {
+        console.error("❌ Erro ao ler o banco de dados do ranking:", e);
         return await sock.sendMessage(sender, { text: "❌ Erro ao ler o banco de dados.", quoted: msg });
     }
 
-    // Transformar em array e limpar: Só pega o que for ID de usuário (tem @) e tem pontuação
+    // 2. Transformar em array e limpar
     const entries = Object.entries(placar);
     
     if (entries.length === 0) {
         return await sock.sendMessage(sender, { text: "❌ O placar está vazio.", quoted: msg });
     }
 
-    // Ordena
+    // 3. Ordena os 10 primeiros
     const ranking = entries.sort((a, b) => b[1] - a[1]).slice(0, 10);
 
     let res = `💎 *TOP 10 - RICOS DO BONDE*\n\n`;
@@ -771,18 +775,19 @@ if (text === '!ranking' || text === '!placar') {
 
     ranking.forEach((entry, i) => {
         const [id, pontos] = entry;
-        listaMentions.push(id); // Adiciona o ID completo para o WhatsApp entender a menção
+        listaMentions.push(id); // Adiciona o ID para o WhatsApp mencionar corretamente
         const medalha = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "🔹";
         
-        // Formato correto para mencionar: @numero
         const numero = id.split('@')[0];
         res += `${medalha} ${i + 1}. @${numero} - *${pontos.toLocaleString('pt-BR')} pts*\n`;
     });
 
-    await sock.sendMessage(sender, { text: res, mentions: listaMentions }, { quoted: msg });
+    // 4. Envio do ranking
+    await sock.sendMessage(sender, { 
+        text: res, 
+        mentions: listaMentions 
+    }, { quoted: msg });
 }
-
-
 
 // --- COMANDO !link ---
 if (lowerText === '!link') {
@@ -1227,36 +1232,47 @@ if (text.startsWith('!ban')) {
 
       // --- COMANDO !PESQUISAR (VERSÃO GOOGLE-IT) ---
 // --- COMANDO !PESQUISAR (VERSÃO ROBUSTA SEM BIBLIOTECA) ---
+// --- COMANDO !PESQUISAR (CORRIGIDO) ---
+// --- COMANDO !PESQUISAR (VERSÃO COM GIF E ROBUSTA) ---
 if (text.startsWith('!pesquisar ')) {
     const termo = text.replace('!pesquisar ', '').trim();
     if (!termo) return await sock.sendMessage(sender, { text: "❌ O que você quer pesquisar?", quoted: msg });
 
+    // 1. Reação inicial e GIF de carregando
     await sock.sendMessage(sender, { react: { text: '🔍', key: msg.key } });
+    const msgCarregando = await sock.sendMessage(sender, { 
+        video: { url: 'https://media.tenor.com/IzywMgoVemYAAAPo/cat-busy.mp4' }, // GIF de pesquisa
+        gifPlayback: true,
+        caption: `🔍 Pesquisando sobre: *${termo.toUpperCase()}*...`
+    }, { quoted: msg });
 
     try {
-        // Usando a API do DuckDuckGo que é gratuita e não bloqueia
-        const res = await axios.get(`https://api.duckduckgo.com/?q=${encodeURIComponent(termo)}&format=json&pretty=1&no_redirect=1`);
+        // 2. Busca na API do DuckDuckGo
+        const res = await axios.get(`https://api.duckduckgo.com/?q=${encodeURIComponent(termo)}&format=json&pretty=1&no_redirect=1`, {
+            headers: { 'User-Agent': 'Mozilla/5.0' }
+        });
         const data = res.data;
 
+        // 3. Montagem da resposta
+        let respostaTexto = "";
         if (data.AbstractText) {
-            const resposta = `🔍 *RESULTADO: ${termo.toUpperCase()}*\n\n` +
-                             `${data.AbstractText}\n\n` +
-                             `🔗 *Fonte:* ${data.AbstractURL || 'DuckDuckGo'}`;
-            await sock.sendMessage(sender, { text: resposta, quoted: msg });
+            respostaTexto = `🔍 *RESULTADO: ${termo.toUpperCase()}*\n\n${data.AbstractText}\n\n🔗 *Fonte:* ${data.AbstractURL || 'DuckDuckGo'}`;
         } else if (data.RelatedTopics && data.RelatedTopics.length > 0) {
-            // Se não tiver resumo direto, pega o primeiro tópico relacionado
             const topo = data.RelatedTopics[0];
-            const resposta = `🔍 *RESULTADO: ${termo.toUpperCase()}*\n\n` +
-                             `${topo.Text}\n\n` +
-                             `🔗 *Fonte:* ${topo.FirstURL}`;
-            await sock.sendMessage(sender, { text: resposta, quoted: msg });
+            respostaTexto = `🔍 *RESULTADO: ${termo.toUpperCase()}*\n\n${topo.Text}\n\n🔗 *Fonte:* ${topo.FirstURL}`;
         } else {
-            await sock.sendMessage(sender, { text: "❌ Não encontrei nada sobre isso.", quoted: msg });
+            respostaTexto = "❌ Não encontrei um resumo sobre isso.";
         }
 
+        // 4. Edita a mensagem de "carregando" para o resultado final
+        await sock.sendMessage(sender, { 
+            text: respostaTexto, 
+            edit: msgCarregando.key // Edita a mensagem do GIF
+        });
+
     } catch (e) {
-        console.error("Erro no comando !pesquisar:", e);
-        await sock.sendMessage(sender, { text: "❌ O buscador deu ruim, tenta de novo!", quoted: msg });
+        console.error("Erro no !pesquisar:", e);
+        await sock.sendMessage(sender, { text: "❌ O buscador deu ruim (erro de conexão). Tente de novo!", quoted: msg });
     }
 }
         // 4. !TIER (Versão Debochada e com Resposta)
@@ -1737,19 +1753,13 @@ if (text.startsWith('!casar')) {
     const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
     if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione alguém para casar, senão vai ficar encalhado!", quoted: msg });
 
-    // AJUSTE: Força a leitura do arquivo atualizado antes de qualquer verificação
-    try {
-        if (fs.existsSync(arquivoCasais)) {
+    // 1. FORÇA A LEITURA DO DISCO (Atualiza a variável global antes de checar)
     listaCasais = lerArquivoSeguro(arquivoCasais);
-}
-    } catch (e) {
-        listaCasais = [];
-    }
 
     const p1 = participant; // ID completo de quem chamou
     const p2 = mention;     // ID completo do mencionado
 
-    // TRAVA DE BIGAMIA: Ninguém casa se já estiver casado com outra pessoa
+    // 2. TRAVA DE BIGAMIA: Ninguém casa se já estiver casado com outra pessoa
     const jaTemRelacionamento = listaCasais.find(c => c.p1 === p1 || c.p2 === p1 || c.p1 === p2 || c.p2 === p2);
     if (jaTemRelacionamento) {
         return await sock.sendMessage(sender, { 
@@ -1758,9 +1768,16 @@ if (text.startsWith('!casar')) {
         });
     }
 
-    // Adiciona o novo casal
+    // 3. Adiciona o novo casal na memória
     listaCasais.push({ p1, p2 }); 
-    salvarCasais(); 
+
+    // 4. SALVAMENTO FORÇADO NO DISCO (Garante que vai para o /var/data/casais.json)
+    try {
+        fs.writeFileSync(arquivoCasais, JSON.stringify(listaCasais, null, 2));
+        console.log("✅ Casamento salvo no disco com sucesso!");
+    } catch (err) {
+        console.error("❌ Erro ao salvar casamento no disco:", err);
+    }
 
     const frases = [
         `💍 O @${p1.split('@')[0]} casou com @${p2.split('@')[0]}!`,
@@ -1783,22 +1800,25 @@ if (text.startsWith('!casar')) {
 }
 
 if (text === '!casais') {
-    // AJUSTE: Força a leitura do arquivo toda vez que o comando é chamado
+    // 1. Carregamento forçado e seguro do disco para a variável global
     try {
         if (fs.existsSync(arquivoCasais)) {
-            listaCasais = lerArquivoSeguro(arquivoCasais);
+            const dados = fs.readFileSync(arquivoCasais, 'utf8');
+            listaCasais = (dados && dados.trim().length > 0) ? JSON.parse(dados) : [];
         } else {
             listaCasais = [];
         }
     } catch (e) {
-        console.error("Erro ao ler casais.json:", e);
+        console.error("❌ Erro ao ler casais.json no comando !casais:", e);
         listaCasais = [];
     }
 
+    // 2. Verificação se a lista está vazia
     if (!listaCasais || listaCasais.length === 0) {
         return await sock.sendMessage(sender, { text: "❌ Ninguém casou ainda! Estão todos encalhados.", quoted: msg });
     }
 
+    // 3. Montagem do texto zueiro
     const frasesZueiras = [
         "🏆 *CARTÓRIO DO CAOS - CASAIS DO MOMENTO* 🏆",
         "🔥 *OS LOUCOS QUE DECIDIRAM SOFRER JUNTOS* 🔥",
@@ -1814,20 +1834,22 @@ if (text === '!casais') {
 
     let listaMentions = [];
 
+    // 4. Loop para listar os casais
     listaCasais.forEach((c, i) => {
-        // Usa o formato @ID para o WhatsApp processar a menção
+        // Formatação do número para exibir
         const id1 = c.p1.split('@')[0];
         const id2 = c.p2.split('@')[0];
         
         texto += `${i + 1}. @${id1} ❤️ @${id2}\n`;
         
-        // Adiciona os IDs completos para a lista de menções do WhatsApp
+        // Adiciona os IDs completos (ex: 552199999999@s.whatsapp.net) para a menção funcionar
         listaMentions.push(c.p1);
         listaMentions.push(c.p2);
     });
     
     texto += "\n🤡 Quem será o próximo trouxa a cair na armadilha? Digite !casar @alguém";
 
+    // 5. Envio da mensagem com reações e menções
     await sock.sendMessage(sender, { react: { text: '💍', key: msg.key } });
     await sock.sendMessage(sender, { 
         text: texto, 
