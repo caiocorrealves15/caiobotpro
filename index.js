@@ -13,7 +13,7 @@ const ARQUIVO_MUTADOS = '/var/data/mutados.json'; // ADICIONE AQUI TAMBÉM
 const cookies = process.env.COOKIES_JSON ? JSON.parse(process.env.COOKIES_JSON) : [];
 const { Sticker, StickerTypes } = require('wa-sticker-formatter');
 const ytSearch = require('yt-search'); 
-const ytdl = require('ytdl-core');
+const google = require('google-this');
 const qrcode = require('qrcode-terminal');
 const infrações = {};
 const ultimaMensagem = {};
@@ -936,13 +936,6 @@ if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd)
     }, { quoted: msg });
 }
 
-
-
-        // 2. !MENU
-        // 2. !MENU (ESTILO PERSONALIZADO BASEADO NA IMAGEM)
-        // 2. !MENU (ESTILO PERSONALIZADO ATUALIZADO)
-// 2. !MENU (MENU COMPLETO E ORGANIZADO)
-// 2. !MENU (MENU COMPLETO E ATUALIZADO)
 // 2. !MENU (MENU COMPLETO E ATUALIZADO)
 if (text === '!menu') {
     const senderId = msg.key.participant || msg.key.remoteJid; 
@@ -975,9 +968,9 @@ if (text === '!menu') {
 │ ⌛ !sortear   | 🎮 !jogar
 │ 😵 !forca     | ⚽ !penalti
 │ 🎥 !emoji     | 🤡 !piada
-│ 🎤 !musica    | 👥 !casais
+│ 🎤 !musica (Quiz)
 │ 🧠 !perguntas | 💍 !casar
-│ 💔 !descasar 
+│ 💔 !descasar  | 👥 !casais
 │
 ├────😂 ZUEIRA────
 │ 🤜 !socar     | 😘 !beijar
@@ -994,7 +987,8 @@ if (text === '!menu') {
 │
 ├────⚙️ UTIL & SUPORTE────
 │ 📛 !menu      | 🌤️ !clima
-│ 🔗 !link      | 📦 !backup
+│ 🔍 !pesquisar| 🔗 !link
+│ 📦 !backup
 │
 ╰━━━━━━━━━━━━━━━━━━━━━━╯
 🤖 *Acumule pontos, derrote os Bosses e não seja um NPC.*`.trim();
@@ -1199,6 +1193,44 @@ if (text.startsWith('!ban')) {
         } else {
             await sock.sendMessage(sender, { text: "❌ Mencione alguém para banir!" }, { quoted: msg });
         }
+    }
+}
+
+       // --- COMANDO !PESQUISAR (BUSCA RÁPIDA) ---
+if (text.startsWith('!pesquisar ')) {
+    const termo = text.replace('!pesquisar ', '').trim();
+    if (!termo) return await sock.sendMessage(sender, { text: "❌ O que você quer pesquisar?", quoted: msg });
+
+    await sock.sendMessage(sender, { react: { text: '🔍', key: msg.key } });
+
+    try {
+        // Busca o primeiro resultado no Google
+        const options = {
+            page: 0,
+            safe: false,
+            parse_ads: false,
+            additional_params: {
+                hl: 'pt'
+            }
+        };
+        
+        const resultados = await google.search(termo, options);
+        
+        if (resultados.results.length === 0) {
+            return await sock.sendMessage(sender, { text: "❌ Não achei nada sobre isso, tenta outra coisa!", quoted: msg });
+        }
+
+        const topo = resultados.results[0];
+        const resposta = `🔍 *RESULTADO DA BUSCA: ${termo.toUpperCase()}*\n\n` +
+                         `*${topo.title}*\n\n` +
+                         `${topo.description}\n\n` +
+                         `🔗 *Fonte:* ${topo.link}`;
+
+        await sock.sendMessage(sender, { text: resposta, quoted: msg });
+
+    } catch (e) {
+        console.error("Erro no comando !pesquisar:", e);
+        await sock.sendMessage(sender, { text: "❌ Deu erro na busca, o Google tá de greve!", quoted: msg });
     }
 }
 
