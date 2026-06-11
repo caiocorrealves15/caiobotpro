@@ -390,6 +390,42 @@ if (fs.existsSync(arquivoPlacar)) {
     await sock.sendMessage(sender, { text: `👑 Parabéns @${participant.split('@')[0]}! Agora seu cargo oficial é: *${novoCargo}*`, mentions: [participant], quoted: msg });
 }
 
+// --- COMANDO !DAR_PONTOS (EXCLUSIVO PARA ADM) ---
+if (text.startsWith('!dar_pontos')) {
+    // 1. Verifica se quem enviou é ADM
+    if (!isAdmin) {
+        return await sock.sendMessage(sender, { text: "❌ Apenas ADMs têm autoridade para manipular a economia do Bonde! 🚫", quoted: msg });
+    }
+
+    // 2. Extrai a menção e a quantidade
+    const args = text.split(' ');
+    const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+    const quantidade = parseInt(args[2]);
+
+    if (!mention || isNaN(quantidade)) {
+        return await sock.sendMessage(sender, { text: "❌ Use: !dar_pontos @mencao [quantidade]\nEx: !dar_pontos @12345 500", quoted: msg });
+    }
+
+    // 3. Carrega o placar com segurança
+    let placar = {};
+    if (fs.existsSync(arquivoPlacar)) {
+        placar = JSON.parse(fs.readFileSync(arquivoPlacar, 'utf8'));
+    }
+
+    // 4. Adiciona os pontos
+    placar[mention] = (placar[mention] || 0) + quantidade;
+    
+    // 5. Salva no arquivo
+    fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
+
+    // 6. Confirmação
+    await sock.sendMessage(sender, { 
+        text: `✅ Sucesso! Foram adicionados *${quantidade} pontos* ao saldo de @${mention.split('@')[0]}.`, 
+        mentions: [mention],
+        quoted: msg 
+    });
+}
+
 if (text.startsWith('!dar_cargo')) {
     if (!isAdmin) return await sock.sendMessage(sender, { text: "❌ Só ADM tem poder para dar cargos!", quoted: msg });
     
@@ -646,31 +682,98 @@ if (jogoEmoji.ativo &&
 
 // Substitua o seu bloco !rankingemoji por este:
 if (text === '!ranking' || text === '!placar') {
-    // Carrega o placar geral
-    const placar = fs.existsSync(arquivoPlacar) ? JSON.parse(fs.readFileSync(arquivoPlacar, 'utf8')) : {};
+    // 1. Carrega o placar com verificação de segurança
+    let placar = {};
+    try {
+        if (fs.existsSync(arquivoPlacar)) {
+            const conteudo = fs.readFileSync(arquivoPlacar, 'utf8');
+            placar = conteudo ? JSON.parse(conteudo) : {};
+        }
+    } catch (e) {
+        console.error("Erro ao ler placar.json:", e);
+    }
 
-    // Transforma em array, ordena do maior para o menor e pega os 10 primeiros
-    const ranking = Object.entries(placar)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 10);
+    // 2. Limpeza: Garante que todos os valores sejam números e remove IDs vazios
+    const rankingProcessado = Object.entries(placar)
+        .filter(([id, pontos]) => id && typeof pontos === 'number') // Filtra só o que é válido
+        .sort((a, b) => b[1] - a[1]) // Ordena do maior para o menor
+        .slice(0, 10); // Pega os top 10
 
+    if (rankingProcessado.length === 0) {
+        return await sock.sendMessage(sender, { text: "❌ O placar está vazio ou corrompido. Vamos jogar para acumular pontos! 🎮", quoted: msg });
+    }
+
+    // 3. Monta o ranking
     let res = `💎 *TOP 10 - RICOS DO BONDE*\n\n`;
     res += `*Quem tem mais pontos acumulados nos jogos?*\n\n`;
 
-    ranking.forEach((entry, i) => {
+    let listaMentions = [];
+
+    rankingProcessado.forEach((entry, i) => {
         const [id, pontos] = entry;
         const nome = id.split('@')[0];
-        // Adiciona um emoji especial para o Top 1
+        
+        listaMentions.push(id); // Adiciona o ID real para o WhatsApp mencionar
+        
         const medalha = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "🔹";
         
-        res += `${medalha} ${i + 1}. @${nome} - *${pontos} pts*\n`;
+        // Formata o número para evitar quebras
+        res += `${medalha} ${i + 1}. @${nome} - *${pontos.toLocaleString('pt-BR')} pts*\n`;
     });
 
     res += `\n🤖 *Dica: Jogue !penalti, !jogar ou !perguntas para subir na lista!*`;
 
+    // 4. Envio com as menções corretas
     await sock.sendMessage(sender, { 
         text: res, 
-        mentions: ranking.map(e => e[0]) 
+        mentions: listaMentions 
+    }, { quoted: msg });
+}if (text === '!ranking' || text === '!placar') {
+    // 1. Carrega o placar com verificação de segurança
+    let placar = {};
+    try {
+        if (fs.existsSync(arquivoPlacar)) {
+            const conteudo = fs.readFileSync(arquivoPlacar, 'utf8');
+            placar = conteudo ? JSON.parse(conteudo) : {};
+        }
+    } catch (e) {
+        console.error("Erro ao ler placar.json:", e);
+    }
+
+    // 2. Limpeza: Garante que todos os valores sejam números e remove IDs vazios
+    const rankingProcessado = Object.entries(placar)
+        .filter(([id, pontos]) => id && typeof pontos === 'number') // Filtra só o que é válido
+        .sort((a, b) => b[1] - a[1]) // Ordena do maior para o menor
+        .slice(0, 10); // Pega os top 10
+
+    if (rankingProcessado.length === 0) {
+        return await sock.sendMessage(sender, { text: "❌ O placar está vazio ou corrompido. Vamos jogar para acumular pontos! 🎮", quoted: msg });
+    }
+
+    // 3. Monta o ranking
+    let res = `💎 *TOP 10 - RICOS DO BONDE*\n\n`;
+    res += `*Quem tem mais pontos acumulados nos jogos?*\n\n`;
+
+    let listaMentions = [];
+
+    rankingProcessado.forEach((entry, i) => {
+        const [id, pontos] = entry;
+        const nome = id.split('@')[0];
+        
+        listaMentions.push(id); // Adiciona o ID real para o WhatsApp mencionar
+        
+        const medalha = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "🔹";
+        
+        // Formata o número para evitar quebras
+        res += `${medalha} ${i + 1}. @${nome} - *${pontos.toLocaleString('pt-BR')} pts*\n`;
+    });
+
+    res += `\n🤖 *Dica: Jogue !penalti, !jogar ou !perguntas para subir na lista!*`;
+
+    // 4. Envio com as menções corretas
+    await sock.sendMessage(sender, { 
+        text: res, 
+        mentions: listaMentions 
     }, { quoted: msg });
 }
 
@@ -1055,7 +1158,7 @@ if (text.startsWith('!penalti')) {
         return await sock.sendMessage(sender, { 
             video: { url: 'https://media.tenor.com/Rfz8o91xR5wAAAPo/jonathan-david-jo-david.mp4' }, 
             gifPlayback: true,
-            caption: `⚽ *DISPUTA DE PÊNALTIS*\n\nSeu total de gols: ${placar[senderId]}\n\nEscolha o canto para bater o pênalti: 1, 2 ou 3`
+            caption: `⚽ *DISPUTA DE PÊNALTIS*\n\nSeu total de gols: ${placar[senderId]}\n\nEscolha o canto para bater o pênalti: !penalti1, !penalti2 ou !penalti3`
         }, { quoted: msg });
     }
 
@@ -1064,13 +1167,13 @@ if (text.startsWith('!penalti')) {
         placar[senderId] += 50;
         fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
         await sock.sendMessage(sender, { 
-            caption: `⚽ GOOOOOL! Você marcou! Total de gols: ${placar[senderId]}`, 
+            caption: `⚽ GOOOOOL! Você marcou! Total de pontos ganhos: ${placar[senderId]}`, 
             video: { url: 'https://media.tenor.com/vnXD4h47_ZwAAAPo/kick-goal.mp4' }, 
             gifPlayback: true
         }, { quoted: msg });
     } else {
         await sock.sendMessage(sender, { 
-            caption: `🧤 DEFESA! O goleiro pegou. Seu total continua ${placar[senderId]} gols.`, 
+            caption: `🧤 DEFESA! O goleiro pegou, se é ruim hein.😂😂😂 Seu total continua ${placar[senderId]} gols.`, 
             video: { url: 'https://media.tenor.com/AdTJAjjVaIkAAAPo/goalkeeper.mp4' }, 
             gifPlayback: true
         }, { quoted: msg });
