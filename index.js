@@ -392,39 +392,56 @@ if (fs.existsSync(arquivoPlacar)) {
 
 // --- COMANDO !DAR_PONTOS (EXCLUSIVO PARA ADM) ---
 if (text.startsWith('!dar_pontos')) {
-    // 1. Verifica se quem enviou é ADM
+    // 1. Verifica se quem enviou é ADM (Certifique-se que sua variável isAdmin esteja correta)
     if (!isAdmin) {
         return await sock.sendMessage(sender, { text: "❌ Apenas ADMs têm autoridade para manipular a economia do Bonde! 🚫", quoted: msg });
     }
 
     // 2. Extrai a menção e a quantidade
+    // O args[0] é o comando, args[1] é a menção (@bot), args[2] é o valor
     const args = text.split(' ');
     const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
     const quantidade = parseInt(args[2]);
 
     if (!mention || isNaN(quantidade)) {
-        return await sock.sendMessage(sender, { text: "❌ Use: !dar_pontos @mencao [quantidade]\nEx: !dar_pontos @12345 500", quoted: msg });
+        return await sock.sendMessage(sender, { 
+            text: "❌ Formato inválido.\nUse: !dar_pontos @mencao [quantidade]\nEx: !dar_pontos @5521999999999 500", 
+            quoted: msg 
+        });
     }
 
-    // 3. Carrega o placar com segurança
+    // 3. Carrega o placar com segurança total
     let placar = {};
-    if (fs.existsSync(arquivoPlacar)) {
-        placar = JSON.parse(fs.readFileSync(arquivoPlacar, 'utf8'));
+    try {
+        if (fs.existsSync(arquivoPlacar)) {
+            const conteudo = fs.readFileSync(arquivoPlacar, 'utf8');
+            // Se o arquivo estiver vazio, define como objeto vazio
+            placar = conteudo ? JSON.parse(conteudo) : {};
+        }
+    } catch (e) {
+        console.error("Erro ao ler o arquivo de placar:", e);
+        placar = {};
     }
 
     // 4. Adiciona os pontos
+    // A chave do JSON será o ID completo (ex: 552199999999@s.whatsapp.net)
     placar[mention] = (placar[mention] || 0) + quantidade;
     
     // 5. Salva no arquivo
-    fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
+    try {
+        fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
+    } catch (e) {
+        return await sock.sendMessage(sender, { text: "❌ Erro ao salvar os pontos no banco de dados.", quoted: msg });
+    }
 
-    // 6. Confirmação
+    // 6. Confirmação com menção correta
     await sock.sendMessage(sender, { 
         text: `✅ Sucesso! Foram adicionados *${quantidade} pontos* ao saldo de @${mention.split('@')[0]}.`, 
         mentions: [mention],
         quoted: msg 
     });
 }
+
 
 if (text.startsWith('!dar_cargo')) {
     if (!isAdmin) return await sock.sendMessage(sender, { text: "❌ Só ADM tem poder para dar cargos!", quoted: msg });
@@ -687,48 +704,39 @@ if (text === '!ranking' || text === '!placar') {
     try {
         if (fs.existsSync(arquivoPlacar)) {
             const conteudo = fs.readFileSync(arquivoPlacar, 'utf8');
-            placar = conteudo ? JSON.parse(conteudo) : {};
+            placar = JSON.parse(conteudo);
         }
     } catch (e) {
-        console.error("Erro ao ler placar.json:", e);
+        return await sock.sendMessage(sender, { text: "❌ Erro ao ler o banco de dados.", quoted: msg });
     }
 
-    // Filtra APENAS quem tem o final @s.whatsapp.net (pessoas reais)
-    const rankingProcessado = Object.entries(placar)
-        .filter(([id, pontos]) => id && id.endsWith('@s.whatsapp.net') && typeof pontos === 'number')
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 10);
-
-    if (rankingProcessado.length === 0) {
-        return await sock.sendMessage(sender, { text: "❌ O placar está vazio ou corrompido. Jogue para acumular pontos! 🎮", quoted: msg });
+    // Transformar em array e limpar: Só pega o que for ID de usuário (tem @) e tem pontuação
+    const entries = Object.entries(placar);
+    
+    if (entries.length === 0) {
+        return await sock.sendMessage(sender, { text: "❌ O placar está vazio.", quoted: msg });
     }
+
+    // Ordena
+    const ranking = entries.sort((a, b) => b[1] - a[1]).slice(0, 10);
 
     let res = `💎 *TOP 10 - RICOS DO BONDE*\n\n`;
-    res += `*Quem tem mais pontos acumulados nos jogos?*\n\n`;
-
     let listaMentions = [];
 
-    rankingProcessado.forEach((entry, i) => {
+    ranking.forEach((entry, i) => {
         const [id, pontos] = entry;
-        
-        listaMentions.push(id); // Adiciona o ID completo para a menção funcionar
+        listaMentions.push(id); // Adiciona o ID completo para o WhatsApp entender a menção
         const medalha = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "🔹";
         
-        // Pega apenas o número antes do @
-        const numeroLimpo = id.split('@')[0];
-        
-        // Formato correto para menção: @numero
-        res += `${medalha} ${i + 1}. @${numeroLimpo} - *${pontos.toLocaleString('pt-BR')} pts*\n`;
+        // Formato correto para mencionar: @numero
+        const numero = id.split('@')[0];
+        res += `${medalha} ${i + 1}. @${numero} - *${pontos.toLocaleString('pt-BR')} pts*\n`;
     });
 
-    res += `\n🤖 *Dica: Jogue !penalti, !jogar ou !perguntas para subir na lista!*`;
-
-    // Envio forçando as menções
-    await sock.sendMessage(sender, { 
-        text: res, 
-        mentions: listaMentions 
-    }, { quoted: msg });
+    await sock.sendMessage(sender, { text: res, mentions: listaMentions }, { quoted: msg });
 }
+
+
 
 // --- COMANDO !link ---
 if (lowerText === '!link') {
