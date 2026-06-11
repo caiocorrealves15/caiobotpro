@@ -1861,7 +1861,7 @@ if (text.startsWith('!musica ')) {
         // 5. Envia o áudio
         await sock.sendMessage(sender, { 
             audio: fs.readFileSync(audioPath), 
-            mimetype: 'audio/mpeg' 
+            mimetype: 'audio/mp4' 
         }, { quoted: msg });
 
         // 6. Limpa o arquivo
