@@ -58,6 +58,13 @@ const salvarCasais = () => {
     fs.writeFileSync(arquivoCasais, JSON.stringify(listaCasais, null, 2));
 };
 
+if (text === '!idgrupo') {
+    if (m.isGroup) {
+        await sock.sendMessage(sender, { text: `O ID deste grupo é: ${from}` });
+    } else {
+        await sock.sendMessage(sender, { text: "Este comando só funciona dentro de grupos." });
+    }
+}
 // Garante que o arquivo exista antes de qualquer coisa
 if (!fs.existsSync(ARQUIVO_PLACAR_EMOJI)) {
     fs.writeFileSync(ARQUIVO_PLACAR_EMOJI, JSON.stringify({}));
