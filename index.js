@@ -41,6 +41,13 @@ function lerArquivoSeguro(caminho) {
     }
 }
 
+let tribunal = {
+    ativo: false,
+    vitima: null,
+    acusador: null,
+    votos: {}
+};
+
 let raidBoss = {
     ativo: false,
     hp: 0,
@@ -133,8 +140,7 @@ async function connectToWhatsApp() {
         syncFullHistory: false,
         browser: ['Desktop', 'Chrome', '121.0.0.0'] 
     });
-
-    sock.ev.on('creds.update', saveCreds);
+sock.ev.on('creds.update', saveCreds);
     sock.ev.removeAllListeners('messages.upsert');
     sock.ev.removeAllListeners('group-participants.update');
         
@@ -144,7 +150,7 @@ async function connectToWhatsApp() {
 
         if (action === 'add') {
             membrosPendentes[userId] = Date.now(); 
-            const textoBoasVindas = `━━━━━━━━━━━━━━━━━━━━━━━━━━\n🔥 *BEM-VINDO AO CAOS: BONDE DO BRASIL* 🔥\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nFala aí, @${userId.split('@')[0]}! 🎉 \nVocê acaba de ser convocado para a elite da zueira! 🚀\n\n🎮 *O QUE ROLA NO BONDE:*\nAqui o pau quebra com estilo! Temos sistema de economia, cargos exclusivos e muito caos.\n• *JOGOS:* Participe do nosso *Quiz* (!perguntas), encare o *Boss* (!atacar) ou vire um *mestre do ranking* (!placar).\n• *LOJA:* Use *!comprar [item]* para virar o jogo (tem até mute, vip e adm de fachada! 🤫).\n• *CASAMENTOS:* Quer dividir o mico? Digite *!casar @alguém*.\n\n📜 *REGULAMENTO DO BONDE (OU A LEI DO MAIS FORTE)*\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n① *Respeito acima de tudo:* Sem brigas ou mimimi.\n② *Privacidade:* PV alheio sem permissão = BAN.\n③ *Segurança:* Nada de conteúdo adulto ou você vaza.\n④ *Zero Tolerância:* Link suspeito, spam ou trava? É BAN direto sem direito a apelação! 🚫\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n📝 *REGISTRO OBRIGATÓRIO (NÃO SEJA UM FANTASMA):*\nEnvie: *FOTO | CIDADE | IDADE | NOME*. \nSe não registrar, o bot acha que você é robô e vai te perseguir! 🤖\n\n🤖 *DICA:* Digite *!menu* AGORA para ver todos os comandos e começar a brincadeira. Se não digitar, já entra perdendo pontos! 💸`;
+            const textoBoasVindas = `━━━━━━━━━━━━━━━━━━━━━━━━━━\n🔥 *BEM-VINDO AO CAOS: BONDE DO BRASIL* 🔥\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nFala aí, @${userId.split('@')[0]}! 🎉 \nVocê acaba de pisar na elite da zueira! Mas antes de soltar a voz, preste muita atenção nas leis do grupo pra não ir de arrasta pra cima no primeiro dia! 🚀\n\n🚨 *REGULAMENTO MÁXIMO (LEU, TÁ LIDO. NÃO LEU, É BAN)* 🚨\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n🚫 *1. ZERO PUTARIA E INVASÃO DE PV:* Aqui não é bagunça! É ESTRITAMENTE PROIBIDO qualquer tipo de conteúdo adulto (nudes, pornografia, figurinhas pesadas). Além disso, chamar os membros no PV sem permissão é BAN NA HORA, sem aviso prévio e sem choro!\n🚫 *2. ZERO TOLERÂNCIA:* Link suspeito, spam ou trava zap? O sistema te expulsa na velocidade da luz.\n⚠️ *3. RESPEITO:* A zueira é liberada, mas sem brigas pesadas ou mimimi. Saiba brincar.\n\n📝 *REGISTRO OBRIGATÓRIO (NÃO SEJA UM FANTASMA):*\nEnvie IMEDIATAMENTE a sua apresentação no formato abaixo:\n👉 *FOTO | CIDADE | IDADE | NOME*\nSe não registrar, o bot acha que você é intruso e vai te expulsar automaticamente! 🤖📸\n\n🎮 *O QUE ROLA NO BONDE:*\n• *JOGOS:* Participe do Quiz (*!perguntas*), encare o Boss (*!atacar*) ou lute pelo topo do ranking (*!rank*).\n• *LOJA:* Use *!comprar [item]* para dominar a economia (compre mutes, escudos e cargos VIP 🤫).\n• *CAOS:* Tem tribunal (*!julgar*), casamentos (*!casar*), assaltos (*!roubar*) e muita fofoca (*!fofoca*).\n\n🤖 *DICA DE OURO:* Digite *!menu* no grupo AGORA para ver todos os comandos. Se ficar parado, os outros membros vão te roubar! 💸`;
 
             await sock.sendMessage(id, { 
                 text: textoBoasVindas, 
@@ -354,7 +360,7 @@ if (contagemFlood[participant].length >= 5) {
     }
         // --- 5. COMANDO INVÁLIDO ---
         if (text.startsWith('!')) {
-            const comandosExistentes = ['!menu', '!comprar', '!loja', '!pesquisar', '!backup', '!dar_pontos', '!atacar', '!boss', '!rank', '!casar', '!casais', '!piada', '!avisoadm', '!descasar', '!emoji', '!sortear', '!cadastros', '!perguntas', '!jogar', '!forca', '!jogosoff', '!jogoson', '!limpar', '!fixar', '!status', '!link', '!tier', '!ranking', '!placar', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute', '!gado', '!corno', '!fofoca', '!roubar', '!cargos', '!comprar_cargo', '!dar_cargo'];
+            const comandosExistentes = ['!menu', '!comprar', '!julgar', '!loja', '!pesquisar', '!backup', '!dar_pontos', '!atacar', '!boss', '!rank', '!casar', '!casais', '!piada', '!avisoadm', '!descasar', '!emoji', '!sortear', '!cadastros', '!perguntas', '!jogar', '!forca', '!jogosoff', '!jogoson', '!limpar', '!fixar', '!status', '!link', '!tier', '!ranking', '!placar', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute', '!gado', '!corno', '!fofoca', '!roubar', '!cargos', '!comprar_cargo', '!dar_cargo'];
             const cmdDigitado = text.split(' ')[0]; 
             
             if (!comandosExistentes.includes(cmdDigitado)) {
@@ -777,7 +783,8 @@ if (contagemFlood[participant].length >= 5) {
 │ 🎥 !emoji     | 🤡 !piada
 │ 🎤 !musica (Quiz)
 │ 🧠 !perguntas | 💍 !casar
-│ 💔 !descasar  | 👥 !casais
+│ 💔 !descasar  | ⚖️ !julgar
+│ 👥 !casais
 │
 ├────😂 ZUEIRA────
 │ 🤜 !socar     | 😘 !beijar
@@ -1039,6 +1046,111 @@ if (contagemFlood[participant].length >= 5) {
             });
 
             await sock.sendMessage(sender, { text: res, mentions: ppts.map(p => p.id) }, { quoted: msg });
+        }
+
+        // ==========================================
+        // ⚖️ O TRIBUNAL DO BONDE ⚖️
+        // ==========================================
+        if (text.startsWith('!julgar')) {
+            if (!isGroup) return await sock.sendMessage(sender, { text: "❌ O tribunal só funciona em grupos!" }, { quoted: quoteMsg });
+            if (tribunal.ativo) return await sock.sendMessage(sender, { text: "❌ Já existe um julgamento acontecendo! Aguarde o martelo bater." }, { quoted: quoteMsg });
+
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            if (!mention) return await sock.sendMessage(sender, { text: "❌ Marque o réu que vai a julgamento! Ex: !julgar @membro" }, { quoted: quoteMsg });
+            if (mention === participant) return await sock.sendMessage(sender, { text: "❌ Você não pode processar a si mesmo, seu maluco! 😂" }, { quoted: quoteMsg });
+
+            // --- TRAVA DE IMUNIDADE (ADM E BOT) ---
+            const MEU_ID_REAL = "96057379803159@lid"; 
+            const meuNumero = "5527992997083";
+            if (groupAdmins.includes(mention)) {
+                return await sock.sendMessage(sender, { text: "❌ TÁ MALUCO? O réu faz parte da Elite (ADM)! Vocês não têm poder para julgar a chefia! 👑" }, { quoted: quoteMsg });
+            }
+            if (mention === MEU_ID_REAL || String(mention).includes(meuNumero)) {
+                return await sock.sendMessage(sender, { text: "❌ Tentando julgar o juiz? O bot é intocável! 🤖" }, { quoted: quoteMsg });
+            }
+
+            // --- INICIA O TRIBUNAL ---
+            tribunal.ativo = true;
+            tribunal.vitima = mention;
+            tribunal.acusador = participant;
+            tribunal.votos = {};
+
+            const msgAbertura = `⚖️ *O TRIBUNAL DO BONDE ESTÁ ABERTO!* ⚖️\n\nO promotor @${participant.split('@')[0]} acusou o(a) @${mention.split('@')[0]} de falar muita besteira!\n\nJúri, vocês têm *1 MINUTO* para decidir o destino dele(a)!\nFloodem o chat com:\n🔴 *!culpado*\n🟢 *!inocente*\n\n_Se for inocentado, o acusador sofrerá a punição!_`;
+            
+            await sock.sendMessage(sender, { 
+                video: { url: 'https://media.tenor.com/myw9F3Q5zs0AAAPo/stand-up-ada-samantha-maroun.mp4' }, 
+                gifPlayback: true,
+                caption: msgAbertura,
+                mentions: [participant, mention]
+            });
+
+            // Contagem regressiva de 1 minuto (60.000 milissegundos)
+            setTimeout(async () => {
+                if (!tribunal.ativo) return; // Medida de segurança
+
+                let culpados = 0;
+                let inocentes = 0;
+
+                Object.values(tribunal.votos).forEach(voto => {
+                    if (voto === 'culpado') culpados++;
+                    if (voto === 'inocente') inocentes++;
+                });
+
+                tribunal.ativo = false; // Fecha o tribunal
+
+                if (culpados > inocentes) {
+                    // VÍTIMA CONDENADA: Mute de 5 min (300.000ms) + Cargo Humilhante
+                    mutados[tribunal.vitima] = Date.now() + 300000;
+                    fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
+
+                    let cargos = lerArquivoSeguro(arquivoCargos);
+                    cargos[tribunal.vitima] = "⚖️ Condenado";
+                    fs.writeFileSync(arquivoCargos, JSON.stringify(cargos, null, 2));
+
+                    const msgCondenado = `👨‍⚖️ *VEREDITO: CULPADO!* (${culpados}x${inocentes})\n\nA voz do povo é a voz de Deus! O @${tribunal.vitima.split('@')[0]} tomou uma martelada na cabeça!\n\n*PUNIÇÃO:* Mute de 5 minutos e foi rebaixado a "⚖️ Condenado"! 🔨`;
+                    
+                    await sock.sendMessage(sender, { 
+                        video: { url: 'https://media.tenor.com/pUnjk3G9hGgAAAPo/gavel-order-in-court.mp4' }, 
+                        gifPlayback: true,
+                        caption: msgCondenado,
+                        mentions: [tribunal.vitima]
+                    });
+
+                } else {
+                    // VÍTIMA INOCENTADA: Acusador se ferra! Mute de 5 min (300.000ms)
+                    mutados[tribunal.acusador] = Date.now() + 300000;
+                    fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
+
+                    const msgInocente = `👨‍⚖️ *VEREDITO: INOCENTE!* (${inocentes}x${culpados})\n\nO réu @${tribunal.vitima.split('@')[0]} foi ABSOLVIDO pelo júri!\n\n🚨 *REVIRAVOLTA!* O promotor de araque @${tribunal.acusador.split('@')[0]} foi condenado por falsa acusação!\n\n*PUNIÇÃO:* Mute de 5 minutos para aprender a não brincar com a justiça! 🤡`;
+                    
+                    await sock.sendMessage(sender, { 
+                        video: { url: 'https://media.tenor.com/AENPKL0I4uEAAAPo/judge.mp4' }, 
+                        gifPlayback: true,
+                        caption: msgInocente,
+                        mentions: [tribunal.vitima, tribunal.acusador]
+                    });
+                }
+            }, 60000); // 60 segundos exatos
+        }
+
+        // --- SISTEMA DE VOTAÇÃO (Capta os votos da galera) ---
+        if (text === '!culpado' || text === '!inocente') {
+            if (!tribunal.ativo) return;
+            
+            // Regra de ouro: O Acusador e a Vítima NÃO PODEM VOTAR!
+            if (participant === tribunal.vitima || participant === tribunal.acusador) {
+                if (!isLid) await sock.sendMessage(sender, { react: { text: '🚫', key: msg.key } });
+                return;
+            }
+
+            // Cada pessoa só vota uma vez (democracia)
+            if (tribunal.votos[participant]) {
+                if (!isLid) await sock.sendMessage(sender, { react: { text: '👀', key: msg.key } });
+                return;
+            }
+
+            tribunal.votos[participant] = text === '!culpado' ? 'culpado' : 'inocente';
+            if (!isLid) await sock.sendMessage(sender, { react: { text: '⚖️', key: msg.key } });
         }
 
         if (text.startsWith('!matar')) {
