@@ -370,7 +370,7 @@ if (contagemFlood[participant].length >= 5) {
     }
         // --- 5. COMANDO INVÁLIDO ---
         if (text.startsWith('!')) {
-            const comandosExistentes = ['!menu', '!comprar', '!bola8', '!shippar',  '!julgar', '!loja', '!pesquisar', '!backup', '!dar_pontos', '!atacar', '!boss', '!rank', '!casar', '!casais', '!piada', '!avisoadm', '!descasar', '!emoji', '!sortear', '!cadastros', '!perguntas', '!jogar', '!forca', '!jogosoff', '!jogoson', '!limpar', '!fixar', '!status', '!link', '!tier', '!ranking', '!placar', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute', '!gado', '!corno', '!fofoca', '!roubar', '!cargos', '!comprar_cargo', '!dar_cargo'];
+            const comandosExistentes = ['!menu', '!comprar', '!bola8', '!culpado', '!inocente', '!shippar',  '!julgar', '!loja', '!pesquisar', '!backup', '!dar_pontos', '!atacar', '!boss', '!rank', '!casar', '!casais', '!piada', '!avisoadm', '!descasar', '!emoji', '!sortear', '!cadastros', '!perguntas', '!jogar', '!forca', '!jogosoff', '!jogoson', '!limpar', '!fixar', '!status', '!link', '!tier', '!ranking', '!placar', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute', '!gado', '!corno', '!fofoca', '!roubar', '!cargos', '!comprar_cargo', '!dar_cargo'];
             const cmdDigitado = text.split(' ')[0]; 
             
             if (!comandosExistentes.includes(cmdDigitado)) {
@@ -791,8 +791,6 @@ if (contagemFlood[participant].length >= 5) {
 
 😈 *CAOS & TRETA*
  ┣ ⚖️ !julgar @alvo ➾ !culpado/!inocente
- ┣ 🔪 !expor ➾ !aprovado/!reprovado
- ┣ 🤥 !poligrafo ➾ !sim/!nao
  ┣ 💍 !casar ➾ !descasar ➾ !casais
  ┣ 🤫 !fofoca ➾ !socar ➾ !beijar
  ┣ 🐂 !gado ➾ !corno ➾ !matar
