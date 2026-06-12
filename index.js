@@ -648,8 +648,13 @@ if (contagemFlood[participant].length >= 5) {
 
         if (lowerText === '!link') {
             await sock.sendMessage(sender, { react: { text: '🔗', key: msg.key } });
-            const linkDoGrupo = "https://chat.whatsapp.com/HT7DEVaIjiE7hZ8PDThZ5a?s=cl&p=i&ilr=0"; 
-            await sock.sendMessage(sender, { text: `🔗 *LINK DO BONDE DO BRASIL*\n\nAqui está o link para convidar a galera:\n${linkDoGrupo}\n\n*Regra:* Não convide gringos, hein! 😂`, }, { quoted: msg });
+            
+            const linkDoGrupo = "https://chat.whatsapp.com/HT7DEVaIjiE7hZ8PDThZ5a?s=cl&p=i&ilr=0";
+            
+            await sock.sendMessage(sender, { 
+                image: { url: 'https://i.postimg.cc/MGq9Tk1z/Gemini-Generated-Image-dwvo91dwvo91dwvo.png' }, 
+                caption: `🔗 *LINK DO BONDE DO BRASIL*\n\nConvide a tropa pelo link oficial abaixo:\n${linkDoGrupo}\n\n⚠️ *Regra:* Sem gringos e respeite a Elite! 👑`
+            }, { quoted: msg });
         }
 
         if (lowerText.includes('bot')) {
