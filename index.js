@@ -2325,6 +2325,7 @@ if (text.startsWith('!mute')) {
 }
 
 // --- COMANDO !CLIMA (AJUSTADO E LIMPO) ---
+// --- COMANDO !CLIMA (AJUSTADO E LIMPO) ---
 if (text.startsWith('!clima')) {
     const cidade = text.replace('!clima', '').trim();
     if (!cidade) return await sock.sendMessage(sender, { text: "❌ Digite a cidade! Ex: !clima Cariacica", quoted: msg });
@@ -2359,7 +2360,9 @@ if (text.startsWith('!clima')) {
         await sock.sendMessage(sender, { react: { text: '🌤', key: mensagemParaResponder.key } });
         await sock.sendMessage(sender, { text: msgClima }, { quoted: mensagemParaResponder });
     }); 
-} 
+} // ESTE FECHA O IF DO CLIMA
+
+// --- FINALIZAÇÕES DO EVENTO E FUNÇÃO ---
     }); // FECHA O EVENTO MESSAGES.UPSERT
 } // FECHA A FUNÇÃO CONNECTTOWHATSAPP
 
