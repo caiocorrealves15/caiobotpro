@@ -298,21 +298,28 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
         return; 
     }
 
-    // Verifica se a pessoa mandou o formato FOTO | CIDADE | IDADE | NOME
-// --- AUTO-APROVAÇÃO POR FOTO OU APRESENTAÇÃO ---
 // --- SISTEMA DE CADASTRO (AUTO-APROVAÇÃO E COBRANÇA) ---
 if (membrosPendentes[participant]) {
-    // Busca a imagem em qualquer um dos dois formatos (normal ou viewOnce)
-    const imagem = msg.message?.imageMessage || 
-                   msg.message?.viewOnceMessage?.message?.imageMessage || 
-                   msg.message?.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage ||
-                   msg.message?.extendedTextMessage?.contextInfo?.quotedMessage?.viewOnceMessage?.message?.imageMessage;
+    // Busca foto ou vídeo, incluindo versões de Visualização Única (View Once)
+    const msgCorpo = msg.message;
+    const viewOnce = msgCorpo?.viewOnceMessage?.message;
+    const viewOnceV2 = msgCorpo?.viewOnceMessageV2?.message;
+    
+    // Verifica se é imagem ou vídeo (normal ou viewOnce)
+    const midia = msgCorpo?.imageMessage || 
+                  msgCorpo?.videoMessage || 
+                  viewOnce?.imageMessage || 
+                  viewOnce?.videoMessage ||
+                  viewOnceV2?.imageMessage || 
+                  viewOnceV2?.videoMessage ||
+                  msgCorpo?.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage ||
+                  msgCorpo?.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage;
 
     const padraoApresentacao = /\|/g;
     const enviouTextoCorreto = (text.match(padraoApresentacao) || []).length >= 3;
 
-    // Se tiver imagem (qualquer tipo) OU enviou o texto correto, aprovamos
-    if (imagem || enviouTextoCorreto) {
+    // Se tiver qualquer mídia OU enviou o texto correto, aprovamos
+    if (midia || enviouTextoCorreto) {
         await sock.sendMessage(sender, { 
             text: `✅ Cadastro confirmado, @${participant.split('@')[0]}! Bem-vindo ao Bonde!`, 
             mentions: [participant] 
@@ -320,7 +327,7 @@ if (membrosPendentes[participant]) {
         delete membrosPendentes[participant];
     } else {
         await sock.sendMessage(sender, { 
-            text: `⚠️ Ei, @${participant.split('@')[0]}, cadê a apresentação, você não seguiu o padrão! \n\nEnvie uma FOTO ou o formato: FOTO | CIDADE | IDADE | NOME. 📸`, 
+            text: `⚠️ Ei, @${participant.split('@')[0]}, cadê a apresentação, você não seguiu o padrão! \n\nEnvie uma FOTO/VÍDEO ou o formato: FOTO | CIDADE | IDADE | NOME. 📸`, 
             mentions: [participant] 
         }, { quoted: msg });
     }
@@ -2025,7 +2032,6 @@ if (text === '!abrir') {
         // 7. Música e Figurinha
         // Adicione lá no topo do arquivo (junto com os outros 'require')
 
-// Dentro de sock.ev.on('messages.upsert', ...), substitua o seu bloco !musica atual por este:
 // 7. Música e Figurinha// Altere para um nome que não conflite com o seu !adm atual
 // AVISO ADM (ESTILO EMERGÊNCIA DRAMÁTICA)
 if (text === '!avisoadm') { 
@@ -2150,132 +2156,132 @@ if (jogoEmoji.ativo && msg.message?.extendedTextMessage?.contextInfo?.stanzaId =
 }
 // --- BLOCO DO JOGO DA FORCA ---
     // 1. Comando de Início
-    if (text.startsWith('!forca')) {
-        const palavrasHard = ['abstrato', 'efemeridade', 'paradoxo', 'onisciente', 'idiossincrasia', 'inexoravel'];
-        const palavrasMedio = ['arquitetura', 'paradigma', 'recursividade', 'criptografia', 'abstração', 'framework'];
-        
-        const dicasHard = {
-            'abstrato': 'Algo que não é concreto, uma ideia ou conceito.',
-            'efemeridade': 'Algo que dura pouco tempo.',
-            'paradoxo': 'Uma contradição que parece verdadeira.',
-            'onisciente': 'Alguém que sabe tudo.',
-            'idiossincrasia': 'Uma característica peculiar de alguém.',
-            'inexoravel': 'Algo que não se pode evitar ou dobrar.'
-        };
-        const dicasMedio = {
-            'arquitetura': 'A estrutura lógica ou física de um sistema.',
-            'paradigma': 'Um modelo ou padrão a ser seguido.',
-            'recursividade': 'Uma função que chama a si mesma.',
-            'criptografia': 'Transformar informação em código para proteger dados.',
-            'abstração': 'Esconder detalhes complexos e mostrar apenas o essencial.',
-            'framework': 'Um conjunto de ferramentas que facilita o desenvolvimento de software.'
-        };
-
-        // Decide entre Hard ou Medio
-        const nivel = Math.random() > 0.5 ? 'hard' : 'medio';
-        const listaPalavras = nivel === 'hard' ? palavrasHard : palavrasMedio;
-        const listaDicas = nivel === 'hard' ? dicasHard : dicasMedio;
-
-        jogoForca.palavra = listaPalavras[Math.floor(Math.random() * listaPalavras.length)];
-        jogoForca.dica = listaDicas[jogoForca.palavra];
-        jogoForca.descobertas = Array(jogoForca.palavra.length).fill('_');
-        jogoForca.tentativas = [];
-        jogoForca.ativo = true;
-        jogoForca.erros = 0;
-        jogoForca.maxErros = 6;
-
-        const msgForca = await sock.sendMessage(sender, { 
-            video: { url: 'https://media.tenor.com/7HUogy7rXs4AAAPo/feel-me-think-about-it.mp4' }, 
-            gifPlayback: true,
-            caption: `💀 *JOGO DA FORCA (${nivel.toUpperCase()})*\n\nDica: ${jogoForca.dica}\n\nPalavra: ${jogoForca.descobertas.join(' ')}\n\nResponda em cima dessa mensagem com uma letra ou a palavra toda!` 
-        }, { quoted: msg });
-        jogoForca.idMensagem = msgForca.key.id; 
-        return;
-    }
-
-
-    // 2. Lógica de Adivinhação
-    if (jogoForca.ativo && !jogoForca.processando) {
-        const contextInfo = msg.message?.extendedTextMessage?.contextInfo || 
-                            msg.message?.imageMessage?.contextInfo || 
-                            msg.message?.videoMessage?.contextInfo;
-
-        if (contextInfo?.stanzaId === jogoForca.idMensagem && !text.startsWith('!')) {
-            jogoForca.processando = true;
-            const resposta = text.toLowerCase().trim();
-            const autor = msg.key.participant || msg.key.remoteJid;
-
-            // 1. TENTAR PALAVRA COMPLETA (MAIS DE UMA LETRA)
-            if (resposta.length > 1) {
-                if (resposta === jogoForca.palavra) {
-                    jogoForca.ativo = false;
-                    await sock.sendMessage(sender, { react: { text: '🎉', key: msg.key } });
-                    await sock.sendMessage(sender, { 
-                        video: { url: 'https://media.tenor.com/eakvOpIu7fAAAAPo/sarcastic-clap.mp4' }, 
-                        gifPlayback: true, 
-                        caption: `🎉 PARABÉNS @${autor.split('@')[0]}! Você acertou a palavra completa: *${jogoForca.palavra.toUpperCase()}*`,
-                        mentions: [autor]
-                    }, { quoted: msg });
-                } else {
-                    await sock.sendMessage(sender, { text: `QUASE!! Mas não é HAHAHAHA, tente novamente! 🤡`, quoted: msg });
-                }
-            } 
-            // 2. TENTAR LETRA ÚNICA
-            else if (resposta.length === 1) {
-                const letra = resposta;
-  
-                if (jogoForca.tentativas.includes(letra)) {
-                    await sock.sendMessage(sender, { text: `⚠️ @${autor.split('@')[0]}, você já tentou a letra "${letra.toUpperCase()}".`, mentions: [autor] }, { quoted: msg });
-                } else {
-                    jogoForca.tentativas.push(letra);
-       
-                    if (jogoForca.palavra.includes(letra)) {
-                        await sock.sendMessage(sender, { react: { text: '✅', key: msg.key } });
-                        for (let i = 0; i < jogoForca.palavra.length; i++) {
-                            if (jogoForca.palavra[i] === letra) jogoForca.descobertas[i] = letra;
-                        }
+    // --- BLOCO DO JOGO DA FORCA ---
+// 1. Comando de Início
+if (text.startsWith('!forca')) {
+    const palavrasHard = ['abstrato', 'efemeridade', 'paradoxo', 'onisciente', 'idiossincrasia', 'inexoravel'];
+    const palavrasMedio = ['arquitetura', 'paradigma', 'recursividade', 'criptografia', 'abstração', 'framework'];
     
-                        if (!jogoForca.descobertas.includes('_')) {
-                            jogoForca.ativo = false;
-                            await sock.sendMessage(sender, { text: `🎉 PARABÉNS @${autor.split('@')[0]}! Você salvou a alma dele! A palavra era: *${jogoForca.palavra.toUpperCase()}*`, mentions: [autor] }, { quoted: msg });
-                        } else {
-                            await sock.sendMessage(sender, { text: `Boa, campeão @${autor.split('@')[0]}!! Continue: ${jogoForca.descobertas.join(' ')}`, mentions: [autor] });
-                        }
+    const dicasHard = {
+        'abstrato': 'Algo que não é concreto, uma ideia ou conceito.',
+        'efemeridade': 'Algo que dura pouco tempo.',
+        'paradoxo': 'Uma contradição que parece verdadeira.',
+        'onisciente': 'Alguém que sabe tudo.',
+        'idiossincrasia': 'Uma característica peculiar de alguém.',
+        'inexoravel': 'Algo que não se pode evitar ou dobrar.'
+    };
+    const dicasMedio = {
+        'arquitetura': 'A estrutura lógica ou física de um sistema.',
+        'paradigma': 'Um modelo ou padrão a ser seguido.',
+        'recursividade': 'Uma função que chama a si mesma.',
+        'criptografia': 'Transformar informação em código para proteger dados.',
+        'abstração': 'Esconder detalhes complexos e mostrar apenas o essencial.',
+        'framework': 'Um conjunto de ferramentas que facilita o desenvolvimento de software.'
+    };
+
+    // Decide entre Hard ou Medio
+    const nivel = Math.random() > 0.5 ? 'hard' : 'medio';
+    const listaPalavras = nivel === 'hard' ? palavrasHard : palavrasMedio;
+    const listaDicas = nivel === 'hard' ? dicasHard : dicasMedio;
+
+    jogoForca.palavra = listaPalavras[Math.floor(Math.random() * listaPalavras.length)];
+    jogoForca.dica = listaDicas[jogoForca.palavra];
+    jogoForca.descobertas = Array(jogoForca.palavra.length).fill('_');
+    jogoForca.tentativas = [];
+    jogoForca.ativo = true;
+    jogoForca.erros = 0;
+    jogoForca.maxErros = 6;
+
+    const msgForca = await sock.sendMessage(sender, { 
+        video: { url: 'https://media.tenor.com/7HUogy7rXs4AAAPo/feel-me-think-about-it.mp4' }, 
+        gifPlayback: true,
+        caption: `💀 *JOGO DA FORCA (${nivel.toUpperCase()})*\n\nDica: ${jogoForca.dica}\n\nPalavra: ${jogoForca.descobertas.join(' ')}\n\nResponda em cima dessa mensagem com uma letra ou a palavra toda!` 
+    }, { quoted: msg });
+    jogoForca.idMensagem = msgForca.key.id; 
+    return;
+}
+
+// 2. Lógica de Adivinhação
+if (jogoForca.ativo && !jogoForca.processando) {
+    const contextInfo = msg.message?.extendedTextMessage?.contextInfo || 
+                        msg.message?.imageMessage?.contextInfo || 
+                        msg.message?.videoMessage?.contextInfo;
+
+    if (contextInfo?.stanzaId === jogoForca.idMensagem && !text.startsWith('!')) {
+        jogoForca.processando = true;
+        const resposta = text.toLowerCase().trim();
+        const autor = msg.key.participant || msg.key.remoteJid;
+
+        // 1. TENTAR PALAVRA COMPLETA (MAIS DE UMA LETRA)
+        if (resposta.length > 1) {
+            if (resposta === jogoForca.palavra) {
+                jogoForca.ativo = false;
+                await sock.sendMessage(sender, { react: { text: '🎉', key: msg.key } });
+                await sock.sendMessage(sender, { 
+                    video: { url: 'https://media.tenor.com/eakvOpIu7fAAAAPo/sarcastic-clap.mp4' }, 
+                    gifPlayback: true, 
+                    caption: `🎉 PARABÉNS @${autor.split('@')[0]}! Você acertou a palavra completa: *${jogoForca.palavra.toUpperCase()}*`,
+                    mentions: [autor]
+                }, { quoted: msg });
+            } else {
+                await sock.sendMessage(sender, { text: `QUASE!! Mas não é HAHAHAHA, tente novamente! 🤡`, quoted: msg });
+            }
+        } 
+        // 2. TENTAR LETRA ÚNICA
+        else if (resposta.length === 1) {
+            const letra = resposta;
+
+            if (jogoForca.tentativas.includes(letra)) {
+                await sock.sendMessage(sender, { text: `⚠️ @${autor.split('@')[0]}, você já tentou a letra "${letra.toUpperCase()}".`, mentions: [autor] }, { quoted: msg });
+            } else {
+                jogoForca.tentativas.push(letra);
+
+                if (jogoForca.palavra.includes(letra)) {
+                    await sock.sendMessage(sender, { react: { text: '✅', key: msg.key } });
+                    for (let i = 0; i < jogoForca.palavra.length; i++) {
+                        if (jogoForca.palavra[i] === letra) jogoForca.descobertas[i] = letra;
+                    }
+
+                    if (!jogoForca.descobertas.includes('_')) {
+                        jogoForca.ativo = false;
+                        await sock.sendMessage(sender, { text: `🎉 PARABÉNS @${autor.split('@')[0]}! Você salvou a alma dele! A palavra era: *${jogoForca.palavra.toUpperCase()}*`, mentions: [autor] }, { quoted: msg });
                     } else {
-                        await sock.sendMessage(sender, { react: { text: '❌', key: msg.key } });
-                        jogoForca.erros++;
-                        if (jogoForca.erros >= jogoForca.maxErros) {
-                            jogoForca.ativo = false;
-                            await sock.sendMessage(sender, { 
-                                video: { url: 'https://media.tenor.com/HyeG4dSurbwAAAPo/hanging-skeleton-skeleton.mp4' }, 
-                                gifPlayback: true, 
-                                caption: `💀 VOCÊ PERDEU, @${autor.split('@')[0]}! A palavra era *${jogoForca.palavra.toUpperCase()}*`,
-                                mentions: [autor]
-                            }, { quoted: msg });
-                        } else {
-                            await sock.sendMessage(sender, { text: `❌ Errou, @${autor.split('@')[0]}! ${jogoForca.maxErros - jogoForca.erros} vidas restando.`, mentions: [autor] });
-                        }
+                        await sock.sendMessage(sender, { text: `Boa, campeão @${autor.split('@')[0]}!! Continue: ${jogoForca.descobertas.join(' ')}`, mentions: [autor] });
+                    }
+                } else {
+                    await sock.sendMessage(sender, { react: { text: '❌', key: msg.key } });
+                    jogoForca.erros++;
+                    if (jogoForca.erros >= jogoForca.maxErros) {
+                        jogoForca.ativo = false;
+                        await sock.sendMessage(sender, { 
+                            video: { url: 'https://media.tenor.com/HyeG4dSurbwAAAPo/hanging-skeleton-skeleton.mp4' }, 
+                            gifPlayback: true, 
+                            caption: `💀 VOCÊ PERDEU, @${autor.split('@')[0]}! A palavra era *${jogoForca.palavra.toUpperCase()}*`,
+                            mentions: [autor]
+                        }, { quoted: msg });
+                    } else {
+                        await sock.sendMessage(sender, { text: `❌ Errou, @${autor.split('@')[0]}! ${jogoForca.maxErros - jogoForca.erros} vidas restando.`, mentions: [autor] });
                     }
                 }
             }
-
-            setTimeout(() => { jogoForca.processando = false; }, 1000); 
         }
+        setTimeout(() => { jogoForca.processando = false; }, 1000); 
     }
-    // --- FIM DA LÓGICA DA FORCA ---
-        // 8. COMANDO CLIMA (COM DIAGNÓSTICO)
-        if (text.startsWith('!desmute')) {
-            if (!isAdmin) return await sock.sendMessage(sender, { text: "Tentando furar as regras, né?? HAHAHHAHA 👀👀👀\n\nSabe que um ADM está de olho em você agora né?" });
-            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
-            if (mention && mutados[mention]) {
-                delete mutados[mention];
-                // ADICIONE ESSA LINHA PARA SALVAR A REMOÇÃO NO ARQUIVO:
-                fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
-                
-                await sock.sendMessage(sender, { text: "Fala agora, mas com cuidado, ok? To doidinho pra mutar de novo😎😂", mentions: [mention] });
-            }
-        }
+}
+// --- FIM DA LÓGICA DA FORCA ---
+        // --- COMANDO !DESMUTE ---
+if (text.startsWith('!desmute')) {
+    if (!isAdmin) return await sock.sendMessage(sender, { text: "Tentando furar as regras, né?? HAHAHHAHA 👀👀👀\n\nSabe que um ADM está de olho em você agora né?" });
+    const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+    if (mention && mutados[mention]) {
+        delete mutados[mention];
+        fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
+        
+        await sock.sendMessage(sender, { text: "Fala agora, mas com cuidado, ok? To doidinho pra mutar de novo😎😂", mentions: [mention] });
+    }
+}
 
+// --- COMANDO !MUTE ---
 if (text.startsWith('!mute')) {
     // 1. Verifica se quem mandou o comando é ADM
     if (!isAdmin) {
@@ -2293,6 +2299,7 @@ if (text.startsWith('!mute')) {
 
     const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
     if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione o alvo do seu silenciamento, ô lerdo!", quoted: msg });
+    
     // 2. Proteção do seu ID (O dono/criador é intocável)
     const MEU_ID_REAL = "96057379803159@lid"; 
     const meuNumero = "5527992997083";
@@ -2321,23 +2328,70 @@ if (text.startsWith('!mute')) {
     }, { quoted: msg });
 }
 
+    // 3. Aplica o Mute
+    const tempo = text.includes('h') ? 3600000 : 1800000;
+    mutados[mention] = Date.now() + tempo;
+    fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
+    
+    await sock.sendMessage(sender, { 
+        text: "Você está falando demais, dá um tempo seu rabugento.😂❌", 
+        mentions: [mention] 
+    }, { quoted: msg });
+}
+
 // --- COMANDO !CLIMA (VERSÃO FINAL E LIMPA) ---
+// --- COMANDO !CLIMA (VERSÃO COMPLETA) ---
 if (text.startsWith('!clima')) {
     const cidade = text.replace('!clima', '').trim();
     if (!cidade) return await sock.sendMessage(sender, { text: "❌ Digite a cidade! Ex: !clima Cariacica", quoted: msg });
 
+    const mensagemParaResponder = msg;
+
+    const piadasClima = {
+        'sunny': [
+            "Tá um sol que parece que o inferno abriu uma filial aqui! 🔥",
+            "Céu azul... ótimo dia para ficar mofando dentro de casa no computador. ☀️",
+            "Solzão de rachar mamona! Se você sair na rua, vai virar churrasco. 🥩",
+            "Tá mais quente que o banho que você nem tomou hoje. 🥵"
+        ],
+        'cloudy': [
+            "Tempo nublado... bem deprimido, igual ao seu histórico de pesquisas. ☁️",
+            "Céu cinza... o clima perfeito para dormir até o ano que vem. 💤",
+            "Tá nublado, mas a feiura continua a mesma. 🤡",
+            "Parece que vai chover... ou não. Minha previsão é tão inútil quanto você. 🌩️"
+        ],
+        'rain': [
+            "Chovendo? Ótimo, desculpa perfeita para não fazer nada o dia todo! 🌧️",
+            "Tempo de chuva... cuidado para não derreter, você é feito de açúcar? 🍭",
+            "Tá caindo o mundo lá fora e você aí preocupado com o clima? Vai arrumar um emprego! 💼",
+            "Chuva, café e tédio. O combo completo da vida adulta. ☕"
+        ]
+    };
+
     weather.find({ search: cidade, degreeType: 'C' }, async (err, result) => {
         if (err || !result || result.length === 0) {
-            return await sock.sendMessage(sender, { text: "❌ Cidade não encontrada.", quoted: msg });
+            return await sock.sendMessage(sender, { text: "❌ Cidade não encontrada. Tente colocar o Estado junto, ex: !clima Cariacica, ES", quoted: mensagemParaResponder });
         }
+        
         const current = result[0].current;
-        await sock.sendMessage(sender, { text: `🌤 *${current.observationpoint}*\n🌡 ${current.temperature}°C\n☁️ ${current.skytext}` }, { quoted: msg });
-    });
-}
+        const condicaoOriginal = current.skytext.toLowerCase();
+        
+        let categoria = 'cloudy';
+        if (condicaoOriginal.includes('sunny') || condicaoOriginal.includes('clear')) categoria = 'sunny';
+        else if (condicaoOriginal.includes('rain') || condicaoOriginal.includes('storm')) categoria = 'rain';
 
-// --- FIM DE TODOS OS COMANDOS E EVENTOS ---
-    }); // FECHA O EVENTO messages.upsert
+        const fraseExtra = piadasClima[categoria][Math.floor(Math.random() * piadasClima[categoria].length)];
+
+        const msgClima = `🌤 *Tempo em: ${current.observationpoint}*\n` +
+                         `🌡 Temperatura: ${current.temperature}°C\n` +
+                         `☁️ Condição: ${current.skytext}\n\n` +
+                         `💬 *Bot:* ${fraseExtra}`;
+        
+        await sock.sendMessage(sender, { react: { text: '🌤', key: mensagemParaResponder.key } });
+        await sock.sendMessage(sender, { text: msgClima }, { quoted: mensagemParaResponder });
+    }); 
+}
+}); // FECHA O ÚNICO sock.ev.on('messages.upsert')
 } // FECHA A FUNÇÃO connectToWhatsApp
 
-// --- INICIALIZAÇÃO ---
 connectToWhatsApp();
