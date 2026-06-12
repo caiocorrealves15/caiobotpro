@@ -268,26 +268,36 @@ sock.ev.on('creds.update', saveCreds);
             const padraoApresentacao = /\|/g;
             const enviouTextoCorreto = (text.match(padraoApresentacao) || []).length >= 3;
 
+            // Pega o ID da pessoa (Mesmo que seja LID, o mentions: [participant] vai converter em tag azul)
+            const numeroExibicao = participant.split('@')[0];
+
             if (midia || enviouTextoCorreto) {
-                // Prepara a mensagem de confirmação padrão
-                let textoConfirmacao = `✅ *Cadastro confirmado!* 🎉\n\nFala, @${participant.split('@')[0]}! Você mandou muito bem na apresentação. Bem-vindo(a) à elite do Bonde! 🚀🔥`;
+                let textoConfirmacao = `✅ *Cadastro confirmado!* 🎉\n\nFala, @${numeroExibicao}! Você mandou muito bem na apresentação. Bem-vindo(a) à elite do Bonde! 🚀🔥`;
+                let emojiReacao = '✅';
                 
-                // Se o bot detectar que a pessoa usou visualização única, ele manda uma mensagem específica
+                // Se o bot detectar que a pessoa usou visualização única
                 if (mandouViewOnce) {
-                    textoConfirmacao = `🕵️‍♂️ *Visão Biônica Ativada!* 👀\n\nRelaxa, @${participant.split('@')[0]}, eu consegui validar sua foto/vídeo de visualização única! Ninguém precisa ver, só o sistema! 🔒✨\n\n✅ *Cadastro 100% confirmado!* Bem-vindo(a) ao Bonde! 🚀🎉`;
+                    textoConfirmacao = `🕵️‍♂️ *Visão Biônica Ativada!* 👀\n\nRelaxa, @${numeroExibicao}, eu consegui validar sua foto/vídeo de visualização única! Ninguém precisa ver, só o sistema! 🔒✨\n\n✅ *Cadastro 100% confirmado!* Bem-vindo(a) ao Bonde! 🚀🎉`;
+                    emojiReacao = '🕵️‍♂️';
                 }
 
+                // 1. Reage à mensagem que o usuário mandou
+                await sock.sendMessage(sender, { react: { text: emojiReacao, key: msg.key } });
+
+                // 2. Responde EM CIMA da mensagem e MARCA a pessoa corretamente
                 await sock.sendMessage(sender, { 
                     text: textoConfirmacao, 
-                    mentions: myMention // Usando a variável myMention do ajuste anterior para não bugar no Web
-                }, { quoted: quoteMsg });
+                    mentions: [participant] 
+                }, { quoted: msg });
                 
                 delete membrosPendentes[participant];
             } else {
+                // Reage com aviso e cobra o padrão correto
+                await sock.sendMessage(sender, { react: { text: '⚠️', key: msg.key } });
                 await sock.sendMessage(sender, { 
-                    text: `⚠️ Ei, @${participant.split('@')[0]}, cadê a apresentação? Você não seguiu o padrão! 🤦‍♂️\n\nEnvie uma *FOTO/VÍDEO* (pode ser de visualização única 🔒) ou o formato:\n*FOTO | CIDADE | IDADE | NOME* 📸`, 
-                    mentions: myMention 
-                }, { quoted: quoteMsg });
+                    text: `⚠️ Ei, @${numeroExibicao}, cadê a apresentação? Você não seguiu o padrão! 🤦‍♂️\n\nEnvie uma *FOTO/VÍDEO* (pode ser de visualização única 🔒) ou o formato:\n*FOTO | CIDADE | IDADE | NOME* 📸`, 
+                    mentions: [participant] 
+                }, { quoted: msg });
             }
             return;
         }
@@ -360,7 +370,7 @@ if (contagemFlood[participant].length >= 5) {
     }
         // --- 5. COMANDO INVÁLIDO ---
         if (text.startsWith('!')) {
-            const comandosExistentes = ['!menu', '!comprar', '!julgar', '!loja', '!pesquisar', '!backup', '!dar_pontos', '!atacar', '!boss', '!rank', '!casar', '!casais', '!piada', '!avisoadm', '!descasar', '!emoji', '!sortear', '!cadastros', '!perguntas', '!jogar', '!forca', '!jogosoff', '!jogoson', '!limpar', '!fixar', '!status', '!link', '!tier', '!ranking', '!placar', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute', '!gado', '!corno', '!fofoca', '!roubar', '!cargos', '!comprar_cargo', '!dar_cargo'];
+            const comandosExistentes = ['!menu', '!comprar', '!bola8', '!shippar',  '!julgar', '!loja', '!pesquisar', '!backup', '!dar_pontos', '!atacar', '!boss', '!rank', '!casar', '!casais', '!piada', '!avisoadm', '!descasar', '!emoji', '!sortear', '!cadastros', '!perguntas', '!jogar', '!forca', '!jogosoff', '!jogoson', '!limpar', '!fixar', '!status', '!link', '!tier', '!ranking', '!placar', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute', '!gado', '!corno', '!fofoca', '!roubar', '!cargos', '!comprar_cargo', '!dar_cargo'];
             const cmdDigitado = text.split(' ')[0]; 
             
             if (!comandosExistentes.includes(cmdDigitado)) {
@@ -757,55 +767,55 @@ if (contagemFlood[participant].length >= 5) {
             const dataAtual = new Date().toLocaleDateString('pt-BR');
             const horaAtual = new Date(new Date().getTime() - (3 * 60 * 60 * 1000)).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
             const meuId = '5527992997083@s.whatsapp.net'; 
+            
             const menuTexto = `
-╭━━━ 🇧🇷 BONDE DO BRASIL 🇧🇷
-│
-│ 👤 Fala, @${senderId.split('@')[0]}!
-│ 📅 ${dataAtual} | ⏰ ${horaAtual}
-│ 👑 Dono: @5527992997083
-│
-├────🛍️ LOJA & ECONOMIA────
-│ 🛒 !loja      | 💰 !roubar
-│ 💳 !comprar_cargo [nome]
-│ 💵 !dar_pontos @mencao [qtd]
-│ 🤫 !comprar [item]
-│
-├────🔥 EVENTOS & RAIDS────
-│ 👹 !boss      | ⚔️ !atacar
-│
-├────💎 STATUS & CARGOS────
-│ 🛍️ !cargos    | 🎖️ !dar_cargo @mencao
-│ 🔰 !rank      | 🏆 !ranking
-│
-├────🎮 JOGOS & DESAFIOS────
-│ ⌛ !sortear   | 🎮 !jogar
-│ 😵 !forca     | ⚽ !penalti
-│ 🎥 !emoji     | 🤡 !piada
-│ 🎤 !musica (Quiz)
-│ 🧠 !perguntas | 💍 !casar
-│ 💔 !descasar  | ⚖️ !julgar
-│ 👥 !casais
-│
-├────😂 ZUEIRA────
-│ 🤜 !socar     | 😘 !beijar
-│ 🗡️ !matar     | 🤳 !f
-│ 🐂 !gado      | 🦌 !corno
-│ 🤫 !fofoca
-│
-├────🚨 ADMIN────
-│ ❌ !ban       | ❇️ !adm
-│ 🚫 !fechar    | 🔓 !abrir
-│ 🔇 !mute      | 🔊 !desmute
-│ 📣 !avisoadm  | 🕹️ !jogoson/off
-│ 👻 !cadastros
-│
-├────⚙️ UTIL & SUPORTE────
-│ 📛 !menu      | 🌤️ !clima
-│ 🔍 !pesquisar| 🔗 !link
-│ 📦 !backup
-│
-╰━━━━━━━━━━━━━━━━━━━━━━╯
-🤖 *Acumule pontos, derrote os Bosses e não seja um NPC.*`.trim();
+⚜️ ━━━ *B O N D E  V I P* ━━━ ⚜️
+  
+ 👤 *Membro:* @${senderId.split('@')[0]}
+ 🕒 *Acesso:* ${dataAtual} às ${horaAtual}
+ 👑 *CEO:* @5527992997083
+
+💎 *MERCADO & ECONOMIA*
+ ┣ 🛒 !loja ➾ _Itens VIP_
+ ┣ 💰 !roubar ➾ _Assaltar_
+ ┣ 💳 !comprar_cargo [nome]
+ ┣ 🎁 !comprar [item]
+ ┗ 🏆 !ranking / !rank
+
+🎲 *DIVERSÃO & SORTE*
+ ┣ 👾 !jogar ➾ !forca ➾ !penalti
+ ┣ 🧠 !perguntas ➾ !musica
+ ┣ 🎬 !emoji ➾ !piada
+ ┣ 🎱 !bola8 [pergunta]
+ ┗ 💘 !shippar @mencao
+
+😈 *CAOS & TRETA*
+ ┣ ⚖️ !julgar @alvo ➾ !culpado/!inocente
+ ┣ 🔪 !expor ➾ !aprovado/!reprovado
+ ┣ 🤥 !poligrafo ➾ !sim/!nao
+ ┣ 💍 !casar ➾ !descasar ➾ !casais
+ ┣ 🤫 !fofoca ➾ !socar ➾ !beijar
+ ┣ 🐂 !gado ➾ !corno ➾ !matar
+ ┗ 🖼️ !f _(Figurinha)_
+
+⚔️ *GUERRA & STATUS*
+ ┣ 👹 !boss ➾ !atacar
+ ┗ 🎖️ !cargos ➾ !tier
+
+🚨 *CONTROLE (ADMS)*
+ ┣ 🔨 !ban ➾ !mute ➾ !desmute
+ ┣ 🔒 !fechar/abrir ➾ !adm
+ ┣ 🕹️ !jogoson/off ➾ !dar_pontos
+ ┗ 📣 !avisoadm ➾ !cadastros
+
+🛠️ *SISTEMA*
+ ┣ 🌤️ !clima [cidade]
+ ┣ 🔍 !pesquisar [algo]
+ ┣ 🔗 !link ➾ !backup
+ ┗ 📛 !menu
+
+━━━━━━━━━━━━━━━━━━━━
+⚠️ _O sistema nunca dorme._`.trim();
 
             await sock.sendMessage(sender, { 
                 video: { url: 'https://media.tenor.com/WV_2tGerThoAAAPo/farming-aura-farming.mp4' },
@@ -980,7 +990,7 @@ if (contagemFlood[participant].length >= 5) {
             }
         }
 
-        // --- COMANDO !PESQUISAR (REFEITO PARA WIKIPÉDIA - BUSCA INTELIGENTE) ---
+        // --- COMANDO !PESQUISAR (REFEITO PARA WIKIPÉDIA - BLINDADO) ---
         if (text.startsWith('!pesquisar ')) {
             const termo = text.replace('!pesquisar ', '').trim();
             if (!termo) return await sock.sendMessage(sender, { text: "❌ O que você quer pesquisar?" }, { quoted: quoteMsg });
@@ -994,32 +1004,115 @@ if (contagemFlood[participant].length >= 5) {
             }, { quoted: quoteMsg });
 
             try {
+                // Configuração de Headers para evitar bloqueio da Wikipédia (Eles bloqueiam bots sem User-Agent)
+                const axiosConfig = {
+                    headers: {
+                        'User-Agent': 'BondeDoBrasilBot/1.0 (Bot do WhatsApp) axios/1.x'
+                    }
+                };
+
                 // 1. Faz uma busca inteligente para achar o título exato do artigo
                 const searchUrl = `https://pt.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(termo)}&utf8=&format=json`;
-                const searchRes = await axios.get(searchUrl);
+                const searchRes = await axios.get(searchUrl, axiosConfig);
 
                 // Se não achou nenhum resultado na busca
-                if (!searchRes.data.query.search || searchRes.data.query.search.length === 0) {
+                if (!searchRes.data?.query?.search || searchRes.data.query.search.length === 0) {
                     return await sock.sendMessage(sender, { text: "❌ Não encontrei absolutamente nada sobre isso na Wikipédia. Tente usar outras palavras!" }, { quoted: quoteMsg });
                 }
 
                 // Pega o título do resultado mais relevante (o primeiro da lista)
                 const tituloExato = searchRes.data.query.search[0].title;
+                const tituloFormatado = encodeURIComponent(tituloExato.replace(/ /g, '_')); // Troca espaços por _ para não bugar a URL
 
-                // 2. Agora sim, puxa o resumo usando o título certinho
-                const res = await axios.get(`https://pt.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(tituloExato)}`);
-                
-                if (res.data && res.data.extract) {
-                    const respostaTexto = `🔍 *RESULTADO: ${tituloExato.toUpperCase()}*\n\n${res.data.extract}\n\n🔗 *Fonte:* ${res.data.content_urls.desktop.page}`;
-                    await sock.sendMessage(sender, { text: respostaTexto }, { quoted: quoteMsg });
-                } else {
-                    await sock.sendMessage(sender, { text: "❌ Encontrei a página, mas não consegui puxar o resumo. Tente ser mais específico!" }, { quoted: quoteMsg });
+                try {
+                    // 2. Agora sim, puxa o resumo usando o título certinho
+                    const res = await axios.get(`https://pt.wikipedia.org/api/rest_v1/page/summary/${tituloFormatado}`, axiosConfig);
+                    
+                    if (res.data && res.data.extract) {
+                        const respostaTexto = `🔍 *RESULTADO: ${tituloExato.toUpperCase()}*\n\n${res.data.extract}\n\n🔗 *Fonte:* ${res.data.content_urls?.desktop?.page || `https://pt.wikipedia.org/wiki/${tituloFormatado}`}`;
+                        await sock.sendMessage(sender, { text: respostaTexto }, { quoted: quoteMsg });
+                    } else {
+                        throw new Error("Página encontrada, mas sem resumo (extract).");
+                    }
+                } catch (restError) {
+                    // PLANO B: Se a API de resumo falhar, pega o trecho (snippet) da pesquisa original e limpa a sujeira do HTML
+                    let snippet = searchRes.data.query.search[0].snippet;
+                    snippet = snippet.replace(/<[^>]*>?/gm, ''); // Expressão regular que apaga as tags <span class="searchmatch"> da Wikipédia
+                    
+                    const respostaTextoFallback = `🔍 *RESULTADO: ${tituloExato.toUpperCase()}*\n\n${snippet}...\n\n🔗 *Fonte:* https://pt.wikipedia.org/wiki/${tituloFormatado}`;
+                    await sock.sendMessage(sender, { text: respostaTextoFallback }, { quoted: quoteMsg });
                 }
+
             } catch (e) {
-                console.error("Erro no !pesquisar:", e);
-                await sock.sendMessage(sender, { text: "❌ O buscador deu erro de conexão. Tente de novo!" }, { quoted: quoteMsg });
+                console.error("Erro no !pesquisar:", e.message);
+                await sock.sendMessage(sender, { text: "❌ O buscador deu erro de conexão com a Wikipédia. Tente de novo!" }, { quoted: quoteMsg });
             }
         }
+
+        // ==========================================
+        // 🔮 A BOLA 8 MÁGICA (!bola8)
+        // ==========================================
+        if (text.startsWith('!bola8')) {
+            const pergunta = text.replace('!bola8', '').trim();
+            if (!pergunta) {
+                return await sock.sendMessage(sender, { text: "❌ Você precisa me fazer uma pergunta! Ex: !bola8 Eu vou ficar rico?" }, { quoted: msg });
+            }
+
+            const respostas = [
+                "🔮 Com certeza! Pode apostar sua casa nisso.",
+                "🔮 Nem em um milhão de anos, desista.",
+                "🔮 Minhas fontes dizem que vai dar ruim...",
+                "🔮 As estrelas dizem que sim, mas meu sistema diz que não.",
+                "🔮 Vai sonhando, iludido! 😂",
+                "🔮 Sim! Mas só se você fizer um pix pro ADM.",
+                "🔮 Não conte com isso.",
+                "🔮 Talvez... a vida é uma caixinha de surpresas.",
+                "🔮 Sem dúvida! (A menos que dê errado).",
+                "🔮 Pergunta de novo mais tarde, tô com preguiça agora."
+            ];
+
+            const respostaSorteada = respostas[Math.floor(Math.random() * respostas.length)];
+            
+            await sock.sendMessage(sender, { react: { text: '🎱', key: msg.key } });
+            await sock.sendMessage(sender, { 
+                text: `🎱 *A BOLA DE CRISTAL DO BONDE DIZ:*\n\n*Sua pergunta:* _${pergunta}_\n*Resposta:* ${respostaSorteada}`,
+                mentions: [participant]
+            }, { quoted: msg });
+        }
+
+        // ==========================================
+        // ❤️ MEDIDOR DE CASAL / SHIPP (!shippar)
+        // ==========================================
+        if (text.startsWith('!shippar')) {
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            if (!mention) {
+                return await sock.sendMessage(sender, { text: "❌ Marque o @ do seu crush pra ver se dá match! Ex: !shippar @fulano" }, { quoted: msg });
+            }
+            if (mention === participant) {
+                return await sock.sendMessage(sender, { text: "❌ Shippar você com você mesmo? É carência ou amor-próprio demais? 😂" }, { quoted: msg });
+            }
+
+            const porcentagem = Math.floor(Math.random() * 101);
+            let diagnostico = "";
+
+            if (porcentagem === 0) diagnostico = "Péssima ideia. Se vocês ficarem juntos, vai dar polícia! 🚓💔";
+            else if (porcentagem < 30) diagnostico = "Amizade e olhe lá. Um de vocês vai acabar chorando no banho. 🚿";
+            else if (porcentagem < 60) diagnostico = "Tem uma química, mas vai dar um trabalho... 🧪👀";
+            else if (porcentagem < 90) diagnostico = "EITA! O clima esquentou! Eu já shippo, só falta o beijo! 👩‍❤️‍💋‍👨🔥";
+            else diagnostico = "PERFEIÇÃO! Almas gêmeas! Já podem casar e dividir a conta do Nubank! 💍💳";
+
+            const p1 = participant.split('@')[0];
+            const p2 = mention.split('@')[0];
+
+            await sock.sendMessage(sender, { react: { text: '💘', key: msg.key } });
+            await sock.sendMessage(sender, { 
+                video: { url: 'https://media.tenor.com/P4WfI2T8pCMAAAPo/love-hearts.mp4' }, 
+                gifPlayback: true,
+                caption: `💘 *MÁQUINA DO AMOR* 💘\n\nAnalisando a química entre @${p1} e @${p2}...\n\n*Resultado:* ${porcentagem}% Compatíveis! 💞\n\n*Veredito:* ${diagnostico}`,
+                mentions: [participant, mention]
+            }, { quoted: msg });
+        }
+
         if (text.startsWith('!tier')) {
             await sock.sendMessage(sender, { react: { text: '📊', key: msg.key } });
             const tema = text.replace('!tier', '').trim() || "do grupo";
