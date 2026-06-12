@@ -1,4 +1,3 @@
-const weather = require('weather-js');
 const { execSync } = require('child_process');
 const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, downloadContentFromMessage } = require('@whiskeysockets/baileys');
 const pino = require('pino');
@@ -6,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const dataPath = '/var/data';
 const arquivoPlacarEmoji = path.join(dataPath, 'placar_emoji.json');
-const ARQUIVO_PLACAR_EMOJI = arquivoPlacarEmoji;
+const ARQUIVO_PLACAR_EMOJI = arquivoPlacarEmoji; 
 const ARQUIVO_RANK = path.join(dataPath, 'rank.json');
 const ARQUIVO_MUTADOS = path.join(dataPath, 'mutados.json');
 const arquivoMutados = ARQUIVO_MUTADOS;
@@ -27,6 +26,9 @@ let admsTemporarios = {};
 let escudosAtivos = {};
 const cooldownRoubo = {}; 
 let membrosPendentes = {}; 
+
+// --- CACHE DE ADMS (PARA O BOT FICAR RÁPIDO) ---
+const cacheAdmins = {};
 
 function lerArquivoSeguro(caminho) {
     try {
@@ -49,7 +51,6 @@ let raidBoss = {
 const enviarBackupAutomatico = async (sock) => {
     const meuNumero = '5527992997083@s.whatsapp.net';
     const arquivos = [arquivoPlacar, arquivoCargos, arquivoCasais, arquivoRank];
-    
     for (const arquivo of arquivos) {
         if (fs.existsSync(arquivo)) {
             await sock.sendMessage(meuNumero, { 
@@ -77,38 +78,11 @@ const salvarCasais = () => {
     listaCasais = lerArquivoSeguro(arquivoCasais);
 };
 
-if (!fs.existsSync(ARQUIVO_PLACAR_EMOJI)) {
-    fs.writeFileSync(ARQUIVO_PLACAR_EMOJI, JSON.stringify({}));
-}
-
-if (!fs.existsSync(arquivoPlacar)) {
-    fs.writeFileSync(arquivoPlacar, JSON.stringify({}));
-}
-
-try {
-    if (fs.existsSync(arquivoCasais)) {
-        const dados = fs.readFileSync(arquivoCasais, 'utf8');
-        if (dados && dados.trim().length > 0) {
-            listaCasais = JSON.parse(dados);
-            console.log(`✅ Lista de casais carregada com sucesso (${listaCasais.length} casais).`);
-        } else {
-            console.log("⚠️ casais.json estava vazio, iniciando lista limpa.");
-            listaCasais = [];
-        }
-    } else {
-        console.log("ℹ️ Arquivo casais.json não encontrado, criando um novo.");
-        listaCasais = [];
-        fs.writeFileSync(arquivoCasais, JSON.stringify([], null, 2));
-    }
-} catch (e) {
-    console.error("❌ Erro fatal ao ler casais.json, reiniciando lista:", e);
-    listaCasais = [];
-}
-
 function garantirArquivo(caminho) {
     if (!fs.existsSync(caminho)) {
-        console.log(`Criando arquivo inexistente no disco: ${caminho}`);
-        fs.writeFileSync(caminho, JSON.stringify({})); 
+        console.log(`Criando arquivo inexistente: ${caminho}`);
+        if (caminho === arquivoCasais) fs.writeFileSync(caminho, JSON.stringify([]));
+        else fs.writeFileSync(caminho, JSON.stringify({})); 
     }
 }
 
@@ -117,6 +91,7 @@ garantirArquivo(arquivoCargos);
 garantirArquivo(arquivoCasais);
 garantirArquivo(ARQUIVO_RANK);
 garantirArquivo(ARQUIVO_MUTADOS);
+garantirArquivo(ARQUIVO_PLACAR_EMOJI);
 
 let placarEmoji = lerArquivoSeguro(ARQUIVO_PLACAR_EMOJI);
 
@@ -127,8 +102,6 @@ if (isRender) {
     app.get('/', (req, res) => res.send('Bot está online!'));
     app.listen(process.env.PORT || 10000);
 }
-
-let brincadeirasAtivas = true;
 
 let jogoForca = {
     ativo: false,
@@ -180,7 +153,7 @@ async function connectToWhatsApp() {
         } else if (action === 'remove') {
             if (membrosPendentes[userId]) {
                 delete membrosPendentes[userId];
-                console.log(`🧹 ${userId.split('@')[0]} saiu do grupo, removido da lista de pendentes.`);
+                console.log(`🧹 ${userId.split('@')[0]} saiu do grupo.`);
             }
         }
     });
@@ -224,7 +197,7 @@ async function connectToWhatsApp() {
             fs.unlinkSync(tempPath);
         } catch (err) { 
             console.error("ERRO DETALHADO: ", err);
-            await sock.sendMessage(sender, { text: "❌ Erro ao baixar ou processar a mídia. O vídeo pode estar corrompido ou o arquivo é muito grande." }); 
+            await sock.sendMessage(sender, { text: "❌ Erro ao baixar ou processar a mídia." }); 
         }
     }
 
@@ -235,23 +208,29 @@ async function connectToWhatsApp() {
         const sender = msg.key.remoteJid;
         const participant = msg.key.participant || sender;
         
-        // --- TRAVA CRÍTICA (Evita o erro "str is not iterable" no terminal) ---
-        if (participant && participant.includes('@lid')) return;
+        // --- TRAVA CRÍTICA ---
+        if (participant && participant.includes('@lid')) return; 
 
-        console.log("DEBUG ID DO PARTICIPANTE: " + participant);
         const isGroup = sender.endsWith('@g.us');
         
         const text = msg.message.conversation || msg.message.extendedTextMessage?.text || msg.message.imageMessage?.caption || msg.message.videoMessage?.caption || "";
         const lowerText = text.toLowerCase();
         const isMedia = !!(msg.message.imageMessage || msg.message.videoMessage || msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage || msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage);
 
+        // --- SISTEMA DE CACHE DE ADM (ACELERA O BOT EM 1000%) ---
         let isAdmin = false;
+        let groupAdmins = [];
         if (isGroup) {
-            try {
-                const metadata = await sock.groupMetadata(sender);
-                const groupAdmins = metadata.participants.filter(p => p.admin !== null).map(p => p.id);
-                isAdmin = groupAdmins.includes(participant);
-            } catch (e) { console.log("Erro ao buscar admins:", e); }
+            if (!cacheAdmins[sender] || Date.now() - cacheAdmins[sender].lastFetch > 60000) {
+                try {
+                    const metadata = await sock.groupMetadata(sender);
+                    groupAdmins = metadata.participants.filter(p => p.admin !== null).map(p => p.id);
+                    cacheAdmins[sender] = { admins: groupAdmins, lastFetch: Date.now() };
+                } catch (e) { console.log("Erro ao buscar admins:", e); }
+            } else {
+                groupAdmins = cacheAdmins[sender].admins;
+            }
+            isAdmin = groupAdmins.includes(participant);
         }
 
         // --- 1. VERIFICAÇÃO DE MUTADOS ---
@@ -279,17 +258,14 @@ async function connectToWhatsApp() {
             return;
         }
 
-        // --- 3. ANTI-SPAM UNIFICADO ---
+        // --- 3. ANTI-SPAM (AGORA SUPER RÁPIDO) ---
         const agoraSpam = Date.now();
         if (!contagemFlood[participant]) contagemFlood[participant] = [];
         contagemFlood[participant] = contagemFlood[participant].filter(t => agoraSpam - t < 1000);
         contagemFlood[participant].push(agoraSpam);
 
         if (contagemFlood[participant].length >= 5) {
-            const metadata = await sock.groupMetadata(sender).catch(() => null);
-            const ehAdm = metadata?.participants.find(p => p.id === participant)?.admin !== null;
-
-            if (!ehAdm) {
+            if (!isAdmin) {
                 await sock.sendMessage(sender, { react: { text: '🛑', key: msg.key } });
                 mutados[participant] = Date.now() + 60000;
                 fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
@@ -338,12 +314,10 @@ async function connectToWhatsApp() {
 
         if (text.length > 5000) {
             if (!isAdmin) {
-                const metadata = await sock.groupMetadata(sender);
-                const admins = metadata.participants.filter(p => p.admin !== null).map(p => p.id);
                 await sock.sendMessage(sender, { delete: msg.key });
                 await sock.sendMessage(sender, { 
-                    text: `🚨 *ALERTA DE SEGURANÇA!* 🚨\n\nO membro @${participant.split('@')[0]} tentou enviar uma trava pesada e o sistema bloqueou!\n\n${admins.map(adm => `@${adm.split('@')[0]}`).join(' ')} -> *Fiquem de olho neste membro!*`, 
-                    mentions: [participant, ...admins]
+                    text: `🚨 *ALERTA DE SEGURANÇA!* 🚨\n\nO membro @${participant.split('@')[0]} tentou enviar uma trava pesada e o sistema bloqueou!\n\n${groupAdmins.map(adm => `@${adm.split('@')[0]}`).join(' ')} -> *Fiquem de olho neste membro!*`, 
+                    mentions: [participant, ...groupAdmins]
                 }, { quoted: msg });
                 return;
             } else {
@@ -372,15 +346,17 @@ async function connectToWhatsApp() {
             if (!isAdmin) {
                 const frasesErro = [
                     "❌ Opa, @${participant.split('@')[0]}, você não é ADM! Fica na sua que quem fiscaliza aqui sou eu e os chefes! 🤡",
-                    "🚫 Tentando dar uma de fiscal? Esse comando é só pros ADMs, senta lá! 😂"
+                    "🚫 Tentando dar uma de fiscal, @${participant.split('@')[0]}? Esse comando é só pros ADMs, senta lá! 😂",
+                    "🧐 Eita, querendo mandar no grupo sem ter cargo? Volta pro seu lugar, esse comando é exclusivo da Elite! 👑"
                 ];
                 return await sock.sendMessage(sender, { text: frasesErro[Math.floor(Math.random() * frasesErro.length)], mentions: [participant] }, { quoted: msg });
             }
             const pendentes = Object.keys(membrosPendentes);
             if (pendentes.length === 0) return await sock.sendMessage(sender, { text: "✅ Todos já se apresentaram! O grupo está limpo. 😇" });
             
-            let msgLista = "🕵️‍♂️ *Atenção, ADMs! O radar detectou novos membros que ainda não tomaram vergonha na cara para se registrar!*\n\n";
+            let msgLista = "🕵️‍♂️ *Atenção, ADMs! O radar detectou novos membros que ainda não tomaram vergonha na cara para se registrar!*\n\n👻 *LISTA DE FANTASMAS (NÃO APRESENTADOS):*\n\n";
             pendentes.forEach(p => { msgLista += `• @${p.split('@')[0]}\n`; });
+            msgLista += "\n_Se apresentem logo (mandem a FOTO ou DADOS) ou serão expulsos sem aviso prévio! 🤡_";
             await sock.sendMessage(sender, { text: msgLista, mentions: pendentes }, { quoted: msg });
         }
 
@@ -476,7 +452,6 @@ async function connectToWhatsApp() {
                 { q: "Qual é o maior mamífero terrestre do mundo? 🐘", r: "elefante africano" },
                 { q: "Qual cientista propôs as leis da gravitação universal? 🍎", r: "isaac newton" },
                 { q: "Qual o idioma mais falado do mundo por falantes nativos? 🗣️", r: "mandarim" },
-                { q: "Qual o nome da linha imaginária que divide o globo em Norte e Sul? 🗺️", r: "linha do equador" },
                 { q: "Quem pintou a 'Mona Lisa'? 🎨", r: "leonardo da vinci" },
                 { q: "Qual é a floresta tropical que produz 20% do oxigênio da Terra? 🌳", r: "amazonica" },
                 { q: "Qual é o país que tem a forma de uma bota no mapa? 🇮🇹", r: "italia" },
@@ -486,7 +461,6 @@ async function connectToWhatsApp() {
                 { q: "Qual é o nome da substância que dá a cor verde às plantas? 🍃", r: "clorofila" },
                 { q: "Qual é a cidade conhecida como 'cidade luz'? 🗼", r: "paris" }
             ];
-
             const sorteada = quiz[Math.floor(Math.random() * quiz.length)];
             await sock.sendMessage(sender, { react: { text: '🤔', key: msg.key } });
             const msgQuiz = await sock.sendMessage(sender, { 
@@ -494,7 +468,6 @@ async function connectToWhatsApp() {
                 gifPlayback: true,
                 caption: `🧠 *QUIZ DO BONDE - NÍVEL AVANÇADO (VALENDO 30 PONTOS)* 🧠\n\n${sorteada.q}\n\n*Responda em cima desta mensagem!*`, 
             }, { quoted: msg });
-
             jogoPerguntas.ativo = true;
             jogoPerguntas.resposta = sorteada.r;
             jogoPerguntas.idMensagem = msgQuiz.key.id;
@@ -587,7 +560,6 @@ async function connectToWhatsApp() {
                     placar = (conteudo && conteudo.trim().length > 0) ? JSON.parse(conteudo) : {};
                 }
             } catch (e) {
-                console.error("❌ Erro ao ler o banco de dados do ranking:", e);
                 return await sock.sendMessage(sender, { text: "❌ Erro ao ler o banco de dados.", quoted: msg });
             }
 
@@ -618,7 +590,6 @@ async function connectToWhatsApp() {
         if (lowerText.includes('bot')) {
             const reacoesPossiveis = ['🤖', '🔥', '👀', '🤙', '😎', '💥', '👻'];
             const reacoesEscolhidas = reacoesPossiveis.sort(() => 0.5 - Math.random()).slice(0, 3);
-
             for (const emoji of reacoesEscolhidas) {
                 await sock.sendMessage(sender, { react: { text: emoji, key: msg.key } });
                 await new Promise(resolve => setTimeout(resolve, 300)); 
@@ -953,7 +924,7 @@ async function connectToWhatsApp() {
             }
         }
 
-        // --- COMANDO !PESQUISAR ---
+        // --- COMANDO !PESQUISAR (REFEITO PARA WIKIPÉDIA - NUNCA MAIS INGLÊS) ---
         if (text.startsWith('!pesquisar ')) {
             const termo = text.replace('!pesquisar ', '').trim();
             if (!termo) return await sock.sendMessage(sender, { text: "❌ O que você quer pesquisar?", quoted: msg });
@@ -967,16 +938,17 @@ async function connectToWhatsApp() {
             }, { quoted: msg });
 
             try {
+                // Buscando direto na Wikipédia em Português! Fim do problema com inglês.
                 const res = await axios.get(`https://pt.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(termo)}`);
                 if (res.data && res.data.extract) {
                     const respostaTexto = `🔍 *RESULTADO: ${termo.toUpperCase()}*\n\n${res.data.extract}\n\n🔗 *Fonte:* ${res.data.content_urls.desktop.page}`;
                     await sock.sendMessage(sender, { text: respostaTexto }, { quoted: msg });
                 } else {
-                    await sock.sendMessage(sender, { text: "❌ Encontrei o resultado, mas está em um formato que não consegui resumir em português. Tente ser mais específico!", quoted: msg });
+                    await sock.sendMessage(sender, { text: "❌ Encontrei a página, mas não consegui puxar o resumo. Tente ser mais específico!", quoted: msg });
                 }
             } catch (e) {
                 console.error("Erro no !pesquisar:", e);
-                await sock.sendMessage(sender, { text: "❌ O buscador deu ruim (erro de conexão ou termo não encontrado). Tente de novo com palavras mais exatas!", quoted: msg });
+                await sock.sendMessage(sender, { text: "❌ Não encontrei absolutamente nada sobre isso na Wikipédia (ou deu erro de conexão). Tente usar um termo exato!", quoted: msg });
             }
         }
 
@@ -1023,6 +995,7 @@ async function connectToWhatsApp() {
                 ];
                 const sorteioMatar = frasesMatar[Math.floor(Math.random() * frasesMatar.length)];
                 const linkGifMatar = "https://media.tenor.com/3gus0SGhiEIAAAPo/cool-beans.mp4";
+
                 await sock.sendMessage(sender, { 
                     video: { url: linkGifMatar }, 
                     gifPlayback: true,
@@ -1708,13 +1681,19 @@ async function connectToWhatsApp() {
                 'rain': ["Chovendo? Ótimo, desculpa pra não fazer nada! 🌧️", "Combo: chuva, café e tédio. ☕"]
             };
 
-            weather.find({ search: cidade, degreeType: 'C' }, async (err, result) => {
-                if (err || !result || result.length === 0) return await sock.sendMessage(sender, { text: "❌ Cidade não encontrada.", quoted: msg });
-                const cur = result[0].current;
-                const cat = cur.skytext.toLowerCase().includes('sunny') ? 'sunny' : (cur.skytext.toLowerCase().includes('rain') ? 'rain' : 'cloudy');
-                const msgClima = `🌤 *Tempo em: ${cur.observationpoint}*\n🌡 Temp: ${cur.temperature}°C\n💬 *Bot:* ${piadasClima[cat][Math.floor(Math.random() * piadasClima[cat].length)]}`;
+            try {
+                // Trocado o weather-js bugado pela api da wttr.in (MUITO mais estável)
+                const res = await axios.get(`https://wttr.in/${encodeURIComponent(cidade)}?format=j1`);
+                const climaData = res.data.current_condition[0];
+                const tempC = climaData.temp_C;
+                const desc = climaData.lang_pt ? climaData.lang_pt[0].value : climaData.weatherDesc[0].value;
+                const cat = desc.toLowerCase().includes('sol') || desc.toLowerCase().includes('limpo') ? 'sunny' : (desc.toLowerCase().includes('chuva') ? 'rain' : 'cloudy');
+
+                const msgClima = `🌤 *Tempo em: ${cidade.toUpperCase()}*\n🌡 Temp: ${tempC}°C\n☁️ Condição: ${desc}\n\n💬 *Bot:* ${piadasClima[cat][Math.floor(Math.random() * piadasClima[cat].length)]}`;
                 await sock.sendMessage(sender, { text: msgClima }, { quoted: msg });
-            });
+            } catch (err) {
+                await sock.sendMessage(sender, { text: "❌ Cidade não encontrada ou erro no satélite do clima.", quoted: msg });
+            }
         }
 
         // --- SALVAMENTO FINAL DE RANKING ---
