@@ -1143,7 +1143,8 @@ if (contagemFlood[participant].length >= 5) {
         // ⚖️ O TRIBUNAL DO BONDE ⚖️
         // ==========================================
         // ==========================================
-        // ⚖️ O TRIBUNAL DO BONDE (VERSÃO IMUNE) ⚖️
+        // ==========================================
+        // ⚖️ O TRIBUNAL DO BONDE (VERSÃO DEFINITIVA) ⚖️
         // ==========================================
         if (text.startsWith('!julgar')) {
             if (!isGroup) return await sock.sendMessage(sender, { text: "❌ O tribunal só funciona em grupos!" }, { quoted: quoteMsg });
@@ -1153,7 +1154,7 @@ if (contagemFlood[participant].length >= 5) {
             if (!mention) return await sock.sendMessage(sender, { text: "❌ Marque o réu que vai a julgamento! Ex: !julgar @membro" }, { quoted: quoteMsg });
             
             // --- TRAVA DE IMUNIDADE ABSOLUTA PARA ADM E DONO ---
-            // Se o participante marcado for ADM ou você (dono), o tribunal nem abre.
+            // Se for ADM ou você (dono), o tribunal nem abre.
             if (groupAdmins.includes(mention) || mention.includes('5527992997083')) {
                 return await sock.sendMessage(sender, { 
                     text: "❌ *ORDEM JUDICIAL:* A Elite (ADM/Dono) possui imunidade diplomática total! O tribunal não tem jurisdição sobre a chefia. 👑", 
@@ -1163,11 +1164,10 @@ if (contagemFlood[participant].length >= 5) {
 
             if (mention === participant) return await sock.sendMessage(sender, { text: "❌ Você não pode processar a si mesmo, seu maluco! 😂" }, { quoted: quoteMsg });
 
-            // --- INICIA O TRIBUNAL ---
             tribunal.ativo = true;
             tribunal.vitima = mention;
             tribunal.acusador = participant;
-            tribunal.votos = {};
+            tribunal.votos = {}; // Limpa votos anteriores
 
             const msgAbertura = `⚖️ *O TRIBUNAL DO BONDE ESTÁ ABERTO!* ⚖️\n\nO promotor @${participant.split('@')[0]} acusou o(a) @${mention.split('@')[0]} de falar besteira!\n\nJúri, vocês têm *1 MINUTO* para decidir o destino dele(a)!\nFloodem o chat com:\n🔴 *!culpado*\n🟢 *!inocente*\n\n_Se for inocentado, o acusador sofrerá a punição!_`;
             
@@ -1178,49 +1178,57 @@ if (contagemFlood[participant].length >= 5) {
                 mentions: [participant, mention]
             });
 
-            // Contagem regressiva de 1 minuto (60.000 ms)
             setTimeout(async () => {
                 if (!tribunal.ativo) return;
+                tribunal.ativo = false;
 
                 let culpados = 0;
                 let inocentes = 0;
-
-                Object.values(tribunal.votos).forEach(voto => {
-                    if (voto === 'culpado') culpados++;
-                    if (voto === 'inocente') inocentes++;
-                });
-
-                tribunal.ativo = false;
+                Object.values(tribunal.votos).forEach(voto => voto === 'culpado' ? culpados++ : inocentes++);
 
                 if (culpados > inocentes) {
-                    // VÍTIMA CONDENADA: Mute de 5 min (300.000ms)
-                    mutados[tribunal.vitima] = Date.now() + 300000;
-                    fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
-
-                    let cargos = lerArquivoSeguro(arquivoCargos);
-                    cargos[tribunal.vitima] = "⚖️ Condenado";
-                    fs.writeFileSync(arquivoCargos, JSON.stringify(cargos, null, 2));
-
-                    await sock.sendMessage(sender, { 
-                        video: { url: 'https://media.tenor.com/pUnjk3G9hGgAAAPo/gavel-order-in-court.mp4' }, 
-                        gifPlayback: true,
-                        caption: `👨‍⚖️ *VEREDITO: CULPADO!* (${culpados}x${inocentes})\n\nO @${tribunal.vitima.split('@')[0]} tomou a martelada!\n\n*PUNIÇÃO:* Mute de 5 minutos e rebaixado a "⚖️ Condenado"! 🔨`,
-                        mentions: [tribunal.vitima]
-                    });
-
+                    // VERIFICAÇÃO FINAL DE SEGURANÇA: Se a vítima for ADM (impossível, mas por precaução), não muta
+                    if (groupAdmins.includes(tribunal.vitima) || tribunal.vitima.includes('5527992997083')) {
+                        await sock.sendMessage(sender, { text: "⚖️ O réu foi condenado, mas possui imunidade de ADM! Justiça perdoada." });
+                    } else {
+                        mutados[tribunal.vitima] = Date.now() + 300000;
+                        fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
+                        let cargos = lerArquivoSeguro(arquivoCargos);
+                        cargos[tribunal.vitima] = "⚖️ Condenado";
+                        fs.writeFileSync(arquivoCargos, JSON.stringify(cargos, null, 2));
+                        await sock.sendMessage(sender, { 
+                            video: { url: 'https://media.tenor.com/pUnjk3G9hGgAAAPo/gavel-order-in-court.mp4' }, 
+                            gifPlayback: true,
+                            caption: `👨‍⚖️ *VEREDITO: CULPADO!* (${culpados}x${inocentes})\n\nO @${tribunal.vitima.split('@')[0]} tomou a martelada!\n\n*PUNIÇÃO:* Mute de 5 minutos e rebaixado a "⚖️ Condenado"! 🔨`,
+                            mentions: [tribunal.vitima]
+                        });
+                    }
                 } else {
-                    // VÍTIMA INOCENTADA: Acusador se ferra! Mute de 5 min (300.000ms)
-                    mutados[tribunal.acusador] = Date.now() + 300000;
-                    fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
-
-                    await sock.sendMessage(sender, { 
-                        video: { url: 'https://media.tenor.com/AENPKL0I4uEAAAPo/judge.mp4' }, 
-                        gifPlayback: true,
-                        caption: `👨‍⚖️ *VEREDITO: INOCENTE!* (${inocentes}x${culpados})\n\nO réu @${tribunal.vitima.split('@')[0]} foi ABSOLVIDO!\n\n🚨 *REVIRAVOLTA!* O promotor @${tribunal.acusador.split('@')[0]} foi condenado por falsa acusação!\n\n*PUNIÇÃO:* Mute de 5 minutos para aprender a não brincar com a justiça! 🤡`,
-                        mentions: [tribunal.vitima, tribunal.acusador]
-                    });
+                    // Punição do acusador (se ele for ADM, ele não toma mute)
+                    if (groupAdmins.includes(tribunal.acusador) || tribunal.acusador.includes('5527992997083')) {
+                        await sock.sendMessage(sender, { text: "⚖️ O promotor foi condenado por falsa acusação, mas como é ADM, está imune ao mute! 👑" });
+                    } else {
+                        mutados[tribunal.acusador] = Date.now() + 300000;
+                        fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
+                        await sock.sendMessage(sender, { 
+                            video: { url: 'https://media.tenor.com/AENPKL0I4uEAAAPo/judge.mp4' }, 
+                            gifPlayback: true,
+                            caption: `👨‍⚖️ *VEREDITO: INOCENTE!* (${inocentes}x${culpados})\n\nO réu @${tribunal.vitima.split('@')[0]} foi ABSOLVIDO!\n\n🚨 *REVIRAVOLTA!* O promotor @${tribunal.acusador.split('@')[0]} foi condenado por falsa acusação!\n\n*PUNIÇÃO:* Mute de 5 minutos para aprender a não brincar com a justiça! 🤡`,
+                            mentions: [tribunal.vitima, tribunal.acusador]
+                        });
+                    }
                 }
             }, 60000);
+        }
+
+        // --- SISTEMA DE VOTAÇÃO (CORRIGIDO) ---
+        if (text === '!culpado' || text === '!inocente') {
+            if (!tribunal.ativo) return;
+            if (participant === tribunal.vitima || participant === tribunal.acusador) return;
+            if (tribunal.votos[participant]) return;
+
+            tribunal.votos[participant] = text.replace('!', ''); 
+            if (!isLid) await sock.sendMessage(sender, { react: { text: '⚖️', key: msg.key } });
         }
 
         if (text.startsWith('!matar')) {
