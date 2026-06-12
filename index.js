@@ -222,7 +222,7 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
         // --- LIMPEZA AUTOMÁTICA DE QUEM SAIU ---
         if (membrosPendentes[userId]) {
             delete membrosPendentes[userId];
-            console.log(\`🧹 ${userId.split('@')[0]} saiu do grupo, removido da lista de pendentes.\`);
+            console.log(`🧹 ${userId.split('@')[0]} saiu do grupo, removido da lista de pendentes.`);
         }
     }
 });
