@@ -1987,66 +1987,40 @@ if (text === '!atacar') {
 
         // 6. Admin Fechar/Abrir (Com Reply e Frases Aleatórias)
 // 6. Admin Fechar/Abrir (AJUSTADO E COMPLETÃO)
+// 6. Admin Fechar/Abrir (FORMATO BOLEANO - MAIS COMPATÍVEL)
 if (text === '!fechar') {
     if (!isAdmin) {
-        const frasesErro = [
-            "Tentando furar as regras, né?? HAHAHHAHA 👀👀👀\n\nSabe que um ADM está de olho em você agora né?",
-            "Ops! Você não tem o poder necessário para isso, melhor não brincar com o perigo! 🚫",
-            "Ih, ala! O engraçadinho quer fechar o grupo? Deixa isso com quem manda! 🤡"
-        ];
-        const msgErro = frasesErro[Math.floor(Math.random() * frasesErro.length)];
-        await sock.sendMessage(sender, { text: msgErro, quoted: msg });
+        await sock.sendMessage(sender, { text: "Ih, ala! O engraçadinho quer fechar o grupo? Deixa isso com quem manda! 🤡" }, { quoted: msg });
     } else {
-        const frasesAdm = [
-            "SILÊNCIO!!!!!!!!! Fechei mesmo🤫, Um ADM vai querer anunciar alguma coisa🫡🫡🫡",
-            "Grupo fechado! Todo mundo de boca calada, hora de ouvir os chefes! 🤐",
-            "Cala a boca todo mundo! O grupo está em modo de anúncio! 📢"
-        ];
-        const msgAdm = frasesAdm[Math.floor(Math.random() * frasesAdm.length)];
-        await sock.sendMessage(sender, { text: msgAdm, quoted: msg });
-        
-        // Forma correta para a maioria das versões atuais do Baileys
+        await sock.sendMessage(sender, { text: "Grupo fechado! 🤐" }, { quoted: msg });
         try {
-            await sock.groupSettingUpdate(sender, 'announcement');
+            // Tenta o formato booleano
+            await sock.groupSettingUpdate(sender, { announcement: true });
         } catch (e) {
-            console.error("Erro ao fechar grupo:", e);
-            await sock.sendMessage(sender, { text: "❌ Erro: Não sou administrador ou não tenho permissão!" });
+            console.error("Erro ao fechar:", e);
+            // Se falhar, tenta a string como fallback
+            await sock.groupSettingUpdate(sender, 'announcement');
         }
     }
 }
 
 if (text === '!abrir') {
     if (!isAdmin) {
-        const frasesErro = [
-            "Tentando furar as regras, né?? HAHAHHAHA 👀👀👀\n\nSabe que um ADM está de olho em você agora né?",
-            "Tá achando que é dono do pedaço? Acesso negado, amigão! 🚫",
-            "Negativo! Só ADM manda aqui, volta pra sua cadeira! 😂"
-        ];
-        const msgErro = frasesErro[Math.floor(Math.random() * frasesErro.length)];
-        await sock.sendMessage(sender, { text: msgErro, quoted: msg });
+        await sock.sendMessage(sender, { text: "Negativo! Só ADM manda aqui! 😂" }, { quoted: msg });
     } else {
-        const frasesAdm = [
-            "Pronto, podem falar a vontade bando de desempregados HAHAHAHA.😂😂",
-            "Grupo aberto! Podem soltar os cachorros e começar a bagunça de novo! 🔓",
-            "Liberado para conversas! O silêncio acabou, podem gastar o teclado! ⌨️"
-        ];
-        const msgAdm = frasesAdm[Math.floor(Math.random() * frasesAdm.length)];
-        await sock.sendMessage(sender, { text: msgAdm, quoted: msg });
-        
-        // Forma correta para a maioria das versões atuais do Baileys
+        await sock.sendMessage(sender, { text: "Grupo aberto! Podem soltar a bagunça! 🔓" }, { quoted: msg });
         try {
-            await sock.groupSettingUpdate(sender, 'not_announcement');
+            // Tenta o formato booleano
+            await sock.groupSettingUpdate(sender, { announcement: false });
         } catch (e) {
-            console.error("Erro ao abrir grupo:", e);
-            await sock.sendMessage(sender, { text: "❌ Erro: Não sou administrador ou não tenho permissão!" });
+            console.error("Erro ao abrir:", e);
+            // Se falhar, tenta a string como fallback
+            await sock.groupSettingUpdate(sender, 'not_announcement');
         }
     }
 }
-
         // 7. Música e Figurinha
         // Adicione lá no topo do arquivo (junto com os outros 'require')
-
-// 7. Música e Figurinha// Altere para um nome que não conflite com o seu !adm atual
 // AVISO ADM (ESTILO EMERGÊNCIA DRAMÁTICA)
 if (text === '!avisoadm') { 
     if (!msg.key.remoteJid.endsWith('@g.us')) {
