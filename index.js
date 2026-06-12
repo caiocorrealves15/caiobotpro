@@ -208,15 +208,16 @@ async function connectToWhatsApp() {
         const sender = msg.key.remoteJid;
         const participant = msg.key.participant || sender;
         
-        // --- TRAVA CRÍTICA ---
-        if (participant && participant.includes('@lid')) return; 
+        // --- A MÁGICA QUE SALVA O BOT DO WHATSAPP WEB ---
+
+        const isLid = participant && participant.includes('@lid');
+        const quoteMsg = isLid ? undefined : msg; 
+        const myMention = isLid ? [] : [participant];
 
         const isGroup = sender.endsWith('@g.us');
-        
         const text = msg.message.conversation || msg.message.extendedTextMessage?.text || msg.message.imageMessage?.caption || msg.message.videoMessage?.caption || "";
         const lowerText = text.toLowerCase();
         const isMedia = !!(msg.message.imageMessage || msg.message.videoMessage || msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage || msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage);
-
         // --- SISTEMA DE CACHE DE ADM (ACELERA O BOT EM 1000%) ---
         let isAdmin = false;
         let groupAdmins = [];
