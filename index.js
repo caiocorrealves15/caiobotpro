@@ -194,18 +194,13 @@ async function connectToWhatsApp() {
 Fala aí, @${userId.split('@')[0]}! 🎉 
 Você acaba de ser convocado para a elite da zueira! 🚀
 
-👑 **A ORDEM DO BONDE:**
-Esquece aqueles grupos parados que só mandam bom dia. Aqui seu nome vale ouro, seu ranking define sua moral e o bot não perdoa ninguém! 🏆
+🎮 *O QUE ROLA NO BONDE:*
+Aqui o pau quebra com estilo! Temos sistema de economia, cargos exclusivos e muito caos.
+• *JOGOS:* Participe do nosso *Quiz* (!perguntas), encare o *Boss* (!atacar) ou vire um *mestre do ranking* (!placar).
+• *LOJA:* Use *!comprar [item]* para virar o jogo (tem até mute, vip e adm de fachada! 🤫).
+• *CASAMENTOS:* Quer dividir o mico? Digite *!casar @alguém*.
 
-💎 **SISTEMA DE STATUS (OS CARGOS DE LUXO)**
-Mostre que você não é NPC e suba de nível:
-• 👑 *LENDA:* O dono da verdade.
-• 🔥 *REI DA ZUEIRA:* O caos personificado.
-• 🐂 *GADO SUPREMO:* O posto mais disputado.
-• 🤫 *FOFOQUEIRO(A):* O olho que tudo vê.
-👉 Use *!cargos* e *!comprar_cargo* para ostentar sua superioridade.
-
-📜 **REGULAMENTO DO BONDE (OU A LEI DO MAIS FORTE)**
+📜 *REGULAMENTO DO BONDE (OU A LEI DO MAIS FORTE)*
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
 ① *Respeito acima de tudo:* Sem brigas ou mimimi.
 ② *Privacidade:* PV alheio sem permissão = BAN.
@@ -213,11 +208,11 @@ Mostre que você não é NPC e suba de nível:
 ④ *Zero Tolerância:* Link suspeito, spam ou trava? É BAN direto sem direito a apelação! 🚫
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-📝 **REGISTRO OBRIGATÓRIO (NÃO SEJA UM FANTASMA):**
+📝 *REGISTRO OBRIGATÓRIO (NÃO SEJA UM FANTASMA):*
 Envie: *FOTO | CIDADE | IDADE | NOME*. 
 Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
 
-🤖 **DICA:** Digite *!menu* AGORA para começar a brincadeira. Se não digitar, já entra perdendo pontos! 💸`;
+🤖 *DICA:* Digite *!menu* AGORA para ver todos os comandos e começar a brincadeira. Se não digitar, já entra perdendo pontos! 💸`;
 
         await sock.sendMessage(id, { 
             text: textoBoasVindas, 
@@ -227,7 +222,7 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
         // --- LIMPEZA AUTOMÁTICA DE QUEM SAIU ---
         if (membrosPendentes[userId]) {
             delete membrosPendentes[userId];
-            console.log(`🧹 ${userId.split('@')[0]} saiu do grupo, removido da lista de pendentes.`);
+            console.log(\`🧹 ${userId.split('@')[0]} saiu do grupo, removido da lista de pendentes.\`);
         }
     }
 });
@@ -499,37 +494,31 @@ if (text.startsWith('!dar_cargo')) {
 // --- COMANDO !PERGUNTAS (QUIZ NÍVEL AVANÇADO) ---
 if (text === '!perguntas') {
     const quiz = [
-        { q: "Qual o maior órgão do corpo humano? 🧠", r: "pele" },
-        { q: "Quem foi o primeiro homem a pisar na Lua? 🌑", r: "neil armstrong" },
-        { q: "Qual é o rio mais longo do mundo? 🌊", r: "amazonas" },
-        { q: "Qual é a moeda oficial do Japão? 💴", r: "iene" },
-        { q: "Qual é o elemento químico mais abundante no universo? 🌌", r: "hidrogenio" },
-        { q: "Em que país surgiu a democracia? 🏛️", r: "grecia" },
-        { q: "Qual é a capital da Austrália? 🇦🇺", r: "camberra" },
-        { q: "Quantos planetas existem no nosso Sistema Solar? 🪐", r: "8" },
-        { q: "Qual é a língua oficial da Áustria? 🇦🇹", r: "alemao" },
-        { q: "Qual foi o conflito que deu origem à ONU? 🕊️", r: "segunda guerra mundial" },
-        { q: "Qual é o menor país do mundo em território? 🇻🇦", r: "vaticano" },
-        { q: "Qual a camada da atmosfera que nos protege da radiação UV? 🛡️", r: "ozonio" },
-        { q: "Qual é o nome da galáxia onde está o Sistema Solar? 🌠", r: "via lactea" },
-        { q: "Quem formulou a teoria da relatividade? ➗", r: "einstein" },
-        { q: "Qual é o maior continente do mundo? 🗺️", r: "asia" },
-        { q: "Qual é o gás que as plantas absorvem na fotossíntese? 🍃", r: "gas carbonico" },
-        { q: "Qual é a montanha mais alta das Américas? 🏔️", r: "aconcagua" },
-        { q: "Quem escreveu 'Dom Quixote'? 📖", r: "cervantes" },
-        { q: "Qual é o país com maior área territorial do mundo? 🌍", r: "russia" },
-        { q: "Qual é o estado brasileiro conhecido como 'o celeiro do Brasil'? 🌽", r: "mato grosso" },
-        // NOVAS PERGUNTAS MAIS DIFÍCEIS:
-        { q: "Qual o nome do fenômeno que faz com que a luz se curve ao passar perto de um objeto massivo? 🌌", r: "lente gravitacional" },
-        { q: "Qual é a capital do Cazaquistão? 🇰🇿", r: "astana" },
-        { q: "Qual metal é líquido à temperatura ambiente? 🌡️", r: "mercurio" },
-        { q: "Quem pintou o teto da Capela Sistina? 🎨", r: "michelangelo" },
-        { q: "Qual foi o primeiro elemento da tabela periódica? 🧪", r: "hidrogenio" },
-        { q: "Qual é a unidade de medida para a intensidade sonora? 🔊", r: "decibel" },
-        { q: "Quantos ossos tem o corpo humano adulto? 🦴", r: "206" },
-        { q: "Qual é o oceano que banha a costa leste da Austrália? 🌊", r: "pacifico" },
-        { q: "Em qual cidade fica a sede da União Europeia? 🇪🇺", r: "bruxelas" },
-        { q: "Qual o nome do maior deserto quente do mundo? 🏜️", r: "saara" }
+        { q: "Qual o nome da menor unidade de memória de um computador? 💻", r: "bit" },
+        { q: "Qual país possui o maior número de fusos horários do mundo? 🌍", r: "franca" },
+        { q: "Quem foi o arquiteto responsável pelo projeto de Brasília? 🏛️", r: "oscar niemeyer" },
+        { q: "Qual é o metal mais denso da tabela periódica? 🧪", r: "osmio" },
+        { q: "Qual é a capital da Etiópia? 🇪🇹", r: "adis abeba" },
+        { q: "Qual o nome do satélite natural que possui uma atmosfera própria em nosso sistema solar? 🪐", r: "tita" },
+        { q: "Em que ano a Segunda Guerra Mundial terminou oficialmente? 🕊️", r: "1945" },
+        { q: "Qual a profundidade do ponto mais profundo dos oceanos, a Fossa das Marianas? 🌊", r: "11000 metros" },
+        { q: "Quem é conhecido como o pai da computação moderna? 🤖", r: "alan turing" },
+        { q: "Qual o nome da reação química que ocorre quando o ferro enferruja? ⚙️", r: "oxidacao" },
+        { q: "Qual é o único continente que não possui vulcões ativos? 🏔️", r: "australia" },
+        { q: "Qual foi o primeiro país a conceder o voto às mulheres? 🗳️", r: "nova zelandia" },
+        { q: "Qual a velocidade da luz no vácuo em km/s? ⚡", r: "300000" },
+        { q: "Qual é o maior mamífero terrestre do mundo? 🐘", r: "elefante africano" },
+        { q: "Qual cientista propôs as leis da gravitação universal? 🍎", r: "isaac newton" },
+        { q: "Qual o idioma mais falado do mundo por falantes nativos? 🗣️", r: "mandarim" },
+        { q: "Qual o nome da linha imaginária que divide o globo em Norte e Sul? 🗺️", r: "linha do equador" },
+        { q: "Quem pintou a 'Mona Lisa'? 🎨", r: "leonardo da vinci" },
+        { q: "Qual é a floresta tropical que produz 20% do oxigênio da Terra? 🌳", r: "amazonica" },
+        { q: "Qual é o país que tem a forma de uma bota no mapa? 🇮🇹", r: "italia" },
+        { q: "Qual é o maior animal que já existiu na Terra? 🐋", r: "baleia azul" },
+        { q: "Quem escreveu a obra 'Crime e Castigo'? 📚", r: "dostoievski" },
+        { q: "Qual a temperatura em que a água ferve ao nível do mar em Celsius? 🌡️", r: "100" },
+        { q: "Qual é o nome da substância que dá a cor verde às plantas? 🍃", r: "clorofila" },
+        { q: "Qual é a cidade conhecida como 'cidade luz'? 🗼", r: "paris" }
     ];
 
     const sorteada = quiz[Math.floor(Math.random() * quiz.length)];
@@ -797,7 +786,7 @@ if (lowerText === '!link') {
     });
 
     // Substitua pelo link real do seu grupo
-    const linkDoGrupo = "https://chat.whatsapp.com/HjwPNF7jO195ivlIjdtKAC?s=cl&p=i&ilr=0"; 
+    const linkDoGrupo = "https://chat.whatsapp.com/HT7DEVaIjiE7hZ8PDThZ5a?s=cl&p=i&ilr=0"; 
     
     // 2º Ação: Envia a resposta com o link
     await sock.sendMessage(sender, { 
@@ -1233,7 +1222,7 @@ if (text.startsWith('!ban')) {
       // --- COMANDO !PESQUISAR (VERSÃO GOOGLE-IT) ---
 // --- COMANDO !PESQUISAR (VERSÃO ROBUSTA SEM BIBLIOTECA) ---
 // --- COMANDO !PESQUISAR (CORRIGIDO) ---
-// --- COMANDO !PESQUISAR (VERSÃO COM GIF E ROBUSTA) ---
+// --- COMANDO !PESQUISAR (VERSÃO ROBUSTA E CORRIGIDA) ---
 if (text.startsWith('!pesquisar ')) {
     const termo = text.replace('!pesquisar ', '').trim();
     if (!termo) return await sock.sendMessage(sender, { text: "❌ O que você quer pesquisar?", quoted: msg });
@@ -1255,23 +1244,23 @@ if (text.startsWith('!pesquisar ')) {
 
         // 3. Montagem da resposta
         let respostaTexto = "";
-        if (data.AbstractText) {
+        if (data.AbstractText && data.AbstractText.length > 0) {
             respostaTexto = `🔍 *RESULTADO: ${termo.toUpperCase()}*\n\n${data.AbstractText}\n\n🔗 *Fonte:* ${data.AbstractURL || 'DuckDuckGo'}`;
         } else if (data.RelatedTopics && data.RelatedTopics.length > 0) {
             const topo = data.RelatedTopics[0];
-            respostaTexto = `🔍 *RESULTADO: ${termo.toUpperCase()}*\n\n${topo.Text}\n\n🔗 *Fonte:* ${topo.FirstURL}`;
+            respostaTexto = `🔍 *RESULTADO: ${termo.toUpperCase()}*\n\n${topo.Text}\n\n🔗 *Fonte:* ${topo.FirstURL || 'DuckDuckGo'}`;
         } else {
-            respostaTexto = "❌ Não encontrei um resumo sobre isso.";
+            respostaTexto = "❌ Não encontrei um resumo detalhado sobre isso.";
         }
 
-        // 4. Edita a mensagem de "carregando" para o resultado final
-        await sock.sendMessage(sender, { 
-            text: respostaTexto, 
-            edit: msgCarregando.key // Edita a mensagem do GIF
-        });
+        // 4. Ação Final: Deleta o GIF e envia o texto real
+        await sock.sendMessage(sender, { delete: msgCarregando.key });
+        await sock.sendMessage(sender, { text: respostaTexto }, { quoted: msg });
 
     } catch (e) {
         console.error("Erro no !pesquisar:", e);
+        // Tenta deletar o GIF mesmo se der erro antes de avisar
+        await sock.sendMessage(sender, { delete: msgCarregando.key }).catch(() => {});
         await sock.sendMessage(sender, { text: "❌ O buscador deu ruim (erro de conexão). Tente de novo!", quoted: msg });
     }
 }
@@ -1384,6 +1373,10 @@ if (text === '!loja') {
 if (text.startsWith('!comprar') || text.startsWith('!limpar') || text.startsWith('!fixar') || text.startsWith('!status')) {
     
     // LÓGICA DE COMPRA
+    // --- COMANDO !COMPRAR E GESTÃO (BLOCO UNIFICADO) ---
+if (text.startsWith('!comprar') || text.startsWith('!limpar') || text.startsWith('!fixar') || text.startsWith('!status')) {
+    
+    // LÓGICA DE COMPRA
     if (text.startsWith('!comprar')) {
         const args = text.split(' ');
         const item = args[1];
@@ -1417,12 +1410,15 @@ if (text.startsWith('!comprar') || text.startsWith('!limpar') || text.startsWith
             } catch (e) {
                 console.error("Erro ao verificar admins para o mute:", e);
             }
-            // ------------------------------------------
 
             mutados[mention] = Date.now() + 60000;
             fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
             sucesso = true;
         } else if (item === 'desmute') {
+            // --- AJUSTE: VERIFICA SE O USUÁRIO ESTÁ MUTADO ---
+            if (!mutados[participant]) {
+                return await sock.sendMessage(sender, { text: "❌ Você não está mutado, não precisa gastar pontos!", quoted: msg });
+            }
             delete mutados[participant];
             fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
             sucesso = true;
@@ -1433,7 +1429,7 @@ if (text.startsWith('!comprar') || text.startsWith('!limpar') || text.startsWith
                 text: "🔥 *FÚRIA ATIVADA!* Seu próximo ataque no Boss será dobrado! Use !atacar logo antes que a fúria passe!",
                 quoted: msg 
             });
-            sucesso = true; // O código já vai descontar os pontos automaticamente lá embaixo
+            sucesso = true; 
         } else if (item === 'escudo') {
             escudosAtivos[participant] = Date.now() + 3600000;
             sucesso = true;
