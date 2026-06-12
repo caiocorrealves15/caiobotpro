@@ -1986,7 +1986,7 @@ if (text === '!atacar') {
 }
 
         // 6. Admin Fechar/Abrir (Com Reply e Frases Aleatórias)
-// 6. Admin Fechar/Abrir (AJUSTADO PARA A API DO BAILEYS)
+// 6. Admin Fechar/Abrir (AJUSTADO E COMPLETÃO)
 if (text === '!fechar') {
     if (!isAdmin) {
         const frasesErro = [
@@ -2004,8 +2004,14 @@ if (text === '!fechar') {
         ];
         const msgAdm = frasesAdm[Math.floor(Math.random() * frasesAdm.length)];
         await sock.sendMessage(sender, { text: msgAdm, quoted: msg });
-        // CORREÇÃO: O parâmetro correto é 'announcement' para fechar
-        await sock.groupSettingUpdate(sender, 'announcement');
+        
+        // Forma correta para a maioria das versões atuais do Baileys
+        try {
+            await sock.groupSettingUpdate(sender, 'announcement');
+        } catch (e) {
+            console.error("Erro ao fechar grupo:", e);
+            await sock.sendMessage(sender, { text: "❌ Erro: Não sou administrador ou não tenho permissão!" });
+        }
     }
 }
 
@@ -2026,8 +2032,14 @@ if (text === '!abrir') {
         ];
         const msgAdm = frasesAdm[Math.floor(Math.random() * frasesAdm.length)];
         await sock.sendMessage(sender, { text: msgAdm, quoted: msg });
-        // CORREÇÃO: O parâmetro correto é 'not_announcement' para abrir
-        await sock.groupSettingUpdate(sender, 'not_announcement');
+        
+        // Forma correta para a maioria das versões atuais do Baileys
+        try {
+            await sock.groupSettingUpdate(sender, 'not_announcement');
+        } catch (e) {
+            console.error("Erro ao abrir grupo:", e);
+            await sock.sendMessage(sender, { text: "❌ Erro: Não sou administrador ou não tenho permissão!" });
+        }
     }
 }
 
