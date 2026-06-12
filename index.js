@@ -2150,30 +2150,12 @@ if (text.startsWith('!forca')) {
     const palavrasHard = ['abstrato', 'efemeridade', 'paradoxo', 'onisciente', 'idiossincrasia', 'inexoravel'];
     const palavrasMedio = ['arquitetura', 'paradigma', 'recursividade', 'criptografia', 'abstração', 'framework'];
     
-    const dicasHard = {
-        'abstrato': 'Algo que não é concreto, uma ideia ou conceito.',
-        'efemeridade': 'Algo que dura pouco tempo.',
-        'paradoxo': 'Uma contradição que parece verdadeira.',
-        'onisciente': 'Alguém que sabe tudo.',
-        'idiossincrasia': 'Uma característica peculiar de alguém.',
-        'inexoravel': 'Algo que não se pode evitar ou dobrar.'
-    };
-    const dicasMedio = {
-        'arquitetura': 'A estrutura lógica ou física de um sistema.',
-        'paradigma': 'Um modelo ou padrão a ser seguido.',
-        'recursividade': 'Uma função que chama a si mesma.',
-        'criptografia': 'Transformar informação em código para proteger dados.',
-        'abstração': 'Esconder detalhes complexos e mostrar apenas o essencial.',
-        'framework': 'Um conjunto de ferramentas que facilita o desenvolvimento de software.'
-    };
-
-    // Decide entre Hard ou Medio
     const nivel = Math.random() > 0.5 ? 'hard' : 'medio';
     const listaPalavras = nivel === 'hard' ? palavrasHard : palavrasMedio;
-    const listaDicas = nivel === 'hard' ? dicasHard : dicasMedio;
+    const listaDicas = { 'abstrato': 'Algo não concreto', 'efemeridade': 'Dura pouco', 'paradoxo': 'Contradição', 'onisciente': 'Sabe tudo', 'idiossincrasia': 'Peculiaridade', 'inexoravel': 'Invitável', 'arquitetura': 'Estrutura', 'paradigma': 'Modelo', 'recursividade': 'Função que chama a si', 'criptografia': 'Proteção de dados', 'abstração': 'Esconder detalhes', 'framework': 'Ferramentas' };
 
     jogoForca.palavra = listaPalavras[Math.floor(Math.random() * listaPalavras.length)];
-    jogoForca.dica = listaDicas[jogoForca.palavra];
+    jogoForca.dica = listaDicas[jogoForca.palavra] || 'Sem dica';
     jogoForca.descobertas = Array(jogoForca.palavra.length).fill('_');
     jogoForca.tentativas = [];
     jogoForca.ativo = true;
@@ -2183,129 +2165,71 @@ if (text.startsWith('!forca')) {
     const msgForca = await sock.sendMessage(sender, { 
         video: { url: 'https://media.tenor.com/7HUogy7rXs4AAAPo/feel-me-think-about-it.mp4' }, 
         gifPlayback: true,
-        caption: `💀 *JOGO DA FORCA (${nivel.toUpperCase()})*\n\nDica: ${jogoForca.dica}\n\nPalavra: ${jogoForca.descobertas.join(' ')}\n\nResponda em cima dessa mensagem com uma letra ou a palavra toda!` 
+        caption: `💀 *JOGO DA FORCA (${nivel.toUpperCase()})*\n\nDica: ${jogoForca.dica}\n\nPalavra: ${jogoForca.descobertas.join(' ')}` 
     }, { quoted: msg });
     jogoForca.idMensagem = msgForca.key.id; 
     return;
 }
 
-// 2. Lógica de Adivinhação
 if (jogoForca.ativo && !jogoForca.processando) {
-    const contextInfo = msg.message?.extendedTextMessage?.contextInfo || 
-                        msg.message?.imageMessage?.contextInfo || 
-                        msg.message?.videoMessage?.contextInfo;
-
+    const contextInfo = msg.message?.extendedTextMessage?.contextInfo || msg.message?.imageMessage?.contextInfo || msg.message?.videoMessage?.contextInfo;
     if (contextInfo?.stanzaId === jogoForca.idMensagem && !text.startsWith('!')) {
         jogoForca.processando = true;
         const resposta = text.toLowerCase().trim();
         const autor = msg.key.participant || msg.key.remoteJid;
 
-        // 1. TENTAR PALAVRA COMPLETA (MAIS DE UMA LETRA)
         if (resposta.length > 1) {
             if (resposta === jogoForca.palavra) {
                 jogoForca.ativo = false;
-                await sock.sendMessage(sender, { react: { text: '🎉', key: msg.key } });
-                await sock.sendMessage(sender, { 
-                    video: { url: 'https://media.tenor.com/eakvOpIu7fAAAAPo/sarcastic-clap.mp4' }, 
-                    gifPlayback: true, 
-                    caption: `🎉 PARABÉNS @${autor.split('@')[0]}! Você acertou a palavra completa: *${jogoForca.palavra.toUpperCase()}*`,
-                    mentions: [autor]
-                }, { quoted: msg });
-            } else {
-                await sock.sendMessage(sender, { text: `QUASE!! Mas não é HAHAHAHA, tente novamente! 🤡`, quoted: msg });
+                await sock.sendMessage(sender, { text: `🎉 ACERTOU! A palavra era *${jogoForca.palavra.toUpperCase()}*`, quoted: msg });
             }
-        } 
-        // 2. TENTAR LETRA ÚNICA
-        else if (resposta.length === 1) {
-            const letra = resposta;
-
-            if (jogoForca.tentativas.includes(letra)) {
-                await sock.sendMessage(sender, { text: `⚠️ @${autor.split('@')[0]}, você já tentou a letra "${letra.toUpperCase()}".`, mentions: [autor] }, { quoted: msg });
-            } else {
-                jogoForca.tentativas.push(letra);
-
-                if (jogoForca.palavra.includes(letra)) {
-                    await sock.sendMessage(sender, { react: { text: '✅', key: msg.key } });
-                    for (let i = 0; i < jogoForca.palavra.length; i++) {
-                        if (jogoForca.palavra[i] === letra) jogoForca.descobertas[i] = letra;
-                    }
-
-                    if (!jogoForca.descobertas.includes('_')) {
-                        jogoForca.ativo = false;
-                        await sock.sendMessage(sender, { text: `🎉 PARABÉNS @${autor.split('@')[0]}! Você salvou a alma dele! A palavra era: *${jogoForca.palavra.toUpperCase()}*`, mentions: [autor] }, { quoted: msg });
-                    } else {
-                        await sock.sendMessage(sender, { text: `Boa, campeão @${autor.split('@')[0]}!! Continue: ${jogoForca.descobertas.join(' ')}`, mentions: [autor] });
-                    }
+        } else if (resposta.length === 1) {
+            if (!jogoForca.tentativas.includes(resposta)) {
+                jogoForca.tentativas.push(resposta);
+                if (jogoForca.palavra.includes(resposta)) {
+                    for (let i = 0; i < jogoForca.palavra.length; i++) if (jogoForca.palavra[i] === resposta) jogoForca.descobertas[i] = resposta;
+                    await sock.sendMessage(sender, { text: `Boa! ${jogoForca.descobertas.join(' ')}` });
                 } else {
-                    await sock.sendMessage(sender, { react: { text: '❌', key: msg.key } });
                     jogoForca.erros++;
-                    if (jogoForca.erros >= jogoForca.maxErros) {
-                        jogoForca.ativo = false;
-                        await sock.sendMessage(sender, { 
-                            video: { url: 'https://media.tenor.com/HyeG4dSurbwAAAPo/hanging-skeleton-skeleton.mp4' }, 
-                            gifPlayback: true, 
-                            caption: `💀 VOCÊ PERDEU, @${autor.split('@')[0]}! A palavra era *${jogoForca.palavra.toUpperCase()}*`,
-                            mentions: [autor]
-                        }, { quoted: msg });
-                    } else {
-                        await sock.sendMessage(sender, { text: `❌ Errou, @${autor.split('@')[0]}! ${jogoForca.maxErros - jogoForca.erros} vidas restando.`, mentions: [autor] });
-                    }
+                    await sock.sendMessage(sender, { text: `❌ Errou! ${jogoForca.maxErros - jogoForca.erros} vidas restando.` });
                 }
             }
         }
         setTimeout(() => { jogoForca.processando = false; }, 1000); 
     }
 }
-// --- FIM DA LÓGICA DA FORCA ---
-        // --- COMANDO !DESMUTE ---
+
+// --- COMANDOS MUTE/DESMUTE (LIMPOS) ---
 if (text.startsWith('!desmute')) {
-    if (!isAdmin) return await sock.sendMessage(sender, { text: "Tentando furar as regras, né?? HAHAHHAHA 👀👀👀\n\nSabe que um ADM está de olho em você agora né?" });
+    if (!isAdmin) return await sock.sendMessage(sender, { text: "Você não é ADM!" });
     const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
     if (mention && mutados[mention]) {
         delete mutados[mention];
         fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
-        
-        await sock.sendMessage(sender, { text: "Fala agora, mas com cuidado, ok? To doidinho pra mutar de novo😎😂", mentions: [mention] });
+        await sock.sendMessage(sender, { text: "Desmutado!", mentions: [mention] });
     }
 }
 
-// --- COMANDO !MUTE ---
 if (text.startsWith('!mute')) {
-    // 1. Verifica se quem mandou o comando é ADM
-    if (!isAdmin) {
-        const frasesAdm = [
-            "Tentando furar as regras, né?? HAHAHHAHA 👀👀👀\n\nSabe que um ADM está de olho em você agora né?",
-            "Tá achando que é dono do pedaço? Acesso negado, amigão! 🚫",
-            "Negativo! Só ADM manda aqui, volta pra sua cadeira! 😂",
-            "Quer mutar alguém? Primeiro vira ADM, depois a gente conversa! 🤡"
-        ];
-        return await sock.sendMessage(sender, { 
-            text: frasesAdm[Math.floor(Math.random() * frasesAdm.length)], 
-            quoted: msg 
-        });
+    if (!isAdmin) return await sock.sendMessage(sender, { text: "Somente ADMs podem mutar!" });
+    const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+    if (mention) {
+        mutados[mention] = Date.now() + 1800000;
+        fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
+        await sock.sendMessage(sender, { text: "Mutado!", mentions: [mention] });
     }
+}
 
     const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
     if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione o alvo do seu silenciamento, ô lerdo!", quoted: msg });
     
-    // 2. Proteção do seu ID (O dono/criador é intocável)
     const MEU_ID_REAL = "96057379803159@lid"; 
     const meuNumero = "5527992997083";
 
     if (mention === MEU_ID_REAL || (mention && String(mention).includes(meuNumero))) {
-        const frasesTraicao = [
-            "❌ Nem tenta! O criador é intocável e ninguém muta o patrão! 👑",
-            "⚠️ Opa! Traição? O dono do sistema não pode ser mutado, seu infiel! 🚩",
-            "🤡 Engraçadinho... quer mutar o criador? Vai ser banido se tentar de novo! 💀",
-            "🤣 Tentativa frustrada! O criador tem imunidade diplomática! 🥂"
-        ];
-        return await sock.sendMessage(sender, { 
-            text: frasesTraicao[Math.floor(Math.random() * frasesTraicao.length)], 
-            quoted: msg 
-        });
+        return await sock.sendMessage(sender, { text: "❌ Nem tenta! O criador é intocável! 👑", quoted: msg });
     }
 
-    // 3. Aplica o Mute
     const tempo = text.includes('h') ? 3600000 : 1800000;
     mutados[mention] = Date.now() + tempo;
     fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
@@ -2315,19 +2239,6 @@ if (text.startsWith('!mute')) {
         mentions: [mention] 
     }, { quoted: msg });
 }
-
-    // 3. Aplica o Mute
-    const tempo = text.includes('h') ? 3600000 : 1800000;
-    mutados[mention] = Date.now() + tempo;
-    fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
-    
-    await sock.sendMessage(sender, { 
-        text: "Você está falando demais, dá um tempo seu rabugento.😂❌", 
-        mentions: [mention] 
-    }, { quoted: msg });
-}
-
-// --- COMANDO !CLIMA (VERSÃO FINAL E LIMPA) ---
 // --- COMANDO !CLIMA (VERSÃO COMPLETA) ---
 if (text.startsWith('!clima')) {
     const cidade = text.replace('!clima', '').trim();
