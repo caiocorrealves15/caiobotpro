@@ -625,19 +625,13 @@ if (isLink) {
             await sock.sendMessage(sender, { text: `Chefe, precisa falar tanto assim? Se for assim escreve um novo testamento logo 😂😂😂`, }, { quoted: msg });
         }
     }
-
-    // --- INÍCIO DO NOVO ANTI-SPAM (4 mensagens em 1 segundo = MUTE) ---
-        // --- NOVO ANTI-SPAM COM AVISO PARA ADM ---
-    // --- ANTI-SPAM AJUSTADO (SEM ERROS DE ASSINCRONIA) ---
-// --- ANTI-SPAM AJUSTADO (SEM ERROS DE ASSINCRONIA) ---
+// --- INÍCIO DO NOVO ANTI-SPAM (4 mensagens em 1 segundo = MUTE) ---
 const agora = Date.now();
 if (!contagemFlood[participant]) contagemFlood[participant] = [];
 contagemFlood[participant] = contagemFlood[participant].filter(t => agora - t < 1000);
 contagemFlood[participant].push(agora);
 
 if (contagemFlood[participant].length >= 5) {
-    // Agora o bot testa na hora sem depender de buscar o metadata do grupo
-    // Se o seu número (ou dos ADMs) estiver na lista de admins do grupo, isso vai disparar
     const metadata = await sock.groupMetadata(sender).catch(() => null);
     const ehAdm = metadata?.participants.find(p => p.id === participant)?.admin !== null;
 
@@ -649,15 +643,12 @@ if (contagemFlood[participant].length >= 5) {
         contagemFlood[participant] = [];
         return; 
     } else {
-        // REAÇÃO PARA ADM (agora garantida)
         await sock.sendMessage(sender, { react: { text: '⚠️', key: msg.key } });
         await sock.sendMessage(sender, { text: `⚠️ Calma, meu rei @${participant.split('@')[0]}! Só nao reajo por que você não é meu chefe! 😂`, mentions: [participant] }, { quoted: msg });
         contagemFlood[participant] = [];
     }
 }
-// --- FIM ---
 
-    // --- FIM DO NOVO ANTI-SPAM ---
 
 
     // --- COMANDO !f (FIGURINHA INTEGRADO) ---
@@ -943,27 +934,28 @@ if (lowerText.includes('bebida') || lowerText.includes('cerveja') || lowerText.i
 }
 
     // Ache essa linha no seu código e adicione o '!cargos' nela:
-const comandosExistentes = [
-    '!menu', '!comprar', '!loja', '!pesquisar', '!backup', '!dar_pontos', '!atacar', '!boss', '!rank', '!casar', '!casais', '!piada', '!avisoadm', 
-    '!descasar', '!emoji', '!sortear', '!cadastros', '!perguntas', '!jogar', 
-    '!forca', '!jogosoff', '!jogoson', '!limpar', '!fixar', '!status', '!link', '!tier', 
-    '!ranking', '!penalti', '!musica', '!socar', '!beijar', 
-    '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', 
-    '!clima', '!desmute', '!mute', '!gado', '!corno', 
-    '!fofoca', '!roubar', '!cargos', '!comprar_cargo', '!dar_cargo' // Adicionei aqui
-];
+if (text.startsWith('!')) {
+    const comandosExistentes = [
+        '!menu', '!comprar', '!loja', '!pesquisar', '!backup', '!dar_pontos', '!atacar', '!boss', '!rank', 
+        '!casar', '!casais', '!piada', '!avisoadm', '!descasar', '!emoji', '!sortear', '!cadastros', 
+        '!perguntas', '!jogar', '!forca', '!jogosoff', '!jogoson', '!limpar', '!fixar', '!status', 
+        '!link', '!tier', '!ranking', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', 
+        '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute', '!gado', '!corno', 
+        '!fofoca', '!roubar', '!cargos', '!comprar_cargo', '!dar_cargo'
+    ];
 
-if (text.startsWith('!') && !comandosExistentes.some(cmd => text.startsWith(cmd))) {
-    const autor = msg.key.participant || msg.key.remoteJid;
-    
-    // Reação com o emoji 🤦‍♂️ na mensagem do usuário
-    await sock.sendMessage(sender, { react: { text: '🤦‍♂️', key: msg.key } });
-    
-    // Resposta citando o usuário e dando a bronca
-    await sock.sendMessage(sender, { 
-        text: `Aí que você quer demais né, @${autor.split('@')[0]}? Olha o menu e digite esse maldito comando direito!!!!!`, 
-        mentions: [autor] 
-    }, { quoted: msg });
+    if (!comandosExistentes.some(cmd => text.startsWith(cmd))) {
+        const autor = msg.key.participant || msg.key.remoteJid;
+        
+        // Reação com o emoji 🤦‍♂️ na mensagem do usuário
+        await sock.sendMessage(sender, { react: { text: '🤦‍♂️', key: msg.key } });
+        
+        // Resposta citando o usuário e dando a bronca
+        await sock.sendMessage(sender, { 
+            text: `Aí que você quer demais né, @${autor.split('@')[0]}? Olha o menu e digite esse maldito comando direito!!!!!`, 
+            mentions: [autor] 
+        }, { quoted: msg });
+    }
 }
 
 // 2. !MENU (MENU COMPLETO E ATUALIZADO)
@@ -1371,11 +1363,6 @@ if (text === '!loja') {
 
     await sock.sendMessage(sender, { text: menu, quoted: msg });
 }
-// --- COMANDO !COMPRAR E GESTÃO (BLOCO UNIFICADO) ---
-// --- COMANDO !COMPRAR E GESTÃO (BLOCO UNIFICADO) ---
-if (text.startsWith('!comprar') || text.startsWith('!limpar') || text.startsWith('!fixar') || text.startsWith('!status')) {
-    
-    // LÓGICA DE COMPRA
     // --- COMANDO !COMPRAR E GESTÃO (BLOCO UNIFICADO) ---
 if (text.startsWith('!comprar') || text.startsWith('!limpar') || text.startsWith('!fixar') || text.startsWith('!status')) {
     
@@ -2200,95 +2187,52 @@ if (jogoForca.ativo && !jogoForca.processando) {
 }
 
 // --- COMANDOS MUTE/DESMUTE (LIMPOS) ---
+// SUBSTITUA ISSO AQUI PELO QUE VOCÊ TEM NO SEU ARQUIVO:
+
+// --- COMANDOS MUTE/DESMUTE (CORRIGIDOS) ---
 if (text.startsWith('!desmute')) {
     if (!isAdmin) return await sock.sendMessage(sender, { text: "Você não é ADM!" });
     const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
     if (mention && mutados[mention]) {
         delete mutados[mention];
         fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
-        await sock.sendMessage(sender, { text: "Desmutado!", mentions: [mention] });
+        await sock.sendMessage(sender, { text: "Desmutado!😎😂", mentions: [mention] });
     }
 }
 
 if (text.startsWith('!mute')) {
     if (!isAdmin) return await sock.sendMessage(sender, { text: "Somente ADMs podem mutar!" });
     const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
-    if (mention) {
-        mutados[mention] = Date.now() + 1800000;
-        fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
-        await sock.sendMessage(sender, { text: "Mutado!", mentions: [mention] });
-    }
-}
-
-    const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
-    if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione o alvo do seu silenciamento, ô lerdo!", quoted: msg });
+    if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione o alvo!", quoted: msg });
     
     const MEU_ID_REAL = "96057379803159@lid"; 
     const meuNumero = "5527992997083";
-
-    if (mention === MEU_ID_REAL || (mention && String(mention).includes(meuNumero))) {
-        return await sock.sendMessage(sender, { text: "❌ Nem tenta! O criador é intocável! 👑", quoted: msg });
-    }
+    if (mention === MEU_ID_REAL || String(mention).includes(meuNumero)) return await sock.sendMessage(sender, { text: "❌ O criador é intocável! 👑" });
 
     const tempo = text.includes('h') ? 3600000 : 1800000;
     mutados[mention] = Date.now() + tempo;
     fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
-    
-    await sock.sendMessage(sender, { 
-        text: "Você está falando demais, dá um tempo seu rabugento.😂❌", 
-        mentions: [mention] 
-    }, { quoted: msg });
+    await sock.sendMessage(sender, { text: "Você está falando demais, dá um tempo seu rabugento.😂❌", mentions: [mention] }, { quoted: msg });
 }
-// --- COMANDO !CLIMA (VERSÃO COMPLETA) ---
+
+// --- COMANDO !CLIMA ---
 if (text.startsWith('!clima')) {
     const cidade = text.replace('!clima', '').trim();
-    if (!cidade) return await sock.sendMessage(sender, { text: "❌ Digite a cidade! Ex: !clima Cariacica", quoted: msg });
-
-    const mensagemParaResponder = msg;
+    if (!cidade) return await sock.sendMessage(sender, { text: "❌ Digite a cidade!", quoted: msg });
 
     const piadasClima = {
-        'sunny': [
-            "Tá um sol que parece que o inferno abriu uma filial aqui! 🔥",
-            "Céu azul... ótimo dia para ficar mofando dentro de casa no computador. ☀️",
-            "Solzão de rachar mamona! Se você sair na rua, vai virar churrasco. 🥩",
-            "Tá mais quente que o banho que você nem tomou hoje. 🥵"
-        ],
-        'cloudy': [
-            "Tempo nublado... bem deprimido, igual ao seu histórico de pesquisas. ☁️",
-            "Céu cinza... o clima perfeito para dormir até o ano que vem. 💤",
-            "Tá nublado, mas a feiura continua a mesma. 🤡",
-            "Parece que vai chover... ou não. Minha previsão é tão inútil quanto você. 🌩️"
-        ],
-        'rain': [
-            "Chovendo? Ótimo, desculpa perfeita para não fazer nada o dia todo! 🌧️",
-            "Tempo de chuva... cuidado para não derreter, você é feito de açúcar? 🍭",
-            "Tá caindo o mundo lá fora e você aí preocupado com o clima? Vai arrumar um emprego! 💼",
-            "Chuva, café e tédio. O combo completo da vida adulta. ☕"
-        ]
+        'sunny': ["Tá um sol que parece o inferno! 🔥", "Dia de ficar no PC. ☀️"],
+        'cloudy': ["Tempo nublado, igual ao seu histórico. ☁️", "Parece que vai chover... ou não. 🌩️"],
+        'rain': ["Chovendo? Ótimo, desculpa pra não fazer nada! 🌧️", "Combo: chuva, café e tédio. ☕"]
     };
 
     weather.find({ search: cidade, degreeType: 'C' }, async (err, result) => {
-        if (err || !result || result.length === 0) {
-            return await sock.sendMessage(sender, { text: "❌ Cidade não encontrada. Tente colocar o Estado junto, ex: !clima Cariacica, ES", quoted: mensagemParaResponder });
-        }
-        
-        const current = result[0].current;
-        const condicaoOriginal = current.skytext.toLowerCase();
-        
-        let categoria = 'cloudy';
-        if (condicaoOriginal.includes('sunny') || condicaoOriginal.includes('clear')) categoria = 'sunny';
-        else if (condicaoOriginal.includes('rain') || condicaoOriginal.includes('storm')) categoria = 'rain';
-
-        const fraseExtra = piadasClima[categoria][Math.floor(Math.random() * piadasClima[categoria].length)];
-
-        const msgClima = `🌤 *Tempo em: ${current.observationpoint}*\n` +
-                         `🌡 Temperatura: ${current.temperature}°C\n` +
-                         `☁️ Condição: ${current.skytext}\n\n` +
-                         `💬 *Bot:* ${fraseExtra}`;
-        
-        await sock.sendMessage(sender, { react: { text: '🌤', key: mensagemParaResponder.key } });
-        await sock.sendMessage(sender, { text: msgClima }, { quoted: mensagemParaResponder });
-    }); 
+        if (err || !result || result.length === 0) return await sock.sendMessage(sender, { text: "❌ Cidade não encontrada.", quoted: msg });
+        const cur = result[0].current;
+        const cat = cur.skytext.toLowerCase().includes('sunny') ? 'sunny' : (cur.skytext.toLowerCase().includes('rain') ? 'rain' : 'cloudy');
+        const msgClima = `🌤 *Tempo em: ${cur.observationpoint}*\n🌡 Temp: ${cur.temperature}°C\n💬 *Bot:* ${piadasClima[cat][Math.floor(Math.random() * piadasClima[cat].length)]}`;
+        await sock.sendMessage(sender, { text: msgClima }, { quoted: msg });
+    });
 }
 }); // FECHA O ÚNICO sock.ev.on('messages.upsert')
 } // FECHA A FUNÇÃO connectToWhatsApp
