@@ -24,8 +24,9 @@ let ataquesFuria = {};
 const contagemFlood = {};
 let admsTemporarios = {};
 let escudosAtivos = {};
-const cooldownRoubo = {}; 
-let membrosPendentes = {}; 
+const cooldownRoubo = {}; // Armazena o timestamp do último roubo
+let membrosPendentes = {}; // { jid: timestamp }
+const cacheAdmins = {}; // <--- SÓ ADICIONAR ISSO AQUI
 
 // --- CACHE DE ADMS (PARA O BOT FICAR RÁPIDO) ---
 const cacheAdmins = {};
