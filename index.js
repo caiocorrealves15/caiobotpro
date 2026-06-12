@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const dataPath = '/var/data';
 const arquivoPlacarEmoji = path.join(dataPath, 'placar_emoji.json');
-const ARQUIVO_PLACAR_EMOJI = arquivoPlacarEmoji; // Garante que ambos os nomes funcionem
+const ARQUIVO_PLACAR_EMOJI = arquivoPlacarEmoji;
 const ARQUIVO_RANK = path.join(dataPath, 'rank.json');
 const ARQUIVO_MUTADOS = path.join(dataPath, 'mutados.json');
 const arquivoMutados = ARQUIVO_MUTADOS;
@@ -18,14 +18,15 @@ const { Sticker, StickerTypes } = require('wa-sticker-formatter');
 const ytSearch = require('yt-search'); 
 const qrcode = require('qrcode-terminal');
 const axios = require('axios');
+
 const infrações = {};
 const ultimaMensagem = {};
-let ataquesFuria = {}; // Adicione isso junto com as outras let no topo
+let ataquesFuria = {}; 
 const contagemFlood = {};
 let admsTemporarios = {};
 let escudosAtivos = {};
-const cooldownRoubo = {}; // Armazena o timestamp do último roubo
-let membrosPendentes = {}; // { jid: timestamp }
+const cooldownRoubo = {}; 
+let membrosPendentes = {}; 
 
 function lerArquivoSeguro(caminho) {
     try {
@@ -84,7 +85,6 @@ if (!fs.existsSync(arquivoPlacar)) {
     fs.writeFileSync(arquivoPlacar, JSON.stringify({}));
 }
 
-// --- CARREGAMENTO SEGURO DE CASAIS ---
 try {
     if (fs.existsSync(arquivoCasais)) {
         const dados = fs.readFileSync(arquivoCasais, 'utf8');
@@ -108,7 +108,7 @@ try {
 function garantirArquivo(caminho) {
     if (!fs.existsSync(caminho)) {
         console.log(`Criando arquivo inexistente no disco: ${caminho}`);
-        fs.writeFileSync(caminho, JSON.stringify({})); // Cria um JSON vazio
+        fs.writeFileSync(caminho, JSON.stringify({})); 
     }
 }
 
@@ -128,7 +128,6 @@ if (isRender) {
     app.listen(process.env.PORT || 10000);
 }
 
-// --- CONFIGURAÇÕES E VARIÁVEIS INICIAIS ---
 let brincadeirasAtivas = true;
 
 let jogoForca = {
@@ -148,15 +147,9 @@ let jogoEmoji = {
     idMensagem: "" 
 };
 
-// --- VARIÁVEIS DE ESTADO E ARQUIVOS ---
 let contagemMensagens = lerArquivoSeguro(ARQUIVO_RANK);
 let mutados = lerArquivoSeguro(ARQUIVO_MUTADOS);
 
-if (!fs.existsSync(arquivoPlacar)) fs.writeFileSync(arquivoPlacar, JSON.stringify({}));
-if (!fs.existsSync(arquivoCargos)) fs.writeFileSync(arquivoCargos, JSON.stringify({}));
-if (!fs.existsSync(arquivoCasais)) fs.writeFileSync(arquivoCasais, JSON.stringify([], null, 2));
-
-// --- FUNÇÃO DE CONEXÃO ---
 async function connectToWhatsApp() {
     console.log("--- FUNÇÃO DE CONEXÃO INICIADA ---");
     const { state, saveCreds } = await useMultiFileAuthState('./auth_info');
@@ -171,42 +164,14 @@ async function connectToWhatsApp() {
     sock.ev.on('creds.update', saveCreds);
     sock.ev.removeAllListeners('messages.upsert');
     sock.ev.removeAllListeners('group-participants.update');
-
-    // Boas-vindas (VERSÃO COMPLETA)
+        
     sock.ev.on('group-participants.update', async (update) => {
         const { id, participants, action } = update;
         const userId = typeof participants[0] === 'string' ? participants[0] : participants[0].id;
 
         if (action === 'add') {
-            membrosPendentes[userId] = Date.now(); // Salva a hora que entrou
-            
-            const textoBoasVindas = 
-`━━━━━━━━━━━━━━━━━━━━━━━━━━
-🔥 *BEM-VINDO AO CAOS: BONDE DO BRASIL* 🔥
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Fala aí, @${userId.split('@')[0]}! 🎉 
-Você acaba de ser convocado para a elite da zueira! 🚀
-
-🎮 *O QUE ROLA NO BONDE:*
-Aqui o pau quebra com estilo! Temos sistema de economia, cargos exclusivos e muito caos.
-• *JOGOS:* Participe do nosso *Quiz* (!perguntas), encare o *Boss* (!atacar) ou vire um *mestre do ranking* (!placar).
-• *LOJA:* Use *!comprar [item]* para virar o jogo (tem até mute, vip e adm de fachada! 🤫).
-• *CASAMENTOS:* Quer dividir o mico? Digite *!casar @alguém*.
-
-📜 *REGULAMENTO DO BONDE (OU A LEI DO MAIS FORTE)*
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-① *Respeito acima de tudo:* Sem brigas ou mimimi.
-② *Privacidade:* PV alheio sem permissão = BAN.
-③ *Segurança:* Nada de conteúdo adulto ou você vaza.
-④ *Zero Tolerância:* Link suspeito, spam ou trava? É BAN direto sem direito a apelação! 🚫
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-📝 *REGISTRO OBRIGATÓRIO (NÃO SEJA UM FANTASMA):*
-Envie: *FOTO | CIDADE | IDADE | NOME*. 
-Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
-
-🤖 *DICA:* Digite *!menu* AGORA para ver todos os comandos e começar a brincadeira. Se não digitar, já entra perdendo pontos! 💸`;
+            membrosPendentes[userId] = Date.now(); 
+            const textoBoasVindas = `━━━━━━━━━━━━━━━━━━━━━━━━━━\n🔥 *BEM-VINDO AO CAOS: BONDE DO BRASIL* 🔥\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nFala aí, @${userId.split('@')[0]}! 🎉 \nVocê acaba de ser convocado para a elite da zueira! 🚀\n\n🎮 *O QUE ROLA NO BONDE:*\nAqui o pau quebra com estilo! Temos sistema de economia, cargos exclusivos e muito caos.\n• *JOGOS:* Participe do nosso *Quiz* (!perguntas), encare o *Boss* (!atacar) ou vire um *mestre do ranking* (!placar).\n• *LOJA:* Use *!comprar [item]* para virar o jogo (tem até mute, vip e adm de fachada! 🤫).\n• *CASAMENTOS:* Quer dividir o mico? Digite *!casar @alguém*.\n\n📜 *REGULAMENTO DO BONDE (OU A LEI DO MAIS FORTE)*\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n① *Respeito acima de tudo:* Sem brigas ou mimimi.\n② *Privacidade:* PV alheio sem permissão = BAN.\n③ *Segurança:* Nada de conteúdo adulto ou você vaza.\n④ *Zero Tolerância:* Link suspeito, spam ou trava? É BAN direto sem direito a apelação! 🚫\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n📝 *REGISTRO OBRIGATÓRIO (NÃO SEJA UM FANTASMA):*\nEnvie: *FOTO | CIDADE | IDADE | NOME*. \nSe não registrar, o bot acha que você é robô e vai te perseguir! 🤖\n\n🤖 *DICA:* Digite *!menu* AGORA para ver todos os comandos e começar a brincadeira. Se não digitar, já entra perdendo pontos! 💸`;
 
             await sock.sendMessage(id, { 
                 text: textoBoasVindas, 
@@ -234,7 +199,6 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
         console.log("DEBUG: Iniciando processamento de figurinha...");
         try {
             await sock.sendMessage(sender, { text: "🤖✨ CALMA, sou um só!!!!" });
-            
             const ext = type === 'videoMessage' ? 'mp4' : 'jpg';
             const tempPath = `./temp_${Date.now()}.${ext}`;
             const finalPath = `./final_${Date.now()}.webp`;
@@ -272,14 +236,14 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
         const participant = msg.key.participant || sender;
         
         // --- TRAVA CRÍTICA (Evita o erro "str is not iterable" no terminal) ---
-        if (participant && participant.includes('@lid')) return; 
+        if (participant && participant.includes('@lid')) return;
 
         console.log("DEBUG ID DO PARTICIPANTE: " + participant);
         const isGroup = sender.endsWith('@g.us');
         
         const text = msg.message.conversation || msg.message.extendedTextMessage?.text || msg.message.imageMessage?.caption || msg.message.videoMessage?.caption || "";
         const lowerText = text.toLowerCase();
-        const isMedia = (msg.message.imageMessage || msg.message.videoMessage || msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage || msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage);
+        const isMedia = !!(msg.message.imageMessage || msg.message.videoMessage || msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage || msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage);
 
         let isAdmin = false;
         if (isGroup) {
@@ -290,13 +254,32 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
             } catch (e) { console.log("Erro ao buscar admins:", e); }
         }
 
-        // --- SISTEMA DE MUTADOS ---
+        // --- 1. VERIFICAÇÃO DE MUTADOS ---
         if (mutados[participant] && Date.now() < mutados[participant]) {
             await sock.sendMessage(sender, { delete: msg.key });
             return; 
         }
 
-        // --- ANTI-SPAM UNIFICADO ---
+        // --- 2. SISTEMA DE CADASTRO ---
+        if (membrosPendentes[participant]) {
+            const msgCorpo = msg.message;
+            const viewOnce = msgCorpo?.viewOnceMessage?.message;
+            const viewOnceV2 = msgCorpo?.viewOnceMessageV2?.message;
+            
+            const midia = msgCorpo?.imageMessage || msgCorpo?.videoMessage || viewOnce?.imageMessage || viewOnce?.videoMessage || viewOnceV2?.imageMessage || viewOnceV2?.videoMessage || msgCorpo?.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage || msgCorpo?.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage;
+            const padraoApresentacao = /\|/g;
+            const enviouTextoCorreto = (text.match(padraoApresentacao) || []).length >= 3;
+
+            if (midia || enviouTextoCorreto) {
+                await sock.sendMessage(sender, { text: `✅ Cadastro confirmado, @${participant.split('@')[0]}! Bem-vindo ao Bonde!`, mentions: [participant] }, { quoted: msg });
+                delete membrosPendentes[participant];
+            } else {
+                await sock.sendMessage(sender, { text: `⚠️ Ei, @${participant.split('@')[0]}, cadê a apresentação, você não seguiu o padrão! \n\nEnvie uma FOTO/VÍDEO ou o formato: FOTO | CIDADE | IDADE | NOME. 📸`, mentions: [participant] }, { quoted: msg });
+            }
+            return;
+        }
+
+        // --- 3. ANTI-SPAM UNIFICADO ---
         const agoraSpam = Date.now();
         if (!contagemFlood[participant]) contagemFlood[participant] = [];
         contagemFlood[participant] = contagemFlood[participant].filter(t => agoraSpam - t < 1000);
@@ -320,7 +303,7 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
             }
         }
 
-        // --- LÓGICA DO ANTI-LINK COM AUTO BAN ---
+        // --- 4. ANTI-LINK E ANTI-TRAVA ---
         const isLink = /https?:\/\/[^\s]+/.test(text);
         if (isLink) {
             if (!isAdmin) {
@@ -339,12 +322,10 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
                         `🧐 Opa, link por aqui? Nem tenta! O sistema está de olho. Mais ${restam} chance(s) e vaza!`,
                         `🚫 Link detectado! @${participant.split('@')[0]}, você está brincando com a sorte. ${restam} chance(s) restantes!`
                     ];
-                    const sorteioAviso = frasesAviso[Math.floor(Math.random() * frasesAviso.length)];
-
                     await sock.sendMessage(sender, { 
                         video: { url: 'https://media.tenor.com/q4GIdsYVSXcAAAPo/no-nooo.mp4' },
                         gifPlayback: true,
-                        caption: sorteioAviso,
+                        caption: frasesAviso[Math.floor(Math.random() * frasesAviso.length)],
                         mentions: [participant]
                     }, { quoted: msg });
                     await sock.sendMessage(sender, { delete: msg.key });
@@ -355,16 +336,14 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
             }
         }
 
-        // --- INÍCIO DO ANTI-TRAVA ---
         if (text.length > 5000) {
             if (!isAdmin) {
                 const metadata = await sock.groupMetadata(sender);
                 const admins = metadata.participants.filter(p => p.admin !== null).map(p => p.id);
-                const mentions = [participant, ...admins];
                 await sock.sendMessage(sender, { delete: msg.key });
                 await sock.sendMessage(sender, { 
                     text: `🚨 *ALERTA DE SEGURANÇA!* 🚨\n\nO membro @${participant.split('@')[0]} tentou enviar uma trava pesada e o sistema bloqueou!\n\n${admins.map(adm => `@${adm.split('@')[0]}`).join(' ')} -> *Fiquem de olho neste membro!*`, 
-                    mentions: mentions
+                    mentions: [participant, ...admins]
                 }, { quoted: msg });
                 return;
             } else {
@@ -373,44 +352,9 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
             }
         }
 
-        // --- SISTEMA DE CADASTRO (AUTO-APROVAÇÃO E COBRANÇA) ---
-        if (membrosPendentes[participant]) {
-            const msgCorpo = msg.message;
-            const viewOnce = msgCorpo?.viewOnceMessage?.message;
-            const viewOnceV2 = msgCorpo?.viewOnceMessageV2?.message;
-            
-            const midia = msgCorpo?.imageMessage || 
-                          msgCorpo?.videoMessage || 
-                          viewOnce?.imageMessage || 
-                          viewOnce?.videoMessage ||
-                          viewOnceV2?.imageMessage || 
-                          viewOnceV2?.videoMessage ||
-                          msgCorpo?.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage ||
-                          msgCorpo?.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage;
-
-            const padraoApresentacao = /\|/g;
-            const enviouTextoCorreto = (text.match(padraoApresentacao) || []).length >= 3;
-
-            if (midia || enviouTextoCorreto) {
-                await sock.sendMessage(sender, { 
-                    text: `✅ Cadastro confirmado, @${participant.split('@')[0]}! Bem-vindo ao Bonde!`, 
-                    mentions: [participant] 
-                }, { quoted: msg });
-                delete membrosPendentes[participant];
-            } else {
-                await sock.sendMessage(sender, { 
-                    text: `⚠️ Ei, @${participant.split('@')[0]}, cadê a apresentação, você não seguiu o padrão! \n\nEnvie uma FOTO/VÍDEO ou o formato: FOTO | CIDADE | IDADE | NOME. 📸`, 
-                    mentions: [participant] 
-                }, { quoted: msg });
-            }
-            return;
-        }
-
-        // --- COMANDO DE COMANDO INVÁLIDO ---
+        // --- 5. COMANDO INVÁLIDO ---
         if (text.startsWith('!')) {
             const comandosExistentes = ['!menu', '!comprar', '!loja', '!pesquisar', '!backup', '!dar_pontos', '!atacar', '!boss', '!rank', '!casar', '!casais', '!piada', '!avisoadm', '!descasar', '!emoji', '!sortear', '!cadastros', '!perguntas', '!jogar', '!forca', '!jogosoff', '!jogoson', '!limpar', '!fixar', '!status', '!link', '!tier', '!ranking', '!placar', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute', '!gado', '!corno', '!fofoca', '!roubar', '!cargos', '!comprar_cargo', '!dar_cargo'];
-            
-            // Corrige o comportamento para não dar block em comandos válidos ou que têm espaço depois ex: "!clima Vitoria"
             const cmdDigitado = text.split(' ')[0]; 
             
             if (!comandosExistentes.includes(cmdDigitado)) {
@@ -423,34 +367,23 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
             }
         }
 
-        // --- COMANDO PARA ADM LISTAR OS ATRASADOS ---
+        // --- 6. COMANDOS PRINCIPAIS ---
         if (text === '!cadastros') {
             if (!isAdmin) {
                 const frasesErro = [
                     "❌ Opa, @${participant.split('@')[0]}, você não é ADM! Fica na sua que quem fiscaliza aqui sou eu e os chefes! 🤡",
-                    "🚫 Tentando dar uma de fiscal, @${participant.split('@')[0]}? Esse comando é só pros ADMs, senta lá! 😂",
-                    "🧐 Eita, querendo mandar no grupo sem ter cargo? Volta pro seu lugar, esse comando é exclusivo da Elite! 👑"
+                    "🚫 Tentando dar uma de fiscal? Esse comando é só pros ADMs, senta lá! 😂"
                 ];
-                const msgErro = frasesErro[Math.floor(Math.random() * frasesErro.length)];
-                
-                return await sock.sendMessage(sender, { text: msgErro, mentions: [participant] }, { quoted: msg });
+                return await sock.sendMessage(sender, { text: frasesErro[Math.floor(Math.random() * frasesErro.length)], mentions: [participant] }, { quoted: msg });
             }
-
             const pendentes = Object.keys(membrosPendentes);
             if (pendentes.length === 0) return await sock.sendMessage(sender, { text: "✅ Todos já se apresentaram! O grupo está limpo. 😇" });
             
             let msgLista = "🕵️‍♂️ *Atenção, ADMs! O radar detectou novos membros que ainda não tomaram vergonha na cara para se registrar!*\n\n";
-            msgLista += "👻 *LISTA DE FANTASMAS (NÃO APRESENTADOS):*\n\n";
-            
-            pendentes.forEach(p => {
-                msgLista += `• @${p.split('@')[0]}\n`;
-            });
-            
-            msgLista += "\n_Se apresentem logo (mandem a FOTO ou DADOS) ou serão expulsos sem aviso prévio! 🤡_";
+            pendentes.forEach(p => { msgLista += `• @${p.split('@')[0]}\n`; });
             await sock.sendMessage(sender, { text: msgLista, mentions: pendentes }, { quoted: msg });
         }
 
-        // --- COMANDOS JOGOS ON/OFF ---
         if (text === '!jogosoff') {
             if (!isAdmin) return await sock.sendMessage(sender, { text: "❌ Apenas ADMs podem desativar os jogos!", quoted: msg });
             jogosLiberados = false;
@@ -463,24 +396,15 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
             return await sock.sendMessage(sender, { text: "🔓 *JOGOS ATIVADOS!* Podem soltar a bagunça! 🎉", quoted: msg });
         }
 
-        // --- TRAVA DE SEGURANÇA PARA JOGOS ---
         const comandosDeJogo = ['!piada', '!casar', '!descasar', '!forca', '!penalti', '!sortear', '!emoji', '!jogar', '!musica', '!perguntas'];
         if (!jogosLiberados && comandosDeJogo.some(cmd => text.startsWith(cmd))) {
             if (isAdmin) {
-                const frasesAdm = [
-                    "🤖 Os jogos estão trancados a sete chaves, mas como você é o dono da banca (ADM), vou abrir uma exceção só pra você! 👑",
-                    "😎 O grupo tá em modo sério, mas pra você eu abro qualquer porta. Pode mandar o comando! 🔓",
-                    "🤴 Você não deveria, mas você é o chefe, né? Jogos liberados só por causa da sua majestade! 👑",
-                    "🧐 O sistema tá bloqueado, mas pra você eu faço um 'gato' aqui. Manda ver, ADM! 🛠️",
-                    "🤡 Os plebeus não podem jogar, mas como você é o ADM, vou ignorar as regras só pra te agradar! 🎉"
-                ];
-                await sock.sendMessage(sender, { text: frasesAdm[Math.floor(Math.random() * frasesAdm.length)], quoted: msg });
+                await sock.sendMessage(sender, { text: "🤖 Os jogos estão trancados, mas você é ADM, vou abrir uma exceção! 👑", quoted: msg });
             } else {
-                return await sock.sendMessage(sender, { text: "❌ *Os jogos estão desativados por um ADM.* Aguarde a liberação para brincar, seu apressado! 🤐", quoted: msg });
+                return await sock.sendMessage(sender, { text: "❌ *Os jogos estão desativados por um ADM.* Aguarde a liberação! 🤐", quoted: msg });
             }
         }
 
-        // --- COMANDO FIGURINHA ---
         if (lowerText.startsWith('!f') && isMedia) {
             const media = msg.message.imageMessage || msg.message.videoMessage || msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage || msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage;
             const type = (msg.message.imageMessage || msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage) ? 'imageMessage' : 'videoMessage';
@@ -488,49 +412,37 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
             return;
         }
 
-        // --- COMANDOS ECONOMIA & CARGOS ---
         if (text.startsWith('!comprar_cargo')) {
             const novoCargo = text.replace('!comprar_cargo', '').trim();
             if (!novoCargo) return await sock.sendMessage(sender, { text: "❌ Qual cargo você quer? Ex: !comprar_cargo Rei da Zueira", quoted: msg });
-
             let placar = {};
-            if (fs.existsSync(arquivoPlacar)) { placar = JSON.parse(fs.readFileSync(arquivoPlacar, 'utf8')); }
+            if (fs.existsSync(arquivoPlacar)) placar = JSON.parse(fs.readFileSync(arquivoPlacar, 'utf8'));
             let cargos = lerArquivoSeguro(arquivoCargos);
-            
             const custo = 500; 
             if ((placar[participant] || 0) < custo) return await sock.sendMessage(sender, { text: `❌ Você não tem ${custo} pontos! Vai trabalhar! 😂`, quoted: msg });
 
             placar[participant] -= custo;
             cargos[participant] = novoCargo;
-            
             fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
             fs.writeFileSync(arquivoCargos, JSON.stringify(cargos, null, 2));
-
             await sock.sendMessage(sender, { text: `👑 Parabéns @${participant.split('@')[0]}! Agora seu cargo oficial é: *${novoCargo}*`, mentions: [participant], quoted: msg });
         }
 
         if (text.startsWith('!dar_pontos')) {
             if (!isAdmin) return await sock.sendMessage(sender, { text: "❌ Apenas ADMs têm autoridade para manipular a economia do Bonde! 🚫", quoted: msg });
-
             const args = text.split(' ');
             const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
             const quantidade = parseInt(args[2]);
-
-            if (!mention || isNaN(quantidade)) {
-                return await sock.sendMessage(sender, { text: "❌ Formato inválido.\nUse: !dar_pontos @mencao [quantidade]\nEx: !dar_pontos @5521999999999 500", quoted: msg });
-            }
-
+            if (!mention || isNaN(quantidade)) return await sock.sendMessage(sender, { text: "❌ Formato inválido.\nUse: !dar_pontos @mencao [quantidade]", quoted: msg });
+            
             let placar = {};
             try {
                 if (fs.existsSync(arquivoPlacar)) {
-                    const conteudo = fs.readFileSync(arquivoPlacar, 'utf8');
-                    placar = conteudo ? JSON.parse(conteudo) : {};
+                    placar = JSON.parse(fs.readFileSync(arquivoPlacar, 'utf8'));
                 }
             } catch (e) { placar = {}; }
-
             placar[mention] = (placar[mention] || 0) + quantidade;
             fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
-
             await sock.sendMessage(sender, { text: `✅ Sucesso! Foram adicionados *${quantidade} pontos* ao saldo de @${mention.split('@')[0]}.`, mentions: [mention], quoted: msg });
         }
 
@@ -538,17 +450,14 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
             if (!isAdmin) return await sock.sendMessage(sender, { text: "❌ Só ADM tem poder para dar cargos!", quoted: msg });
             const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
             const cargoNome = text.replace('!dar_cargo', '').replace(/@\d+/, '').trim();
-            
             if (!mention || !cargoNome) return await sock.sendMessage(sender, { text: "❌ Use: !dar_cargo @mencao [nome do cargo]", quoted: msg });
 
             let cargos = lerArquivoSeguro(arquivoCargos);
             cargos[mention] = cargoNome;
             fs.writeFileSync(arquivoCargos, JSON.stringify(cargos, null, 2));
-
             await sock.sendMessage(sender, { text: `✅ Cargo "${cargoNome}" concedido com sucesso ao @${mention.split('@')[0]}!`, mentions: [mention], quoted: msg });
         }
 
-        // --- COMANDO !PERGUNTAS ---
         if (text === '!perguntas') {
             const quiz = [
                 { q: "Qual o nome da menor unidade de memória de um computador? 💻", r: "bit" },
@@ -579,9 +488,7 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
             ];
 
             const sorteada = quiz[Math.floor(Math.random() * quiz.length)];
-
             await sock.sendMessage(sender, { react: { text: '🤔', key: msg.key } });
-
             const msgQuiz = await sock.sendMessage(sender, { 
                 video: { url: 'https://media.tenor.com/OoxmND1_sEMAAAPo/batman-doubt.mp4' }, 
                 gifPlayback: true,
@@ -599,7 +506,6 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
 
             if (respostaUsuario === respostaCerta) {
                 jogoPerguntas.ativo = false;
-                
                 let placar = lerArquivoSeguro(arquivoPlacar);
                 placar[participant] = (placar[participant] || 0) + 30; 
                 fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
@@ -616,7 +522,6 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
             }
         }
 
-        // --- COMANDO !EMOJI ---
         if (text.startsWith('!emoji')) {
             const desafios = [
                 { emojis: '⏳🏜️🪰🕶️', resposta: 'duna', gif: 'https://tenor.com/pt-BR/view/mike-dune-mike-paul-dune-mikes-book-reviews-dune-mikes-book-reviews-paul-mike-atreides-gif-22418379' },
@@ -638,7 +543,6 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
             ];
             
             const sorteado = desafios[Math.floor(Math.random() * desafios.length)];
-            
             const msgDesafio = await sock.sendMessage(sender, { 
                 video: { url: 'https://media.tenor.com/oJKQsEPQrYIAAAPo/spongebob-spongebob-squarepants.mp4' },
                 gifPlayback: true,
@@ -656,7 +560,6 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
 
             if (respostaUsuario === jogoEmoji.resposta) {
                 jogoEmoji.ativo = false; 
-                
                 const pId = msg.key.participant;
                 placarEmoji[pId] = (placarEmoji[pId] || 0) + 100;
                 fs.writeFileSync(arquivoPlacarEmoji, JSON.stringify(placarEmoji, null, 2));
@@ -676,7 +579,6 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
             }
         }
 
-        // --- COMANDO !RANKING / !PLACAR ---
         if (text === '!ranking' || text === '!placar') {
             let placar = {};
             try {
@@ -707,14 +609,12 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
             await sock.sendMessage(sender, { text: res, mentions: listaMentions }, { quoted: msg });
         }
 
-        // --- COMANDO !LINK ---
         if (lowerText === '!link') {
             await sock.sendMessage(sender, { react: { text: '🔗', key: msg.key } });
             const linkDoGrupo = "https://chat.whatsapp.com/HT7DEVaIjiE7hZ8PDThZ5a?s=cl&p=i&ilr=0"; 
             await sock.sendMessage(sender, { text: `🔗 *LINK DO BONDE DO BRASIL*\n\nAqui está o link para convidar a galera:\n${linkDoGrupo}\n\n*Regra:* Não convide gringos, hein! 😂`, }, { quoted: msg });
         }
 
-        // --- INTERAÇÕES DIVERSAS ---
         if (lowerText.includes('bot')) {
             const reacoesPossiveis = ['🤖', '🔥', '👀', '🤙', '😎', '💥', '👻'];
             const reacoesEscolhidas = reacoesPossiveis.sort(() => 0.5 - Math.random()).slice(0, 3);
@@ -826,14 +726,11 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
             await sock.sendMessage(sender, { react: { text: emojiSorteado, key: msg.key } });
         }
 
-        // --- COMANDO !MENU ---
         if (text === '!menu') {
             const senderId = msg.key.participant || msg.key.remoteJid; 
             const dataAtual = new Date().toLocaleDateString('pt-BR');
             const horaAtual = new Date(new Date().getTime() - (3 * 60 * 60 * 1000)).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-
             const meuId = '5527992997083@s.whatsapp.net'; 
-
             const menuTexto = `
 ╭━━━ 🇧🇷 BONDE DO BRASIL 🇧🇷
 │
@@ -891,12 +788,10 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
             }, { quoted: msg });
         }
 
-        // --- COMANDO !JOGAR ---
         if (text.startsWith('!jogar')) {
             await sock.sendMessage(sender, { react: { text: '🎮', key: msg.key } });
             const args = text.split(' ');
             const escolha = parseInt(args[1]);
-            const senderId = msg.key.remoteJid;
 
             const cenarios = [
                 { nome: "Caverna Misteriosa", desc: "Você entrou numa caverna úmida e escura. Escolha um caminho:" },
@@ -946,7 +841,6 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
             }
         }
 
-        // --- COMANDO !PIADA ---
         if (text === '!piada') {
             const piadas = [
                 { pergunta: "O que o pato disse para a pata? (Dica: é um trocadilho amoroso)", resposta: "vem quá" },
@@ -994,10 +888,8 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
             }
         }
 
-        // --- COMANDO !PENALTI ---
         if (text.startsWith('!penalti')) {
             await sock.sendMessage(sender, { react: { text: '⚽', key: msg.key } });
-
             const args = text.split(' ');
             const escolha = parseInt(args[1]);
             const senderId = msg.key.remoteJid;
@@ -1031,7 +923,6 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
             }
         }
 
-        // --- COMANDO !BAN ---
         if (text.startsWith('!ban')) {
             if (!isAdmin) {
                 await sock.sendMessage(sender, { text: "Tentando furar as regras, né?? HAHAHHAHA 👀👀👀\n\nSabe que um ADM está de olho em você agora né?" });
@@ -1072,7 +963,7 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
             await sock.sendMessage(sender, { 
                 video: { url: 'https://media.tenor.com/IzywMgoVemYAAAPo/cat-busy.mp4' }, 
                 gifPlayback: true,
-                caption: `🔍 Pesquisando sobre: *${termo.toUpperCase()}*...`
+                caption: `🔍 Pesquisando na Wikipédia sobre: *${termo.toUpperCase()}*...`
             }, { quoted: msg });
 
             try {
@@ -1089,10 +980,8 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
             }
         }
 
-        // --- COMANDO !TIER ---
         if (text.startsWith('!tier')) {
             await sock.sendMessage(sender, { react: { text: '📊', key: msg.key } });
-
             const tema = text.replace('!tier', '').trim() || "do grupo";
             const metadata = await sock.groupMetadata(sender);
             let ppts = metadata.participants.sort(() => 0.5 - Math.random()).slice(0, 5);
@@ -1103,7 +992,6 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
                 `📉 *RANKING DE ${tema.toUpperCase()}: A LISTA QUE NINGUÉM PEDIU, MAS TODO MUNDO QUERIA!*`,
                 `👀 *QUEM SÃO OS ${tema.toUpperCase()} DA VEZ? DESCUBRA AGORA:*`
             ];
-            
             const titulo = frasesTier[Math.floor(Math.random() * frasesTier.length)];
             let res = `${titulo}\n\n`;
 
@@ -1114,14 +1002,12 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
                 else if (score > 70) comentario = " (Respeita o homem/mulher! 🤙)";
                 else if (score > 40) comentario = " (Tá na média... eu acho 🤡)";
                 else comentario = " (Vixe, passa vergonha não! 💀)";
-
                 res += `${i + 1}. @${p.id.split('@')[0]} - ${score}% ${comentario}\n`;
             });
 
             await sock.sendMessage(sender, { text: res, mentions: ppts.map(p => p.id) }, { quoted: msg });
         }
 
-        // --- COMANDO !MATAR ---
         if (text.startsWith('!matar')) {
             const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
             if (mention) {
@@ -1137,7 +1023,6 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
                 ];
                 const sorteioMatar = frasesMatar[Math.floor(Math.random() * frasesMatar.length)];
                 const linkGifMatar = "https://media.tenor.com/3gus0SGhiEIAAAPo/cool-beans.mp4";
-
                 await sock.sendMessage(sender, { 
                     video: { url: linkGifMatar }, 
                     gifPlayback: true,
@@ -1149,7 +1034,6 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
             }
         }
 
-        // --- COMANDO !LOJA ---
         if (text === '!loja') {
             let placar = lerArquivoSeguro(arquivoPlacar);
             const saldo = placar[participant] || 0;
@@ -1178,7 +1062,6 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
             await sock.sendMessage(sender, { text: menu, quoted: msg });
         }
 
-        // --- COMANDO !COMPRAR ---
         if (text.startsWith('!comprar') || text.startsWith('!limpar') || text.startsWith('!fixar') || text.startsWith('!status')) {
             if (text.startsWith('!comprar')) {
                 const args = text.split(' ');
@@ -1264,11 +1147,9 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
             }
         }
 
-        // --- COMANDO !GADO ---
         if (text.startsWith('!gado')) {
             const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
             if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione alguém para ver o nível de gado!", quoted: msg });
-
             const porcentagem = Math.floor(Math.random() * 101);
             const alvo = mention.split('@')[0];
             let mensagemGado = "";
@@ -1281,7 +1162,6 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
             await sock.sendMessage(sender, { text: `🐂 *TESTE DO GADO* 🐂\n\nO @${alvo} é ${porcentagem}% gado! \n${mensagemGado}`, mentions: [mention] }, { quoted: msg });
         }
 
-        // --- COMANDO !CORNO ---
         if (text.startsWith('!corno')) {
             const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
             if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione alguém para fazer o teste do chifre!", quoted: msg });
@@ -1306,7 +1186,6 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
             }, { quoted: msg });
         }
 
-        // --- COMANDO !CARGOS ---
         if (text === '!cargos') {
             let cargos = lerArquivoSeguro(arquivoCargos);
             const opcoesDisponiveis = ["👑 LENDA", "🔥 REI DA ZUEIRA", "🐂 GADO SUPREMO", "🤫 FOFOQUEIRO(A)", "💎 VIP", "🌟 ESTRELA DO BONDE"];
@@ -1330,7 +1209,6 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
             }
         }
 
-        // --- COMANDO !FOFOCA ---
         if (text.startsWith('!fofoca')) {
             if (!isGroup) return await sock.sendMessage(sender, { text: "❌ Isso só funciona em grupos, senão não tem graça!", quoted: msg });
             await sock.sendMessage(sender, { react: { text: '🤫', key: msg.key } });
@@ -1365,7 +1243,6 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
             }
         }
 
-        // --- COMANDO !ROUBAR ---
         if (text.startsWith('!roubar')) {
             const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
             if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione quem você quer assaltar!", quoted: msg });
@@ -1418,7 +1295,6 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
             }
         }
 
-        // --- COMANDO !RANK ---
         if (text === '!rank') {
             let cargos = lerArquivoSeguro(arquivoCargos);
             const ranking = Object.entries(contagemMensagens).sort((a, b) => b[1] - a[1]).slice(0, 10);
@@ -1448,7 +1324,6 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
             await sock.sendMessage(sender, { text: res, mentions: listaMentions }, { quoted: msg });
         }
 
-        // --- COMANDO !SOCAR ---
         if (text.startsWith('!socar')) {
             const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
             if (mention) {
@@ -1470,7 +1345,6 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
             }
         }
 
-        // --- COMANDOS CASAMENTO E DESCASAMENTO ---
         if (text.startsWith('!descasar')) {
             const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
             if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione quem você quer largar, seu indeciso!", quoted: msg });
@@ -1581,7 +1455,6 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
             await sock.sendMessage(sender, { text: texto, mentions: listaMentions, quoted: msg });
         }
 
-        // --- COMANDO !BEIJAR ---
         if (text.startsWith('!beijar')) {
             const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
             if (mention) {
