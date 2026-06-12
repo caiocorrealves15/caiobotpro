@@ -2324,46 +2324,23 @@ if (text.startsWith('!mute')) {
     }, { quoted: msg });
 }
 
-// --- COMANDO !CLIMA (AJUSTADO E LIMPO) ---
-// --- COMANDO !CLIMA (AJUSTADO E LIMPO) ---
+// --- COMANDO !CLIMA (VERSÃO FINAL E LIMPA) ---
 if (text.startsWith('!clima')) {
     const cidade = text.replace('!clima', '').trim();
     if (!cidade) return await sock.sendMessage(sender, { text: "❌ Digite a cidade! Ex: !clima Cariacica", quoted: msg });
 
-    const mensagemParaResponder = msg;
-
-    const piadasClima = {
-        'sunny': ["Tá um sol que parece que o inferno abriu uma filial aqui! 🔥", "Céu azul... ótimo dia para ficar mofando dentro de casa. ☀️", "Solzão de rachar mamona! 🥩", "Tá mais quente que o banho que você nem tomou hoje. 🥵"],
-        'cloudy': ["Tempo nublado... bem deprimido, igual ao seu histórico de pesquisas. ☁️", "Céu cinza... perfeito para dormir. 💤", "Tá nublado, mas a feiura continua a mesma. 🤡", "Previsão inútil. 🌩️"],
-        'rain': ["Chovendo? Ótimo, desculpa perfeita para não fazer nada! 🌧️", "Cuidado para não derreter, você é feito de açúcar? 🍭", "Tá caindo o mundo lá fora. 💼", "Chuva, café e tédio. ☕"]
-    };
-
     weather.find({ search: cidade, degreeType: 'C' }, async (err, result) => {
         if (err || !result || result.length === 0) {
-            return await sock.sendMessage(sender, { text: "❌ Cidade não encontrada.", quoted: mensagemParaResponder });
+            return await sock.sendMessage(sender, { text: "❌ Cidade não encontrada.", quoted: msg });
         }
-        
         const current = result[0].current;
-        const condicaoOriginal = current.skytext.toLowerCase();
-        
-        let categoria = 'cloudy';
-        if (condicaoOriginal.includes('sunny') || condicaoOriginal.includes('clear')) categoria = 'sunny';
-        else if (condicaoOriginal.includes('rain') || condicaoOriginal.includes('storm')) categoria = 'rain';
+        await sock.sendMessage(sender, { text: `🌤 *${current.observationpoint}*\n🌡 ${current.temperature}°C\n☁️ ${current.skytext}` }, { quoted: msg });
+    });
+}
 
-        const fraseExtra = piadasClima[categoria][Math.floor(Math.random() * piadasClima[categoria].length)];
+// --- FIM DE TODOS OS COMANDOS E EVENTOS ---
+    }); // FECHA O EVENTO messages.upsert
+} // FECHA A FUNÇÃO connectToWhatsApp
 
-        const msgClima = `🌤 *Tempo em: ${current.observationpoint}*\n` +
-                         `🌡 Temperatura: ${current.temperature}°C\n` +
-                         `☁️ Condição: ${current.skytext}\n\n` +
-                         `💬 *Bot:* ${fraseExtra}`;
-        
-        await sock.sendMessage(sender, { react: { text: '🌤', key: mensagemParaResponder.key } });
-        await sock.sendMessage(sender, { text: msgClima }, { quoted: mensagemParaResponder });
-    }); 
-} // ESTE FECHA O IF DO CLIMA
-
-// --- FINALIZAÇÕES DO EVENTO E FUNÇÃO ---
-    }); // FECHA O EVENTO MESSAGES.UPSERT
-} // FECHA A FUNÇÃO CONNECTTOWHATSAPP
-
-connectToWhatsApp(); // CHAMA A FUNÇÃO
+// --- INICIALIZAÇÃO ---
+connectToWhatsApp();
