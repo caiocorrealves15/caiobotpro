@@ -2332,29 +2332,14 @@ if (text.startsWith('!clima')) {
     const mensagemParaResponder = msg;
 
     const piadasClima = {
-        'sunny': [
-            "Tá um sol que parece que o inferno abriu uma filial aqui! 🔥",
-            "Céu azul... ótimo dia para ficar mofando dentro de casa no computador. ☀️",
-            "Solzão de rachar mamona! Se você sair na rua, vai virar churrasco. 🥩",
-            "Tá mais quente que o banho que você nem tomou hoje. 🥵"
-        ],
-        'cloudy': [
-            "Tempo nublado... bem deprimido, igual ao seu histórico de pesquisas. ☁️",
-            "Céu cinza... o clima perfeito para dormir até o ano que vem. 💤",
-            "Tá nublado, mas a feiura continua a mesma. 🤡",
-            "Parece que vai chover... ou não. Minha previsão é tão inútil quanto você. 🌩️"
-        ],
-        'rain': [
-            "Chovendo? Ótimo, desculpa perfeita para não fazer nada o dia todo! 🌧️",
-            "Tempo de chuva... cuidado para não derreter, você é feito de açúcar? 🍭",
-            "Tá caindo o mundo lá fora e você aí preocupado com o clima? Vai arrumar um emprego! 💼",
-            "Chuva, café e tédio. O combo completo da vida adulta. ☕"
-        ]
+        'sunny': ["Tá um sol que parece que o inferno abriu uma filial aqui! 🔥", "Céu azul... ótimo dia para ficar mofando dentro de casa. ☀️", "Solzão de rachar mamona! 🥩", "Tá mais quente que o banho que você nem tomou hoje. 🥵"],
+        'cloudy': ["Tempo nublado... bem deprimido, igual ao seu histórico de pesquisas. ☁️", "Céu cinza... perfeito para dormir. 💤", "Tá nublado, mas a feiura continua a mesma. 🤡", "Previsão inútil. 🌩️"],
+        'rain': ["Chovendo? Ótimo, desculpa perfeita para não fazer nada! 🌧️", "Cuidado para não derreter, você é feito de açúcar? 🍭", "Tá caindo o mundo lá fora. 💼", "Chuva, café e tédio. ☕"]
     };
 
     weather.find({ search: cidade, degreeType: 'C' }, async (err, result) => {
         if (err || !result || result.length === 0) {
-            return await sock.sendMessage(sender, { text: "❌ Cidade não encontrada. Tente colocar o Estado junto, ex: !clima Cariacica, ES", quoted: mensagemParaResponder });
+            return await sock.sendMessage(sender, { text: "❌ Cidade não encontrada.", quoted: mensagemParaResponder });
         }
         
         const current = result[0].current;
@@ -2375,9 +2360,7 @@ if (text.startsWith('!clima')) {
         await sock.sendMessage(sender, { text: msgClima }, { quoted: mensagemParaResponder });
     }); 
 } 
+    }); // FECHA O EVENTO MESSAGES.UPSERT
+} // FECHA A FUNÇÃO CONNECTTOWHATSAPP
 
-// --- FECHAMENTO DO BOT ---
-}); 
-}
-
-connectToWhatsApp();
+connectToWhatsApp(); // CHAMA A FUNÇÃO
