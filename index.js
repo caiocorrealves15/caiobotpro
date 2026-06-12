@@ -240,21 +240,48 @@ async function connectToWhatsApp() {
             return; 
         }
 
-        // --- 2. SISTEMA DE CADASTRO ---
+        // --- 2. SISTEMA DE CADASTRO (AUTO-APROVAÇÃO E COBRANÇA) ---
         if (membrosPendentes[participant]) {
             const msgCorpo = msg.message;
+            
+            // Busca foto ou vídeo em todos os formatos possíveis do WhatsApp
             const viewOnce = msgCorpo?.viewOnceMessage?.message;
             const viewOnceV2 = msgCorpo?.viewOnceMessageV2?.message;
+            const ephemeral = msgCorpo?.ephemeralMessage?.message; // Para mensagens temporárias
             
-            const midia = msgCorpo?.imageMessage || msgCorpo?.videoMessage || viewOnce?.imageMessage || viewOnce?.videoMessage || viewOnceV2?.imageMessage || viewOnceV2?.videoMessage || msgCorpo?.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage || msgCorpo?.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage;
+            // Verifica a mídia em cada um dos formatos
+            const midiaNormal = msgCorpo?.imageMessage || msgCorpo?.videoMessage;
+            const midiaViewOnce = viewOnce?.imageMessage || viewOnce?.videoMessage || viewOnceV2?.imageMessage || viewOnceV2?.videoMessage;
+            const midiaEphemeral = ephemeral?.imageMessage || ephemeral?.videoMessage;
+            const midiaQuoted = msgCorpo?.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage || msgCorpo?.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage;
+
+            // Se for mídia de visualização única, marcamos para dar uma resposta especial!
+            const mandouViewOnce = !!midiaViewOnce;
+            const midia = midiaNormal || midiaViewOnce || midiaEphemeral || midiaQuoted;
+
             const padraoApresentacao = /\|/g;
             const enviouTextoCorreto = (text.match(padraoApresentacao) || []).length >= 3;
 
             if (midia || enviouTextoCorreto) {
-                await sock.sendMessage(sender, { text: `✅ Cadastro confirmado, @${participant.split('@')[0]}! Bem-vindo ao Bonde!`, mentions: [participant] }, { quoted: msg });
+                // Prepara a mensagem de confirmação padrão
+                let textoConfirmacao = `✅ *Cadastro confirmado!* 🎉\n\nFala, @${participant.split('@')[0]}! Você mandou muito bem na apresentação. Bem-vindo(a) à elite do Bonde! 🚀🔥`;
+                
+                // Se o bot detectar que a pessoa usou visualização única, ele manda uma mensagem específica
+                if (mandouViewOnce) {
+                    textoConfirmacao = `🕵️‍♂️ *Visão Biônica Ativada!* 👀\n\nRelaxa, @${participant.split('@')[0]}, eu consegui validar sua foto/vídeo de visualização única! Ninguém precisa ver, só o sistema! 🔒✨\n\n✅ *Cadastro 100% confirmado!* Bem-vindo(a) ao Bonde! 🚀🎉`;
+                }
+
+                await sock.sendMessage(sender, { 
+                    text: textoConfirmacao, 
+                    mentions: myMention // Usando a variável myMention do ajuste anterior para não bugar no Web
+                }, { quoted: quoteMsg });
+                
                 delete membrosPendentes[participant];
             } else {
-                await sock.sendMessage(sender, { text: `⚠️ Ei, @${participant.split('@')[0]}, cadê a apresentação, você não seguiu o padrão! \n\nEnvie uma FOTO/VÍDEO ou o formato: FOTO | CIDADE | IDADE | NOME. 📸`, mentions: [participant] }, { quoted: msg });
+                await sock.sendMessage(sender, { 
+                    text: `⚠️ Ei, @${participant.split('@')[0]}, cadê a apresentação? Você não seguiu o padrão! 🤦‍♂️\n\nEnvie uma *FOTO/VÍDEO* (pode ser de visualização única 🔒) ou o formato:\n*FOTO | CIDADE | IDADE | NOME* 📸`, 
+                    mentions: myMention 
+                }, { quoted: quoteMsg });
             }
             return;
         }
@@ -435,31 +462,53 @@ if (contagemFlood[participant].length >= 5) {
 
         if (text === '!perguntas') {
             const quiz = [
-                { q: "Qual o nome da menor unidade de memória de um computador? 💻", r: "bit" },
-                { q: "Qual país possui o maior número de fusos horários do mundo? 🌍", r: "franca" },
-                { q: "Quem foi o arquiteto responsável pelo projeto de Brasília? 🏛️", r: "oscar niemeyer" },
-                { q: "Qual é o metal mais denso da tabela periódica? 🧪", r: "osmio" },
-                { q: "Qual é a capital da Etiópia? 🇪🇹", r: "adis abeba" },
-                { q: "Qual o nome do satélite natural que possui uma atmosfera própria em nosso sistema solar? 🪐", r: "tita" },
-                { q: "Em que ano a Segunda Guerra Mundial terminou oficialmente? 🕊️", r: "1945" },
-                { q: "Qual a profundidade do ponto mais profundo dos oceanos, a Fossa das Marianas? 🌊", r: "11000 metros" },
-                { q: "Quem é conhecido como o pai da computação moderna? 🤖", r: "alan turing" },
-                { q: "Qual o nome da reação química que ocorre quando o ferro enferruja? ⚙️", r: "oxidacao" },
-                { q: "Qual é o único continente que não possui vulcões ativos? 🏔️", r: "australia" },
-                { q: "Qual foi o primeiro país a conceder o voto às mulheres? 🗳️", r: "nova zelandia" },
-                { q: "Qual a velocidade da luz no vácuo em km/s? ⚡", r: "300000" },
-                { q: "Qual é o maior mamífero terrestre do mundo? 🐘", r: "elefante africano" },
-                { q: "Qual cientista propôs as leis da gravitação universal? 🍎", r: "isaac newton" },
-                { q: "Qual o idioma mais falado do mundo por falantes nativos? 🗣️", r: "mandarim" },
-                { q: "Quem pintou a 'Mona Lisa'? 🎨", r: "leonardo da vinci" },
-                { q: "Qual é a floresta tropical que produz 20% do oxigênio da Terra? 🌳", r: "amazonica" },
-                { q: "Qual é o país que tem a forma de uma bota no mapa? 🇮🇹", r: "italia" },
-                { q: "Qual é o maior animal que já existiu na Terra? 🐋", r: "baleia azul" },
-                { q: "Quem escreveu a obra 'Crime e Castigo'? 📚", r: "dostoievski" },
-                { q: "Qual a temperatura em que a água ferve ao nível do mar em Celsius? 🌡️", r: "100" },
-                { q: "Qual é o nome da substância que dá a cor verde às plantas? 🍃", r: "clorofila" },
-                { q: "Qual é a cidade conhecida como 'cidade luz'? 🗼", r: "paris" }
+                { q: "Qual a capital da Austrália? (Dica: não é Sydney) 🦘", r: "canberra" },
+                { q: "Qual o elemento químico de símbolo 'W' na tabela periódica? 🧪", r: "tungstenio" },
+                { q: "Quem escreveu o clássico da literatura 'A Divina Comédia'? 📖", r: "dante alighieri" },
+                { q: "Qual o deserto mais árido do mundo, localizado no norte do Chile? 🏜️", r: "atacama" },
+                { q: "Qual o nome do menor osso do corpo humano, localizado no ouvido médio? 👂", r: "estribo" },
+                { q: "Em que ano ocorreu a queda do Muro de Berlim? 🧱", r: "1989" },
+                { q: "Qual a unidade de medida do Sistema Internacional para resistência elétrica? ⚡", r: "ohm" },
+                { q: "Qual explorador britânico descobriu a tumba do faraó Tutancâmon em 1922? (Nome e Sobrenome) 🏺", r: "howard carter" },
+                { q: "Qual organela celular é conhecida como a 'usina de energia' da célula? 🔬", r: "mitocondria" },
+                { q: "Qual foi o primeiro domínio '.com' registrado na história da internet (em 1985)? 🌐", r: "symbolics" },
+                { q: "Na mitologia grega, qual herói decapitou a Górgona Medusa? 🐍", r: "perseu" },
+                { q: "Qual o nome do tratado assinado em 1494 que dividiu as terras recém-descobertas entre Portugal e Espanha? 📜", r: "tordesilhas" },
+                { q: "Qual rio é considerado o mais longo de todo o continente europeu? 🏞️", r: "volga" },
+                { q: "Quem é reconhecida mundialmente como a primeira programadora de computadores da história? (Nome e Sobrenome) 💻", r: "ada lovelace" },
+                { q: "Qual a partícula subatômica responsável por manter os quarks unidos (a mediadora da força forte)? ⚛️", r: "gluon" },
+                { q: "Como se chama o medo irracional, patológico e paralisante de palhaços? 🤡", r: "coulrofobia" },
+                { q: "Contra qual doença foi desenvolvida a primeira vacina da história (criada por Edward Jenner)? 💉", r: "variola" },
+                { q: "Quem pintou a célebre obra surrealista 'A Persistência da Memória' (famosa pelos relógios derretidos)? (Nome e Sobrenome) 🎨", r: "salvador dali" },
+                { q: "Qual é a galáxia espiral mais próxima da nossa Via Láctea? 🌌", r: "andromeda" },
+                { q: "Que país asiático nunca foi colonizado por uma potência europeia e antigamente era chamado de Sião? 🇹🇭", r: "tailandia" },
+                { q: "Qual matemático britânico foi o gênio por trás da decifração da máquina Enigma na 2ª Guerra Mundial? (Nome e Sobrenome) 🧩", r: "alan turing" },
+                { q: "Qual é a montanha (e vulcão) mais alta de todo o Sistema Solar, localizada em Marte? 🌋", r: "monte olimpo" },
+                { q: "Em que ano exato o homem pisou na Lua pela primeira vez? 🌕", r: "1969" },
+                { q: "Qual a capital da Mongólia, frequentemente listada como a capital mais fria do mundo? 🥶", r: "ulan bator" },
+                { q: "Que gás compõe aproximadamente 78% de toda a atmosfera terrestre? ☁️", r: "nitrogenio" },
+                { q: "Qual famoso e excêntrico imperador romano teria tentado nomear seu próprio cavalo, Incitatus, como cônsul? 🐎", r: "caligula" },
+                { q: "A palavra 'Tsunami' tem origem em qual idioma? 🌊", r: "japones" },
+                { q: "Qual é a letra da vitamina sintetizada pelo corpo humano quando exposto diretamente à luz solar? ☀️", r: "d" },
+                { q: "Qual o livro de ficção mais traduzido do mundo? (Escrito por Antoine de Saint-Exupéry) 📚", r: "o pequeno principe" },
+                { q: "Quem foi o lendário líder mongol que fundou o maior império de terras contíguas da história? (Nome e Sobrenome) 🐎", r: "gengis khan" },
+                { q: "Qual é o único país do mundo cuja bandeira não tem o formato retangular nem quadrado? 🇳🇵", r: "nepal" },
+                { q: "Qual o nome da teoria científica revolucionária que Albert Einstein publicou em 1915 sobre a gravidade? 🌌", r: "relatividade geral" },
+                { q: "Como é chamado na geometria um polígono que possui exatamente 12 lados? 📐", r: "dodecagono" },
+                { q: "Na tabela periódica, a sigla 'Hg' representa qual elemento químico de metal líquido? 🌡️", r: "mercurio" },
+                { q: "Qual grande compositor clássico compôs a célebre 'Nona Sinfonia' enquanto já estava quase totalmente surdo? 🎼", r: "beethoven" },
+                { q: "Qual filósofo da Grécia Antiga, aluno de Platão, foi o tutor do jovem Alexandre, o Grande? 🏛️", r: "aristoteles" },
+                { q: "Qual cidade é atualmente considerada a área metropolitana mais populosa de todo o planeta? 🏙️", r: "toquio" },
+                { q: "Qual navegador português iniciou e liderou a primeira expedição a circum-navegar o globo terrestre? ⛵", r: "fernao de magalhaes" },
+                { q: "Qual órgão vital humano é capaz de se regenerar quase completamente mesmo se perder até 75% da sua massa? 🩸", r: "figado" },
+                { q: "Exatamente quantas casas existem em um tabuleiro de xadrez tradicional? ♟️", r: "64" },
+                { q: "Qual foi o nome do primeiro satélite artificial da Terra, lançado ao espaço pelos soviéticos em 1957? 🛰️", r: "sputnik" },
+                { q: "Qual é o nome do país africano que é um enclave, ou seja, totalmente cercado pelo território da África do Sul? 🌍", r: "lesoto" },
+                { q: "Quem foi o físico teórico que desenvolveu as três leis do movimento e a lei da gravitação universal? (Nome e Sobrenome) 🍎", r: "isaac newton" },
+                { q: "Qual é a parte mais externa e visível do Sol, que só pode ser vista a olho nu durante um eclipse solar total? ☀️", r: "coroa" },
+                { q: "Qual metal precioso é tradicionalmente associado ao 25º aniversário de casamento? 💍", r: "prata" }
             ];
+
             const sorteada = quiz[Math.floor(Math.random() * quiz.length)];
             await sock.sendMessage(sender, { react: { text: '🤔', key: msg.key } });
             const msgQuiz = await sock.sendMessage(sender, { 
@@ -467,6 +516,7 @@ if (contagemFlood[participant].length >= 5) {
                 gifPlayback: true,
                 caption: `🧠 *QUIZ DO BONDE - NÍVEL AVANÇADO (VALENDO 30 PONTOS)* 🧠\n\n${sorteada.q}\n\n*Responda em cima desta mensagem!*`, 
             }, { quoted: msg });
+            
             jogoPerguntas.ativo = true;
             jogoPerguntas.resposta = sorteada.r;
             jogoPerguntas.idMensagem = msgQuiz.key.id;
@@ -923,34 +973,46 @@ if (contagemFlood[participant].length >= 5) {
             }
         }
 
-        // --- COMANDO !PESQUISAR (REFEITO PARA WIKIPÉDIA - NUNCA MAIS INGLÊS) ---
+        // --- COMANDO !PESQUISAR (REFEITO PARA WIKIPÉDIA - BUSCA INTELIGENTE) ---
         if (text.startsWith('!pesquisar ')) {
             const termo = text.replace('!pesquisar ', '').trim();
-            if (!termo) return await sock.sendMessage(sender, { text: "❌ O que você quer pesquisar?", quoted: msg });
+            if (!termo) return await sock.sendMessage(sender, { text: "❌ O que você quer pesquisar?" }, { quoted: quoteMsg });
 
-            await sock.sendMessage(sender, { react: { text: '🔍', key: msg.key } });
+            if (!isLid) await sock.sendMessage(sender, { react: { text: '🔍', key: msg.key } });
             
             await sock.sendMessage(sender, { 
                 video: { url: 'https://media.tenor.com/IzywMgoVemYAAAPo/cat-busy.mp4' }, 
                 gifPlayback: true,
                 caption: `🔍 Pesquisando na Wikipédia sobre: *${termo.toUpperCase()}*...`
-            }, { quoted: msg });
+            }, { quoted: quoteMsg });
 
             try {
-                // Buscando direto na Wikipédia em Português! Fim do problema com inglês.
-                const res = await axios.get(`https://pt.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(termo)}`);
+                // 1. Faz uma busca inteligente para achar o título exato do artigo
+                const searchUrl = `https://pt.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(termo)}&utf8=&format=json`;
+                const searchRes = await axios.get(searchUrl);
+
+                // Se não achou nenhum resultado na busca
+                if (!searchRes.data.query.search || searchRes.data.query.search.length === 0) {
+                    return await sock.sendMessage(sender, { text: "❌ Não encontrei absolutamente nada sobre isso na Wikipédia. Tente usar outras palavras!" }, { quoted: quoteMsg });
+                }
+
+                // Pega o título do resultado mais relevante (o primeiro da lista)
+                const tituloExato = searchRes.data.query.search[0].title;
+
+                // 2. Agora sim, puxa o resumo usando o título certinho
+                const res = await axios.get(`https://pt.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(tituloExato)}`);
+                
                 if (res.data && res.data.extract) {
-                    const respostaTexto = `🔍 *RESULTADO: ${termo.toUpperCase()}*\n\n${res.data.extract}\n\n🔗 *Fonte:* ${res.data.content_urls.desktop.page}`;
-                    await sock.sendMessage(sender, { text: respostaTexto }, { quoted: msg });
+                    const respostaTexto = `🔍 *RESULTADO: ${tituloExato.toUpperCase()}*\n\n${res.data.extract}\n\n🔗 *Fonte:* ${res.data.content_urls.desktop.page}`;
+                    await sock.sendMessage(sender, { text: respostaTexto }, { quoted: quoteMsg });
                 } else {
-                    await sock.sendMessage(sender, { text: "❌ Encontrei a página, mas não consegui puxar o resumo. Tente ser mais específico!", quoted: msg });
+                    await sock.sendMessage(sender, { text: "❌ Encontrei a página, mas não consegui puxar o resumo. Tente ser mais específico!" }, { quoted: quoteMsg });
                 }
             } catch (e) {
                 console.error("Erro no !pesquisar:", e);
-                await sock.sendMessage(sender, { text: "❌ Não encontrei absolutamente nada sobre isso na Wikipédia (ou deu erro de conexão). Tente usar um termo exato!", quoted: msg });
+                await sock.sendMessage(sender, { text: "❌ O buscador deu erro de conexão. Tente de novo!" }, { quoted: quoteMsg });
             }
         }
-
         if (text.startsWith('!tier')) {
             await sock.sendMessage(sender, { react: { text: '📊', key: msg.key } });
             const tema = text.replace('!tier', '').trim() || "do grupo";
