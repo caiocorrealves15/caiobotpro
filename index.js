@@ -28,16 +28,6 @@ const cooldownRoubo = {}; // Armazena o timestamp do último roubo
 let membrosPendentes = {}; // { jid: timestamp }
 const cacheAdmins = {}; // <--- SÓ ADICIONAR ISSO AQUI
 
-async function getProfilePic(sock, jid) {
-    try {
-        const ppUrl = await sock.profilePictureUrl(jid, 'image');
-        return { url: ppUrl };
-    } catch (err) {
-        // Se der erro (pessoa sem foto ou privada), retorna uma imagem padrão
-        return { url: 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png' };
-    }
-}
-
 
 
 function lerArquivoSeguro(caminho) {
@@ -1628,9 +1618,6 @@ _Não perca tempo, compartilhe agora!_`.trim();
             const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
             if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione alguém para eu revelar a verdadeira face! 😂", quoted: msg });
 
-            // Busca a foto de perfil usando a função que criamos
-            const profilePic = await getProfilePic(sock, mention);
-
             // Trava de segurança: Ninguém analisa a Elite!
             if (groupAdmins.includes(mention) || mention.includes('5527992997083')) {
                 return await sock.sendMessage(sender, { text: "❌ *ERRO DE ANÁLISE:* O perfil da Elite é confidencial e perfeito demais para ser analisado! 👑", quoted: msg });
@@ -1639,8 +1626,8 @@ _Não perca tempo, compartilhe agora!_`.trim();
             const autor = participant.split('@')[0];
             const alvo = mention.split('@')[0];
 
-            const adjetivos = ["Carente", "Caótico", "Oportunista", "Iludido", "Pé frio", "Fofoqueiro nível pro", "Aventureiro de WhatsApp", "Dramático", "Sem noção", "Viciado em treta"];
-            const ocupacoes = ["Influencer de fofoca", "Doutor em mandar áudio inútil", "Especialista em dar vácuo", "Estagiário de desastre", "CEO do desemprego", "Auditor de status alheio", "Mestre das desculpas esfarrapadas"];
+            const adjetivos = ["Carente", "Caótico", "Oportunista", "Iludido", "Pé frio", "Fofoqueiro nível pro", "Aventureiro de WhatsApp"];
+            const ocupacoes = ["Influencer de fofoca", "Doutor em mandar áudio inútil", "Especialista em dar vácuo", "Estagiário de desastre"];
             const segredos = [
                 "já chorou assistindo propaganda de margarina.",
                 "tem uma conta secreta pra stalkear o ex e curte foto de 2018 sem querer.",
@@ -1656,11 +1643,7 @@ _Não perca tempo, compartilhe agora!_`.trim();
                 "já mandou áudio falando mal de alguém no grupo errado.",
                 "tá devendo até o pensamento pra agiota virtual.",
                 "finge que tá estudando quando na verdade tá jogando joguinho de fazenda.",
-                "tem um crush platônico no(a) entregador(a) de pizza.",
-                "dorme com a luz acesa porque tem medo de ver o saldo bancário no escuro.",
-                "já editou a mensagem pra corrigir o erro de português, mas a pessoa já tinha visto.",
-                "usa filtro em todas as fotos porque a realidade não ajuda.",
-                "tem pastas escondidas no celular cheia de print de conversas de 2020."
+                "tem um crush platônico no(a) entregador(a) de pizza."
             ];
 
             const perfil = {
@@ -1678,10 +1661,8 @@ _Não perca tempo, compartilhe agora!_`.trim();
                               `🤫 *Segredo Sombrio:* ${perfil.segredo}\n\n` +
                               `_Análise feita por pedido do @${autor}_`;
 
-            // Envia a imagem de perfil capturada + o texto
             await sock.sendMessage(sender, { 
-                image: profilePic, 
-                caption: msgPerfil, 
+                text: msgPerfil, 
                 mentions: [participant, mention] 
             }, { quoted: msg });
         }
