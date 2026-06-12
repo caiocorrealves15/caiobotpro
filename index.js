@@ -28,8 +28,7 @@ const cooldownRoubo = {}; // Armazena o timestamp do último roubo
 let membrosPendentes = {}; // { jid: timestamp }
 const cacheAdmins = {}; // <--- SÓ ADICIONAR ISSO AQUI
 
-// --- CACHE DE ADMS (PARA O BOT FICAR RÁPIDO) ---
-const cacheAdmins = {};
+
 
 function lerArquivoSeguro(caminho) {
     try {
@@ -259,27 +258,26 @@ async function connectToWhatsApp() {
             return;
         }
 
-        // --- 3. ANTI-SPAM (AGORA SUPER RÁPIDO) ---
-        const agoraSpam = Date.now();
-        if (!contagemFlood[participant]) contagemFlood[participant] = [];
-        contagemFlood[participant] = contagemFlood[participant].filter(t => agoraSpam - t < 1000);
-        contagemFlood[participant].push(agoraSpam);
+        // --- INÍCIO DO NOVO ANTI-SPAM (4 mensagens em 1 segundo = MUTE) ---
+const agora = Date.now();
+if (!contagemFlood[participant]) contagemFlood[participant] = [];
+contagemFlood[participant] = contagemFlood[participant].filter(t => agora - t < 1000);
+contagemFlood[participant].push(agora);
 
-        if (contagemFlood[participant].length >= 5) {
-            if (!isAdmin) {
-                await sock.sendMessage(sender, { react: { text: '🛑', key: msg.key } });
-                mutados[participant] = Date.now() + 60000;
-                fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
-                await sock.sendMessage(sender, { text: `🚫 @${participant.split('@')[0]}, spam detectado! Mutado.`, mentions: [participant] }, { quoted: msg });
-                contagemFlood[participant] = [];
-                return; 
-            } else {
-                await sock.sendMessage(sender, { react: { text: '⚠️', key: msg.key } });
-                await sock.sendMessage(sender, { text: `⚠️ Calma, meu rei @${participant.split('@')[0]}! Só nao reajo por que você não é meu chefe! 😂`, mentions: [participant] }, { quoted: msg });
-                contagemFlood[participant] = [];
-            }
-        }
-
+if (contagemFlood[participant].length >= 5) {
+    if (!isAdmin) {
+        await sock.sendMessage(sender, { react: { text: '🛑', key: msg.key } });
+        mutados[participant] = Date.now() + 60000;
+        fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
+        await sock.sendMessage(sender, { text: `🚫 @${participant.split('@')[0]}, spam detectado! Mutado.`, mentions: [participant] }, { quoted: msg });
+        contagemFlood[participant] = [];
+        return; 
+    } else {
+        await sock.sendMessage(sender, { react: { text: '⚠️', key: msg.key } });
+        await sock.sendMessage(sender, { text: `⚠️ Calma, meu rei @${participant.split('@')[0]}! Só nao reajo por que você não é meu chefe! 😂`, mentions: [participant] }, { quoted: msg });
+        contagemFlood[participant] = [];
+    }
+}
         // --- 4. ANTI-LINK E ANTI-TRAVA ---
         const isLink = /https?:\/\/[^\s]+/.test(text);
         if (isLink) {
@@ -313,20 +311,19 @@ async function connectToWhatsApp() {
             }
         }
 
-        if (text.length > 5000) {
-            if (!isAdmin) {
-                await sock.sendMessage(sender, { delete: msg.key });
-                await sock.sendMessage(sender, { 
-                    text: `🚨 *ALERTA DE SEGURANÇA!* 🚨\n\nO membro @${participant.split('@')[0]} tentou enviar uma trava pesada e o sistema bloqueou!\n\n${groupAdmins.map(adm => `@${adm.split('@')[0]}`).join(' ')} -> *Fiquem de olho neste membro!*`, 
-                    mentions: [participant, ...groupAdmins]
-                }, { quoted: msg });
-                return;
-            } else {
-                await sock.sendMessage(sender, { react: { text: '😂', key: msg.key } });
-                await sock.sendMessage(sender, { text: `Chefe, precisa falar tanto assim? Se for assim escreve um novo testamento logo 😂😂😂`, }, { quoted: msg });
-            }
+    if (text.length > 5000) {
+        if (!isAdmin) {
+            await sock.sendMessage(sender, { delete: msg.key });
+            await sock.sendMessage(sender, { 
+                text: `🚨 *ALERTA DE SEGURANÇA!* 🚨\n\nO membro @${participant.split('@')[0]} tentou enviar uma trava pesada e o sistema bloqueou!\n\n${groupAdmins.map(adm => `@${adm.split('@')[0]}`).join(' ')} -> *Fiquem de olho neste membro!*`, 
+                mentions: [participant, ...groupAdmins]
+            }, { quoted: msg });
+            return;
+        } else {
+            await sock.sendMessage(sender, { react: { text: '😂', key: msg.key } });
+            await sock.sendMessage(sender, { text: `Chefe, precisa falar tanto assim? Se for assim escreve um novo testamento logo 😂😂😂`, }, { quoted: msg });
         }
-
+    }
         // --- 5. COMANDO INVÁLIDO ---
         if (text.startsWith('!')) {
             const comandosExistentes = ['!menu', '!comprar', '!loja', '!pesquisar', '!backup', '!dar_pontos', '!atacar', '!boss', '!rank', '!casar', '!casais', '!piada', '!avisoadm', '!descasar', '!emoji', '!sortear', '!cadastros', '!perguntas', '!jogar', '!forca', '!jogosoff', '!jogoson', '!limpar', '!fixar', '!status', '!link', '!tier', '!ranking', '!placar', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute', '!gado', '!corno', '!fofoca', '!roubar', '!cargos', '!comprar_cargo', '!dar_cargo'];
