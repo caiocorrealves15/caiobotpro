@@ -185,8 +185,8 @@ async function connectToWhatsApp() {
 
     if (action === 'add') {
         membrosPendentes[userId] = Date.now(); // Salva a hora que entrou
-        
-        const textoBoasVindas = 
+    
+const textoBoasVindas = 
 `━━━━━━━━━━━━━━━━━━━━━━━━━━
 🔥 *BEM-VINDO AO CAOS: BONDE DO BRASIL* 🔥
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -212,12 +212,13 @@ Aqui o pau quebra com estilo! Temos sistema de economia, cargos exclusivos e mui
 Envie: *FOTO | CIDADE | IDADE | NOME*. 
 Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
 
-🤖 *DICA:* Digite *!menu* AGORA para ver todos os comandos e começar a brincadeira. Se não digitar, já entra perdendo pontos! 💸`;
+🤖 *DICA:* Digite *!menu* AGORA para ver todos os comandos e começar a brincadeira. Se não digitar, já entra perdendo pontos! 💸`
 
         await sock.sendMessage(id, { 
             text: textoBoasVindas, 
             mentions: [userId]
         });
+
     } else if (action === 'remove') {
         // --- LIMPEZA AUTOMÁTICA DE QUEM SAIU ---
         if (membrosPendentes[userId]) {
@@ -226,7 +227,7 @@ Se não registrar, o bot acha que você é robô e vai te perseguir! 🤖
         }
     }
 });
-
+    
     sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update;
         if (qr) qrcode.generate(qr, { small: true });
