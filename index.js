@@ -1106,7 +1106,7 @@ if (contagemFlood[participant].length >= 5) {
 
             await sock.sendMessage(sender, { react: { text: '💘', key: msg.key } });
             await sock.sendMessage(sender, { 
-                video: { url: 'https://media.tenor.com/P4WfI2T8pCMAAAPo/love-hearts.mp4' }, 
+                video: { url: 'https://media.tenor.com/IAIStVNhf-wAAAPo/love-amor.mp4' }, 
                 gifPlayback: true,
                 caption: `💘 *MÁQUINA DO AMOR* 💘\n\nAnalisando a química entre @${p1} e @${p2}...\n\n*Resultado:* ${porcentagem}% Compatíveis! 💞\n\n*Veredito:* ${diagnostico}`,
                 mentions: [participant, mention]
