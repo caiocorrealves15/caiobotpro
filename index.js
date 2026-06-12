@@ -1226,45 +1226,44 @@ if (text.startsWith('!ban')) {
     }
 }
 
-// --- COMANDO !PESQUISAR (VERSÃO ROBUSTA E CORRIGIDA) ---
+// --- COMANDO !PESQUISAR (AJUSTADO: EM PORTUGUÊS E SEM APAGAR O GIF) ---
 if (text.startsWith('!pesquisar ')) {
     const termo = text.replace('!pesquisar ', '').trim();
     if (!termo) return await sock.sendMessage(sender, { text: "❌ O que você quer pesquisar?", quoted: msg });
 
-    // 1. Reação inicial e GIF de carregando
+    // 1. Reação inicial (sem deletar o GIF depois)
     await sock.sendMessage(sender, { react: { text: '🔍', key: msg.key } });
-    const msgCarregando = await sock.sendMessage(sender, { 
-        video: { url: 'https://media.tenor.com/IzywMgoVemYAAAPo/cat-busy.mp4' }, // GIF de pesquisa
+    
+    // Enviamos o GIF, mas não vamos guardar o key dele para deletar depois
+    await sock.sendMessage(sender, { 
+        video: { url: 'https://media.tenor.com/IzywMgoVemYAAAPo/cat-busy.mp4' }, 
         gifPlayback: true,
         caption: `🔍 Pesquisando sobre: *${termo.toUpperCase()}*...`
     }, { quoted: msg });
 
     try {
-        // 2. Busca na API do DuckDuckGo
-        const res = await axios.get(`https://api.duckduckgo.com/?q=${encodeURIComponent(termo)}&format=json&pretty=1&no_redirect=1`, {
+        // 2. Mudamos o parâmetro da API para forçar português (pt-BR)
+        // Adicionamos &kad=pt_BR para tentar forçar a resposta em português
+        const res = await axios.get(`https://api.duckduckgo.com/?q=${encodeURIComponent(termo)}&format=json&pretty=1&no_redirect=1&kad=pt_BR`, {
             headers: { 'User-Agent': 'Mozilla/5.0' }
         });
         const data = res.data;
 
         // 3. Montagem da resposta
         let respostaTexto = "";
+        
+        // Verificamos se ele trouxe um resumo em português
         if (data.AbstractText && data.AbstractText.length > 0) {
             respostaTexto = `🔍 *RESULTADO: ${termo.toUpperCase()}*\n\n${data.AbstractText}\n\n🔗 *Fonte:* ${data.AbstractURL || 'DuckDuckGo'}`;
-        } else if (data.RelatedTopics && data.RelatedTopics.length > 0) {
-            const topo = data.RelatedTopics[0];
-            respostaTexto = `🔍 *RESULTADO: ${termo.toUpperCase()}*\n\n${topo.Text}\n\n🔗 *Fonte:* ${topo.FirstURL || 'DuckDuckGo'}`;
         } else {
-            respostaTexto = "❌ Não encontrei um resumo detalhado sobre isso.";
+            respostaTexto = "❌ Encontrei o resultado, mas está em um formato que não consegui resumir em português. Tente ser mais específico!";
         }
 
-        // 4. Ação Final: Deleta o GIF e envia o texto real
-        await sock.sendMessage(sender, { delete: msgCarregando.key });
+        // 4. Envia o texto da resposta (NÃO DELETAMOS O GIF AGORA)
         await sock.sendMessage(sender, { text: respostaTexto }, { quoted: msg });
 
     } catch (e) {
         console.error("Erro no !pesquisar:", e);
-        // Tenta deletar o GIF mesmo se der erro antes de avisar
-        await sock.sendMessage(sender, { delete: msgCarregando.key }).catch(() => {});
         await sock.sendMessage(sender, { text: "❌ O buscador deu ruim (erro de conexão). Tente de novo!", quoted: msg });
     }
 }
