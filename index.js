@@ -1986,6 +1986,7 @@ if (text === '!atacar') {
 }
 
         // 6. Admin Fechar/Abrir (Com Reply e Frases Aleatórias)
+// 6. Admin Fechar/Abrir (AJUSTADO PARA A API DO BAILEYS)
 if (text === '!fechar') {
     if (!isAdmin) {
         const frasesErro = [
@@ -2003,6 +2004,7 @@ if (text === '!fechar') {
         ];
         const msgAdm = frasesAdm[Math.floor(Math.random() * frasesAdm.length)];
         await sock.sendMessage(sender, { text: msgAdm, quoted: msg });
+        // CORREÇÃO: O parâmetro correto é 'announcement' para fechar
         await sock.groupSettingUpdate(sender, 'announcement');
     }
 }
@@ -2024,6 +2026,7 @@ if (text === '!abrir') {
         ];
         const msgAdm = frasesAdm[Math.floor(Math.random() * frasesAdm.length)];
         await sock.sendMessage(sender, { text: msgAdm, quoted: msg });
+        // CORREÇÃO: O parâmetro correto é 'not_announcement' para abrir
         await sock.groupSettingUpdate(sender, 'not_announcement');
     }
 }
