@@ -179,7 +179,7 @@ async function connectToWhatsApp() {
 
     // Boas-vindas (VERSÃO COMPLETA)
         
-        sock.ev.on('group-participants.update', async (update) => {
+      sock.ev.on('group-participants.update', async (update) => {
     const { id, participants, action } = update;
     const userId = typeof participants[0] === 'string' ? participants[0] : participants[0].id;
 
