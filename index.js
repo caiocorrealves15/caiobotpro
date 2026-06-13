@@ -2565,7 +2565,7 @@ _Não perca tempo, compartilhe agora!_`.trim();
         }
 
        // ==========================================
-        // 🎵 SISTEMA DE MÚSICA (!play) - FORMATO NATIVO DO WHATSAPP (MP4/M4A)
+        // 🎵 SISTEMA DE MÚSICA (!play) - A MÁQUINA DEFINITIVA (COBALT + LINK DIRETO)
         // ==========================================
         if (text.startsWith('!play')) {
             const musica = text.replace('!play', '').trim();
@@ -2585,52 +2585,45 @@ _Não perca tempo, compartilhe agora!_`.trim();
                 // Manda a capa
                 await sock.sendMessage(sender, { 
                     image: { url: video.thumbnail }, 
-                    caption: `🎵 *TOCANDO AGORA:* ${video.title}\n⏱️ *Duração:* ${video.timestamp}\n\n_Sincronizando áudio..._ 🚀` 
+                    caption: `🎵 *TOCANDO AGORA:* ${video.title}\n⏱️ *Duração:* ${video.timestamp}\n\n_Conectando ao satélite..._ 🚀` 
                 }, { quoted: msg });
 
-                const ytdl = require('@distube/ytdl-core');
-                
-                // 2. A SOLUÇÃO: Força o YouTube a entregar APENAS o formato mp4(m4a) que o WhatsApp aceita
-                const stream = ytdl(video.url, { 
-                    filter: format => format.container === 'mp4' && !format.hasVideo && format.hasAudio 
-                });
-                
-                let pedacosDeAudio = [];
+                let downloadUrl = "";
 
-                stream.on('data', (chunk) => {
-                    pedacosDeAudio.push(chunk);
-                });
+                // 2. TENTATIVA 1: COBALT API (O Santo Graal)
+                try {
+                    const cobaltRes = await axios.post('https://api.cobalt.tools/api/json', {
+                        url: video.url,
+                        isAudioOnly: true,
+                        aFormat: 'mp3' // Garante que venha no formato que o Zap ama
+                    }, {
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    downloadUrl = cobaltRes.data.url;
+                } catch (e1) {
+                    // PLANO B: Se o Cobalt piscar, tenta essa API secundária
+                    const resApi = await axios.get(`https://api.vreden.web.id/api/ytmp3?url=${encodeURIComponent(video.url)}`);
+                    downloadUrl = resApi.data.result?.download?.url || "";
+                }
 
-                stream.on('end', async () => {
-                    try {
-                        // Junta os pedaços num único arquivo na memória
-                        const audioCompleto = Buffer.concat(pedacosDeAudio);
-                        
-                        // Envia como MP4 (o WhatsApp vai reconhecer e mostrar o play de áudio na hora)
-                        await sock.sendMessage(sender, { 
-                            audio: audioCompleto, 
-                            mimetype: 'audio/mp4', 
-                            ptt: false 
-                        }, { quoted: msg });
+                if (!downloadUrl) throw new Error("As APIs foram blindadas pelo YouTube.");
 
-                        await sock.sendMessage(sender, { react: { text: '✅', key: msg.key } });
-                    } catch (errEnvio) {
-                        console.error("Erro na hora de enviar pro Zap:", errEnvio);
-                        await sock.sendMessage(sender, { react: { text: '❌', key: msg.key } });
-                        await sock.sendMessage(sender, { text: "❌ O WhatsApp engasgou e recusou o formato do áudio!" }, { quoted: msg });
-                    }
-                });
+                // 3. ENVIO DIRETO DA NUVEM (SEM USAR MEMÓRIA DO SERVIDOR)
+                await sock.sendMessage(sender, { 
+                    audio: { url: downloadUrl }, 
+                    mimetype: 'audio/mpeg', 
+                    ptt: false 
+                }, { quoted: msg });
 
-                stream.on('error', async (err) => {
-                    console.error("Erro no YTDL:", err.message);
-                    await sock.sendMessage(sender, { react: { text: '❌', key: msg.key } });
-                    await sock.sendMessage(sender, { text: `❌ O YouTube bloqueou a música e não quis entregar o arquivo! Motivo: ${err.message}` }, { quoted: msg });
-                });
+                await sock.sendMessage(sender, { react: { text: '✅', key: msg.key } });
 
             } catch (erro) {
-                console.error("Erro geral no play:", erro.message);
+                console.error("Erro no !play:", erro.message);
                 await sock.sendMessage(sender, { react: { text: '❌', key: msg.key } });
-                await sock.sendMessage(sender, { text: `❌ Falha no sistema de busca. Tente novamente.` }, { quoted: msg });
+                await sock.sendMessage(sender, { text: `❌ O YouTube barrou a conexão! Tente outra música.` }, { quoted: msg });
             }
         }
        // ==========================================
