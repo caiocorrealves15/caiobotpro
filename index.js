@@ -2566,17 +2566,18 @@ _Não perca tempo, compartilhe agora!_`.trim();
         }
 
        // ==========================================
-        // 🎨 GERADOR DE IMAGENS IA (!imaginar) - COM TRAVA ANTI-SPAM
+        // 🎨 GERADOR DE IMAGENS IA (!imaginar) - COMPLETÃO E BLINDADO
         // ==========================================
         if (text.startsWith('!imaginar')) {
             const promptTexto = text.replace('!imaginar', '').trim();
             if (!promptTexto) return await sock.sendMessage(sender, { text: "❌ O que você quer que eu desenhe? Ex: !imaginar cachorro rebaixado de oculos" }, { quoted: msg });
 
-            // --- TRAVA 1: SISTEMA DE COOLDOWN (LIMITE DE TEMPO) ---
+            // --- TRAVA 1: SISTEMA DE COOLDOWN (LIMITE DE TEMPO DE 3 MIN) ---
             const agora = Date.now();
-            const tempoCooldown = 3 * 60 * 1000; // 3 minutos de espera
+            const tempoCooldown = 3 * 60 * 1000; 
             
-            if (cooldownImaginar[participant] && (agora - cooldownImaginar[participant]) < tempoCooldown) {
+            // Verifica se a variável global existe e se a pessoa está no tempo de espera
+            if (typeof cooldownImaginar !== 'undefined' && cooldownImaginar[participant] && (agora - cooldownImaginar[participant]) < tempoCooldown) {
                 const tempoRestante = Math.ceil((tempoCooldown - (agora - cooldownImaginar[participant])) / (60 * 1000));
                 return await sock.sendMessage(sender, { 
                     text: `⏳ *CALMA LÁ, DA VINCI!* O pincel da IA está esfriando pra não pegar fogo. Tente novamente daqui a ${tempoRestante} minuto(s). 🎨`, 
@@ -2584,7 +2585,7 @@ _Não perca tempo, compartilhe agora!_`.trim();
                 });
             }
 
-            // --- TRAVA 2: ECONOMIA (CUSTA 30 PONTOS) ---
+            // --- TRAVA 2: ECONOMIA DO GRUPO (CUSTA 30 PONTOS) ---
             let placar = lerArquivoSeguro(arquivoPlacar);
             const custo = 30;
             if ((placar[participant] || 0) < custo) {
@@ -2596,27 +2597,41 @@ _Não perca tempo, compartilhe agora!_`.trim();
             await sock.sendMessage(sender, { text: `🧠 *Iniciando motor de Inteligência Artificial...*\n\nDesenhando: _"${promptTexto}"_\n_Isso pode levar uns 10 segundinhos, aguenta coração!_ ⏳` }, { quoted: msg });
 
             try {
+                // Sorteia um número para sempre gerar uma imagem diferente, mesmo que o texto seja igual
                 const seed = Math.floor(Math.random() * 1000000);
                 const promptFormatado = encodeURIComponent(promptTexto);
                 const imageUrl = `https://image.pollinations.ai/prompt/${promptFormatado}?seed=${seed}&width=1024&height=1024&nologo=true`;
 
-                // Envia a imagem pro Zap
+                // 1. O BOT BAIXA A IMAGEM PRIMEIRO (Dá tempo pra IA pensar e desenhar sem o Zap cancelar a conexão)
+                const response = await axios({
+                    url: imageUrl,
+                    method: 'GET',
+                    responseType: 'arraybuffer', // Puxa como dados brutos para a RAM
+                    timeout: 60000 // Dá até 1 minuto de paciência pra IA terminar o desenho
+                });
+
+                const imagemPronta = Buffer.from(response.data);
+
+                // 2. ENVIA A IMAGEM PERFEITA PARA O WHATSAPP
                 await sock.sendMessage(sender, { 
-                    image: { url: imageUrl }, 
+                    image: imagemPronta, 
                     caption: `🎨 *OBRA DE ARTE CONCLUÍDA!*\n\n💭 *Você pediu:* ${promptTexto}\n\n_Chora, Picasso! O NeymarBOT é o rei da arte!_ 😎` 
                 }, { quoted: msg });
 
-                // SUCESSO! Agora sim debita o dinheiro e ativa a trava de tempo
+                // 3. SUCESSO ABSOLUTO! Agora sim debita o dinheiro e ativa a trava de tempo
                 placar[participant] -= custo;
                 fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
-                cooldownImaginar[participant] = agora; 
+                
+                if (typeof cooldownImaginar !== 'undefined') {
+                    cooldownImaginar[participant] = agora; 
+                }
 
                 await sock.sendMessage(sender, { react: { text: '✅', key: msg.key } });
 
             } catch (erro) {
                 console.error("Erro no !imaginar:", erro.message);
                 await sock.sendMessage(sender, { react: { text: '❌', key: msg.key } });
-                await sock.sendMessage(sender, { text: `❌ Meu cérebro de IA fritou tentando desenhar isso! A criatividade foi longe demais. Tente outra coisa.` }, { quoted: msg });
+                await sock.sendMessage(sender, { text: `❌ Meu cérebro de IA fritou tentando desenhar isso! A criatividade foi longe demais ou a API está lotada. Tente outra coisa.` }, { quoted: msg });
             }
         }
        // ==========================================
