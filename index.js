@@ -2574,13 +2574,12 @@ _Não perca tempo, compartilhe agora!_`.trim();
         }
 
         // ==========================================
-        // 🎵 SISTEMA DE MÚSICA (!play) - O DJ DO BONDE
+        // 🎵 SISTEMA DE MÚSICA (!play) - O DJ DO BONDE (MÉTODO BLINDADO)
         // ==========================================
         if (text.startsWith('!play')) {
             const musica = text.replace('!play', '').trim();
 
             if (!musica) {
-                return await sock.sendMessage(sender, { react: { text: '🤦‍♂️', key: msg.key } });
                 return await sock.sendMessage(sender, { text: "❌ Tá querendo ouvir o silêncio? Digita o nome da música! Ex: !play DJ Arana" }, { quoted: msg });
             }
 
@@ -2588,10 +2587,9 @@ _Não perca tempo, compartilhe agora!_`.trim();
             await sock.sendMessage(sender, { text: `🔍 *DJ NeymarBOT na pista!*\n\nProcurando por _"${musica}"_... Aguenta aí que o grave já vai bater!` }, { quoted: msg });
 
             try {
-                // Importa o baixador blindado
                 const ytdl = require('@distube/ytdl-core');
-
-                // 1. Pesquisa o vídeo no YouTube (usa o ytSearch que você já tem instalado)
+                
+                // 1. Pesquisa o vídeo no YouTube
                 const resultados = await ytSearch(musica);
                 const video = resultados.videos.length > 0 ? resultados.videos[0] : null;
 
@@ -2599,12 +2597,12 @@ _Não perca tempo, compartilhe agora!_`.trim();
                     return await sock.sendMessage(sender, { text: "❌ Não achei nenhuma música com esse nome. Você inventou isso aí? 😂" }, { quoted: msg });
                 }
 
-                // Trava de segurança: Bloqueia áudios maiores que 10 minutos pra não explodir a memória do seu bot
+                // Trava de segurança: Bloqueia áudios maiores que 10 minutos
                 if (video.seconds > 600) { 
                     return await sock.sendMessage(sender, { text: `❌ A música *"${video.title}"* tem mais de 10 minutos! Tá achando que eu sou o Spotify Premium? Escolhe uma menor! 🤡` }, { quoted: msg });
                 }
 
-                // 2. Manda a "Capa do CD" com as informações antes de mandar o áudio
+                // 2. Manda a "Capa do CD" com as informações
                 const infoMsg = `🎵 *TOCANDO AGORA NO BONDE VIP* 🎵\n\n` +
                                 `🎶 *Faixa:* ${video.title}\n` +
                                 `⏱️ *Duração:* ${video.timestamp}\n` +
@@ -2617,21 +2615,45 @@ _Não perca tempo, compartilhe agora!_`.trim();
                     caption: infoMsg 
                 }, { quoted: msg });
 
-                // 3. Puxa a música do YouTube na melhor qualidade e manda pro Zap
+                // 3. DOWNLOAD SEGURO: Cria um arquivo temporário no sistema
+                const tempFile = `./musica_${Date.now()}.mp3`;
                 const stream = ytdl(video.url, { filter: 'audioonly', quality: 'highestaudio' });
+                const fileStream = fs.createWriteStream(tempFile);
 
-                await sock.sendMessage(sender, { 
-                    audio: { stream: stream }, 
-                    mimetype: 'audio/mp4', 
-                    ptt: false // false = manda como música normal. Se colocar true, ele manda como mensagem de voz!
-                }, { quoted: msg });
+                // Joga a música do YouTube pra dentro do arquivo
+                stream.pipe(fileStream);
 
-                await sock.sendMessage(sender, { react: { text: '✅', key: msg.key } });
+                // 4. Quando o download terminar, envia pro WhatsApp e apaga o arquivo
+                fileStream.on('finish', async () => {
+                    try {
+                        await sock.sendMessage(sender, { 
+                            audio: { url: tempFile }, 
+                            mimetype: 'audio/mpeg', 
+                            ptt: false 
+                        }, { quoted: msg });
+
+                        await sock.sendMessage(sender, { react: { text: '✅', key: msg.key } });
+                    } catch (sendError) {
+                        console.error("Erro ao enviar o áudio pro WhatsApp:", sendError);
+                        await sock.sendMessage(sender, { text: "❌ Deu um engasgo na hora de enviar o áudio! 😭" }, { quoted: msg });
+                    } finally {
+                        // Independentemente de dar erro ou não, ele APAGA o arquivo pra liberar espaço
+                        if (fs.existsSync(tempFile)) {
+                            fs.unlinkSync(tempFile);
+                        }
+                    }
+                });
+
+                fileStream.on('error', async (err) => {
+                    console.error("Erro ao salvar áudio:", err);
+                    await sock.sendMessage(sender, { react: { text: '❌', key: msg.key } });
+                    if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile); // Limpa o rastro
+                });
 
             } catch (erro) {
                 console.error("Erro no comando !play:", erro);
                 await sock.sendMessage(sender, { react: { text: '❌', key: msg.key } });
-                await sock.sendMessage(sender, { text: "❌ O YouTube percebeu a pirataria e cortou meu barato! Deu erro ao baixar. Tenta com o link direto ou com outra música." }, { quoted: msg });
+                await sock.sendMessage(sender, { text: "❌ O YouTube percebeu a pirataria e cortou meu barato! Deu erro ao pesquisar." }, { quoted: msg });
             }
         }
        // ==========================================
