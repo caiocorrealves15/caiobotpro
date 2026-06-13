@@ -2573,39 +2573,40 @@ _Não perca tempo, compartilhe agora!_`.trim();
             }
         }
        // ==========================================
-        // 🌤️ COMANDO !CLIMA (SATÉLITE GLOBAL INTELIGENTE)
+        // 🌤️ COMANDO !CLIMA (TRAVADO 100% NO BRASIL 🇧🇷)
         // ==========================================
         if (text.startsWith('!clima')) {
             const cidade = text.replace('!clima', '').trim();
-            if (!cidade) return await sock.sendMessage(sender, { text: "❌ Ô gênio, esqueceu a cidade! Ex: !clima Monteiro Paraíba", quoted: msg });
+            if (!cidade) return await sock.sendMessage(sender, { text: "❌ Ô gênio, esqueceu a cidade! Ex: !clima Vitória ES", quoted: msg });
 
             await sock.sendMessage(sender, { react: { text: '🌤️', key: msg.key } });
 
             try {
-                // 1. Busca as coordenadas com Nominatim (OpenStreetMap) - Ele é super inteligente pra entender "Cidade Estado"
-                const geoRes = await axios.get(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cidade)}&format=json&addressdetails=1&limit=1`, {
-                    headers: { 'User-Agent': 'BondeDoBrasilBot/2.0' }
+                // 1. Busca as coordenadas com FILTRO TRAVADO NO BRASIL (&countrycodes=br)
+                // Assim o satélite nunca mais vai confundir "ES" com Espanha!
+                const geoRes = await axios.get(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cidade)}&format=json&addressdetails=1&limit=1&countrycodes=br`, {
+                    headers: { 'User-Agent': 'BondeDoBrasilBot/3.0' }
                 });
                 
                 if (!geoRes.data || geoRes.data.length === 0) {
-                    return await sock.sendMessage(sender, { text: `❌ A cidade "${cidade}" não existe ou o mapa engoliu! 😂 Tente escrever só o nome da cidade, ou Cidade + Estado.`, quoted: msg });
+                    return await sock.sendMessage(sender, { text: `❌ A cidade "${cidade}" não existe no Brasil ou o mapa engoliu! 😂 Tente escrever só o nome, ou Cidade + Estado.`, quoted: msg });
                 }
 
                 const local = geoRes.data[0];
                 const lat = local.lat;
                 const lon = local.lon;
                 
-                // Pega o nome certinho (cidade, vila ou o nome geral)
+                // Pega o nome certinho (cidade, vila ou o nome geral) e o Estado Brasileiro
                 const nomeCidade = local.address.city || local.address.town || local.address.village || local.address.municipality || local.name;
-                const estado = local.address.state || local.address.country || "Desconhecido";
+                const estado = local.address.state || "Brasil";
 
-                // 2. Busca o clima ao vivo batendo nas coordenadas exatas (Open-Meteo não falha)
+                // 2. Busca o clima ao vivo batendo nas coordenadas exatas
                 const climaRes = await axios.get(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
                 const current = climaRes.data.current_weather;
                 const temp = current.temperature;
                 const code = current.weathercode;
 
-                // 3. Traduz os códigos meteorológicos mundiais (WMO) para PT-BR
+                // 3. Traduz os códigos meteorológicos mundiais para PT-BR
                 let desc = "Desconhecido";
                 let tipo = "nublado";
                 
