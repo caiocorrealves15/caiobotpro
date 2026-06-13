@@ -28,7 +28,15 @@ const cooldownRoubo = {}; // Armazena o timestamp do último roubo
 let membrosPendentes = {}; // { jid: timestamp }
 const cacheAdmins = {}; // <--- SÓ ADICIONAR ISSO AQUI
 
-
+async function getProfilePic(sock, jid) {
+    try {
+        const ppUrl = await sock.profilePictureUrl(jid, 'image');
+        return { url: ppUrl };
+    } catch (err) {
+        // Se der erro (pessoa sem foto ou privada), retorna uma imagem padrão
+        return { url: 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png' };
+    }
+}
 
 function lerArquivoSeguro(caminho) {
     try {
@@ -57,7 +65,7 @@ let raidBoss = {
 
 const enviarBackupAutomatico = async (sock) => {
     const meuNumero = '5527992997083@s.whatsapp.net';
-    const arquivos = [arquivoPlacar, arquivoCargos, arquivoCasais, arquivoRank];
+    const arquivos = [arquivoPlacar, arquivoCargos, arquivoCasais, ARQUIVO_RANK];
     for (const arquivo of arquivos) {
         if (fs.existsSync(arquivo)) {
             await sock.sendMessage(meuNumero, { 
@@ -140,7 +148,8 @@ async function connectToWhatsApp() {
         syncFullHistory: false,
         browser: ['Desktop', 'Chrome', '121.0.0.0'] 
     });
-sock.ev.on('creds.update', saveCreds);
+
+    sock.ev.on('creds.update', saveCreds);
     sock.ev.removeAllListeners('messages.upsert');
     sock.ev.removeAllListeners('group-participants.update');
         
@@ -214,8 +223,6 @@ sock.ev.on('creds.update', saveCreds);
         const sender = msg.key.remoteJid;
         const participant = msg.key.participant || sender;
         
-        // --- A MÁGICA QUE SALVA O BOT DO WHATSAPP WEB ---
-
         const isLid = participant && participant.includes('@lid');
         const quoteMsg = isLid ? undefined : msg; 
         const myMention = isLid ? [] : [participant];
@@ -224,7 +231,7 @@ sock.ev.on('creds.update', saveCreds);
         const text = msg.message.conversation || msg.message.extendedTextMessage?.text || msg.message.imageMessage?.caption || msg.message.videoMessage?.caption || "";
         const lowerText = text.toLowerCase();
         const isMedia = !!(msg.message.imageMessage || msg.message.videoMessage || msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage || msg.message.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage);
-        // --- SISTEMA DE CACHE DE ADM (ACELERA O BOT EM 1000%) ---
+        
         let isAdmin = false;
         let groupAdmins = [];
         if (isGroup) {
@@ -240,36 +247,24 @@ sock.ev.on('creds.update', saveCreds);
             isAdmin = groupAdmins.includes(participant);
         }
 
-        // --- 1. VERIFICAÇÃO DE MUTADOS ---
         if (mutados[participant] && Date.now() < mutados[participant]) {
             await sock.sendMessage(sender, { delete: msg.key });
             return; 
         }
 
-        // --- 2. SISTEMA DE CADASTRO (AUTO-APROVAÇÃO E COBRANÇA) ---
         if (membrosPendentes[participant]) {
             const msgCorpo = msg.message;
             if (!msgCorpo) return;
 
-            // --- BUSCA BLINDADA: Ignora a ordem das chaves do WhatsApp ---
-            // Tenta pegar o conteúdo de visualização única em qualquer uma das versões possíveis
             const msgViewOnceV1 = msgCorpo.viewOnceMessage?.message;
             const msgViewOnceV2 = msgCorpo.viewOnceMessageV2?.message;
             const msgViewOnceExt = msgCorpo.viewOnceMessageV2Extension?.message;
             
-            // Junta o que ele encontrou (se for undefined, o || pula pro próximo)
             const innerViewOnce = msgViewOnceV1 || msgViewOnceV2 || msgViewOnceExt;
-            
-            // É ViewOnce se encontrou o objeto acima E se lá dentro tem imagem/vídeo
             const mandouViewOnce = !!(innerViewOnce && (innerViewOnce.imageMessage || innerViewOnce.videoMessage));
-            
-            // Verifica mídia normal (sem ser view once, imagem/vídeo direta ou respondida)
             const midiaNormal = msgCorpo.imageMessage || msgCorpo.videoMessage || msgCorpo.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage || msgCorpo.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage;
-            
-            // É mídia se mandou view once OU mandou foto/vídeo normal
             const midia = mandouViewOnce || midiaNormal;
 
-            // Validação de texto para apresentação
             const padraoApresentacao = /\|/g;
             const enviouTextoCorreto = (text && (text.match(padraoApresentacao) || []).length >= 3);
 
@@ -279,13 +274,11 @@ sock.ev.on('creds.update', saveCreds);
                 let textoConfirmacao = `✅ *Cadastro confirmado!* 🎉\n\nFala, @${numeroExibicao}! Você mandou muito bem na apresentação. Bem-vindo(a) à elite do Bonde! 🚀🔥`;
                 let emojiReacao = '✅';
                 
-                // Feedback especial para quem mandou foto temporária
                 if (mandouViewOnce) {
                     textoConfirmacao = `🕵️‍♂️ *Visão Biônica Ativada!* 👀\n\nRelaxa, @${numeroExibicao}, eu consegui validar sua foto/vídeo de visualização única! Ninguém precisa ver, só o sistema! 🔒✨\n\n✅ *Cadastro 100% confirmado!* Bem-vindo(a) ao Bonde! 🚀🎉`;
                     emojiReacao = '🕵️‍♂️';
                 }
 
-                // Reação e Resposta
                 await sock.sendMessage(sender, { react: { text: emojiReacao, key: msg.key } });
                 await sock.sendMessage(sender, { 
                     text: textoConfirmacao, 
@@ -294,7 +287,6 @@ sock.ev.on('creds.update', saveCreds);
                 
                 delete membrosPendentes[participant];
             } else {
-                // Cobrança padrão caso o usuário erre
                 await sock.sendMessage(sender, { react: { text: '⚠️', key: msg.key } });
                 await sock.sendMessage(sender, { 
                     text: `⚠️ Ei, @${numeroExibicao}, cadê a apresentação? Você não seguiu o padrão! 🤦‍♂️\n\nEnvie uma *FOTO/VÍDEO* (pode ser de visualização única 🔒) ou o formato:\n*FOTO | CIDADE | IDADE | NOME* 📸`, 
@@ -304,27 +296,26 @@ sock.ev.on('creds.update', saveCreds);
             return;
         }
 
-        // --- INÍCIO DO NOVO ANTI-SPAM (4 mensagens em 1 segundo = MUTE) ---
-const agora = Date.now();
-if (!contagemFlood[participant]) contagemFlood[participant] = [];
-contagemFlood[participant] = contagemFlood[participant].filter(t => agora - t < 1000);
-contagemFlood[participant].push(agora);
+        const agora = Date.now();
+        if (!contagemFlood[participant]) contagemFlood[participant] = [];
+        contagemFlood[participant] = contagemFlood[participant].filter(t => agora - t < 1000);
+        contagemFlood[participant].push(agora);
 
-if (contagemFlood[participant].length >= 5) {
-    if (!isAdmin) {
-        await sock.sendMessage(sender, { react: { text: '🛑', key: msg.key } });
-        mutados[participant] = Date.now() + 60000;
-        fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
-        await sock.sendMessage(sender, { text: `🚫 @${participant.split('@')[0]}, spam detectado! Mutado.`, mentions: [participant] }, { quoted: msg });
-        contagemFlood[participant] = [];
-        return; 
-    } else {
-        await sock.sendMessage(sender, { react: { text: '⚠️', key: msg.key } });
-        await sock.sendMessage(sender, { text: `⚠️ Calma, meu rei @${participant.split('@')[0]}! Só nao reajo por que você não é meu chefe! 😂`, mentions: [participant] }, { quoted: msg });
-        contagemFlood[participant] = [];
-    }
-}
-        // --- 4. ANTI-LINK E ANTI-TRAVA ---
+        if (contagemFlood[participant].length >= 5) {
+            if (!isAdmin) {
+                await sock.sendMessage(sender, { react: { text: '🛑', key: msg.key } });
+                mutados[participant] = Date.now() + 60000;
+                fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
+                await sock.sendMessage(sender, { text: `🚫 @${participant.split('@')[0]}, spam detectado! Mutado.`, mentions: [participant] }, { quoted: msg });
+                contagemFlood[participant] = [];
+                return; 
+            } else {
+                await sock.sendMessage(sender, { react: { text: '⚠️', key: msg.key } });
+                await sock.sendMessage(sender, { text: `⚠️ Calma, meu rei @${participant.split('@')[0]}! Só nao reajo por que você não é meu chefe! 😂`, mentions: [participant] }, { quoted: msg });
+                contagemFlood[participant] = [];
+            }
+        }
+
         const isLink = /https?:\/\/[^\s]+/.test(text);
         if (isLink) {
             if (!isAdmin) {
@@ -357,22 +348,22 @@ if (contagemFlood[participant].length >= 5) {
             }
         }
 
-    if (text.length > 5000) {
-        if (!isAdmin) {
-            await sock.sendMessage(sender, { delete: msg.key });
-            await sock.sendMessage(sender, { 
-                text: `🚨 *ALERTA DE SEGURANÇA!* 🚨\n\nO membro @${participant.split('@')[0]} tentou enviar uma trava pesada e o sistema bloqueou!\n\n${groupAdmins.map(adm => `@${adm.split('@')[0]}`).join(' ')} -> *Fiquem de olho neste membro!*`, 
-                mentions: [participant, ...groupAdmins]
-            }, { quoted: msg });
-            return;
-        } else {
-            await sock.sendMessage(sender, { react: { text: '😂', key: msg.key } });
-            await sock.sendMessage(sender, { text: `Chefe, precisa falar tanto assim? Se for assim escreve um novo testamento logo 😂😂😂`, }, { quoted: msg });
+        if (text.length > 5000) {
+            if (!isAdmin) {
+                await sock.sendMessage(sender, { delete: msg.key });
+                await sock.sendMessage(sender, { 
+                    text: `🚨 *ALERTA DE SEGURANÇA!* 🚨\n\nO membro @${participant.split('@')[0]} tentou enviar uma trava pesada e o sistema bloqueou!\n\n${groupAdmins.map(adm => `@${adm.split('@')[0]}`).join(' ')} -> *Fiquem de olho neste membro!*`, 
+                    mentions: [participant, ...groupAdmins]
+                }, { quoted: msg });
+                return;
+            } else {
+                await sock.sendMessage(sender, { react: { text: '😂', key: msg.key } });
+                await sock.sendMessage(sender, { text: `Chefe, precisa falar tanto assim? Se for assim escreve um novo testamento logo 😂😂😂`, }, { quoted: msg });
+            }
         }
-    }
-        // --- 5. COMANDO INVÁLIDO ---
+
         if (text.startsWith('!')) {
-            const comandosExistentes = ['!menu', '!comprar', '!bola8', '!perfil', '!culpado', '!inocente', '!shippar',  '!julgar', '!loja', '!pesquisar', '!backup', '!dar_pontos', '!atacar', '!boss', '!rank', '!casar', '!casais', '!piada', '!avisoadm', '!descasar', '!emoji', '!sortear', '!cadastros', '!perguntas', '!jogar', '!forca', '!jogosoff', '!jogoson', '!limpar', '!fixar', '!status', '!link', '!tier', '!ranking', '!placar', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute', '!gado', '!corno', '!fofoca', '!roubar', '!cargos', '!comprar_cargo', '!dar_cargo'];
+            const comandosExistentes = ['!menu', '!comprar', '!calvo', '!qi', '!serasa', '!historico', '!fakenews', '!rinha', '!vasco', '!gravida', '!feio', '!clt', '!bola8', '!perfil', '!culpado', '!inocente', '!shippar',  '!julgar', '!loja', '!pesquisar', '!backup', '!dar_pontos', '!atacar', '!boss', '!rank', '!casar', '!casais', '!piada', '!avisoadm', '!descasar', '!emoji', '!sortear', '!cadastros', '!perguntas', '!jogar', '!forca', '!jogosoff', '!jogoson', '!limpar', '!fixar', '!status', '!link', '!tier', '!ranking', '!placar', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute', '!gado', '!corno', '!fofoca', '!roubar', '!cargos', '!comprar_cargo', '!dar_cargo'];
             const cmdDigitado = text.split(' ')[0]; 
             
             if (!comandosExistentes.includes(cmdDigitado)) {
@@ -385,7 +376,6 @@ if (contagemFlood[participant].length >= 5) {
             }
         }
 
-        // --- 6. COMANDOS PRINCIPAIS ---
         if (text === '!cadastros') {
             if (!isAdmin) {
                 const frasesErro = [
@@ -486,45 +476,7 @@ if (contagemFlood[participant].length >= 5) {
                 { q: "Qual o deserto mais árido do mundo, localizado no norte do Chile? 🏜️", r: "atacama" },
                 { q: "Qual o nome do menor osso do corpo humano, localizado no ouvido médio? 👂", r: "estribo" },
                 { q: "Em que ano ocorreu a queda do Muro de Berlim? 🧱", r: "1989" },
-                { q: "Qual a unidade de medida do Sistema Internacional para resistência elétrica? ⚡", r: "ohm" },
-                { q: "Qual explorador britânico descobriu a tumba do faraó Tutancâmon em 1922? (Nome e Sobrenome) 🏺", r: "howard carter" },
-                { q: "Qual organela celular é conhecida como a 'usina de energia' da célula? 🔬", r: "mitocondria" },
-                { q: "Qual foi o primeiro domínio '.com' registrado na história da internet (em 1985)? 🌐", r: "symbolics" },
-                { q: "Na mitologia grega, qual herói decapitou a Górgona Medusa? 🐍", r: "perseu" },
-                { q: "Qual o nome do tratado assinado em 1494 que dividiu as terras recém-descobertas entre Portugal e Espanha? 📜", r: "tordesilhas" },
-                { q: "Qual rio é considerado o mais longo de todo o continente europeu? 🏞️", r: "volga" },
-                { q: "Quem é reconhecida mundialmente como a primeira programadora de computadores da história? (Nome e Sobrenome) 💻", r: "ada lovelace" },
-                { q: "Qual a partícula subatômica responsável por manter os quarks unidos (a mediadora da força forte)? ⚛️", r: "gluon" },
-                { q: "Como se chama o medo irracional, patológico e paralisante de palhaços? 🤡", r: "coulrofobia" },
-                { q: "Contra qual doença foi desenvolvida a primeira vacina da história (criada por Edward Jenner)? 💉", r: "variola" },
-                { q: "Quem pintou a célebre obra surrealista 'A Persistência da Memória' (famosa pelos relógios derretidos)? (Nome e Sobrenome) 🎨", r: "salvador dali" },
-                { q: "Qual é a galáxia espiral mais próxima da nossa Via Láctea? 🌌", r: "andromeda" },
-                { q: "Que país asiático nunca foi colonizado por uma potência europeia e antigamente era chamado de Sião? 🇹🇭", r: "tailandia" },
-                { q: "Qual matemático britânico foi o gênio por trás da decifração da máquina Enigma na 2ª Guerra Mundial? (Nome e Sobrenome) 🧩", r: "alan turing" },
-                { q: "Qual é a montanha (e vulcão) mais alta de todo o Sistema Solar, localizada em Marte? 🌋", r: "monte olimpo" },
-                { q: "Em que ano exato o homem pisou na Lua pela primeira vez? 🌕", r: "1969" },
-                { q: "Qual a capital da Mongólia, frequentemente listada como a capital mais fria do mundo? 🥶", r: "ulan bator" },
-                { q: "Que gás compõe aproximadamente 78% de toda a atmosfera terrestre? ☁️", r: "nitrogenio" },
-                { q: "Qual famoso e excêntrico imperador romano teria tentado nomear seu próprio cavalo, Incitatus, como cônsul? 🐎", r: "caligula" },
-                { q: "A palavra 'Tsunami' tem origem em qual idioma? 🌊", r: "japones" },
-                { q: "Qual é a letra da vitamina sintetizada pelo corpo humano quando exposto diretamente à luz solar? ☀️", r: "d" },
-                { q: "Qual o livro de ficção mais traduzido do mundo? (Escrito por Antoine de Saint-Exupéry) 📚", r: "o pequeno principe" },
-                { q: "Quem foi o lendário líder mongol que fundou o maior império de terras contíguas da história? (Nome e Sobrenome) 🐎", r: "gengis khan" },
-                { q: "Qual é o único país do mundo cuja bandeira não tem o formato retangular nem quadrado? 🇳🇵", r: "nepal" },
-                { q: "Qual o nome da teoria científica revolucionária que Albert Einstein publicou em 1915 sobre a gravidade? 🌌", r: "relatividade geral" },
-                { q: "Como é chamado na geometria um polígono que possui exatamente 12 lados? 📐", r: "dodecagono" },
-                { q: "Na tabela periódica, a sigla 'Hg' representa qual elemento químico de metal líquido? 🌡️", r: "mercurio" },
-                { q: "Qual grande compositor clássico compôs a célebre 'Nona Sinfonia' enquanto já estava quase totalmente surdo? 🎼", r: "beethoven" },
-                { q: "Qual filósofo da Grécia Antiga, aluno de Platão, foi o tutor do jovem Alexandre, o Grande? 🏛️", r: "aristoteles" },
-                { q: "Qual cidade é atualmente considerada a área metropolitana mais populosa de todo o planeta? 🏙️", r: "toquio" },
-                { q: "Qual navegador português iniciou e liderou a primeira expedição a circum-navegar o globo terrestre? ⛵", r: "fernao de magalhaes" },
-                { q: "Qual órgão vital humano é capaz de se regenerar quase completamente mesmo se perder até 75% da sua massa? 🩸", r: "figado" },
-                { q: "Exatamente quantas casas existem em um tabuleiro de xadrez tradicional? ♟️", r: "64" },
-                { q: "Qual foi o nome do primeiro satélite artificial da Terra, lançado ao espaço pelos soviéticos em 1957? 🛰️", r: "sputnik" },
-                { q: "Qual é o nome do país africano que é um enclave, ou seja, totalmente cercado pelo território da África do Sul? 🌍", r: "lesoto" },
-                { q: "Quem foi o físico teórico que desenvolveu as três leis do movimento e a lei da gravitação universal? (Nome e Sobrenome) 🍎", r: "isaac newton" },
-                { q: "Qual é a parte mais externa e visível do Sol, que só pode ser vista a olho nu durante um eclipse solar total? ☀️", r: "coroa" },
-                { q: "Qual metal precioso é tradicionalmente associado ao 25º aniversário de casamento? 💍", r: "prata" }
+                { q: "Qual a unidade de medida do Sistema Internacional para resistência elétrica? ⚡", r: "ohm" }
             ];
 
             const sorteada = quiz[Math.floor(Math.random() * quiz.length)];
@@ -565,21 +517,7 @@ if (contagemFlood[participant].length >= 5) {
         if (text.startsWith('!emoji')) {
             const desafios = [
                 { emojis: '⏳🏜️🪰🕶️', resposta: 'duna', gif: 'https://tenor.com/pt-BR/view/mike-dune-mike-paul-dune-mikes-book-reviews-dune-mikes-book-reviews-paul-mike-atreides-gif-22418379' },
-                { emojis: '🏢🧩💀📼', resposta: 'jogos mortais', gif: 'https://media.tenor.com/_VCUIiAYnQUAAAPo/jigsaw-saw.mp4' },
-                { emojis: '🥃👽🌑🎷', resposta: 'o quinto elemento', gif: 'https://media.tenor.com/nr1ihysLytYAAAPo/fifth-element-friday.mp4' },
-                { emojis: '🏨❄️🪓👨‍👩‍👦', resposta: 'o iluminado', gif: 'https://media.tenor.com/sU7qOfCln0cAAAPo/resplandor-shining.mp4' },
-                { emojis: '🤖🧠🕶️🌆', resposta: 'blade runner', gif: 'https://media.tenor.com/OLN4EbHbw0MAAAPo/ryan-gosling.mp4' },
-                { emojis: '👨‍🦱💊🃏🏙️', resposta: 'coringa', gif: 'https://media.tenor.com/YA5eTXsPOGQAAAPo/%E1%83%AF%E1%83%9D%E1%83%99%E1%83%94%E1%83%A0%E1%83%98-joker.mp4' },
-                { emojis: '🏰🗝️🦁🏹', resposta: 'narnia', gif: 'https://media.tenor.com/L3uIXGs50TMAAAPo/narnia-mrtumnus.mp4' },
-                { emojis: '🦖🌴🧬🧪', resposta: 'jurassic park', gif: 'https://media.tenor.com/xvxsUY2gWtgAAAPo/t-rex.mp4' },
-                { emojis: '👤🔥🌌🕰️', resposta: 'donnie darko', gif: 'https://media.tenor.com/bZgc0s9WzgQAAAPo/donniedarko-bunny.mp4' },
-                { emojis: '🛶💍👹🌋', resposta: 'o hobbit', gif: 'https://media.tenor.com/ofMWBWlpN4IAAAPo/hasanshabbir-blaaah.mp4' },
-                { emojis: '👩‍🏫📓🤫💅', resposta: 'meninas malvadas', gif: 'https://media.tenor.com/9DP0qd04vvsAAAPo/mean-girls-looking-around.mp4' },
-                { emojis: '🕵️‍♂️♟️🎩🔪', resposta: 'o grande truque', gif: 'https://media.tenor.com/CvDyQw6dUBQAAAPo/prestige-movie-hugh-jackman.mp4' },
-                { emojis: '👨‍🔬🧪🚐💰', resposta: 'breaking bad', gif: 'https://media.tenor.com/XyAE6nJKCIUAAAPo/breaking-bad.mp4' },
-                { emojis: '👨‍🚀🌌🌑🚪', resposta: '2001 uma odisseia no espaço', gif: 'https://media.tenor.com/wP-HjXYA6HgAAAPo/dave-bowman-david-bowman.mp4' },
-                { emojis: '👺🎭🎹🎼', resposta: 'o fantasma da ópera', gif: 'https://media.tenor.com/jvxE-RQjbaIAAAPo/phantom-of-the-opera-gerard-butler.mp4' },
-                { emojis: '🥊🏢🛌💤', resposta: 'origem', gif: 'https://media.tenor.com/yaRszZthE04AAAPo/cillian-murphy-inception.mp4' }
+                { emojis: '🏢🧩💀📼', resposta: 'jogos mortais', gif: 'https://media.tenor.com/_VCUIiAYnQUAAAPo/jigsaw-saw.mp4' }
             ];
             
             const sorteado = desafios[Math.floor(Math.random() * desafios.length)];
@@ -730,31 +668,19 @@ _Não perca tempo, compartilhe agora!_`.trim();
                 emoji = '☀️';
                 frases = [
                     'Bom dia! Já acordou querendo trabalhar ou só vai enrolar o dia todo mesmo? 🤡',
-                    'Bom dia! O sol nasceu para todos, mas só para os trouxas que já estão acordados. ☀️',
-                    'Bom dia! Já deu bom dia pro grupo ou vai ficar só de olho nas mensagens? 🧐',
-                    'Bom dia! Levanta que o boleto não se paga sozinho e a vida de herdeiro não chegou! 💸',
-                    'Bom dia! O café tá pronto, mas a vontade de trabalhar ainda não apareceu. ☕',
-                    'Bom dia! Mais um dia tentando não ser demitido. Boa sorte pra nós! 🍀'
+                    'Bom dia! O sol nasceu para todos, mas só para os trouxas que já estão acordados. ☀️'
                 ];
             } else if (lowerText.includes('boa tarde')) {
                 emoji = '🌤️';
                 frases = [
                     'Boa tarde! O dia já tá acabando e você produziu o quê? Exatamente... nada! 😂',
-                    'Boa tarde! Hora daquele cochilo maroto que o chefe não pode saber. 💤',
-                    'Boa tarde! Só passei pra ver quem ainda está vivo e quem já morreu de preguiça. 💀',
-                    'Boa tarde! A tarde é o melhor horário pra fingir que está muito ocupado. 📉',
-                    'Boa tarde! O almoço foi bom, agora é só esperar a hora de ir embora. ⏳',
-                    'Boa tarde! Quem tá trabalhando que lute, eu só estou aqui de bot! 🤖'
+                    'Boa tarde! Hora daquele cochilo maroto que o chefe não pode saber. 💤'
                 ];
             } else if (lowerText.includes('boa noite')) {
                 emoji = '🌙';
                 frases = [
                     'Boa noite! Vai dormir que amanhã o sofrimento continua! 🌙',
-                    'Boa noite! Sonhe com os anjos (ou com o pix que nunca cai). 💸',
-                    'Boa noite! Desliga esse celular e vai dormir, viciado em zap! 📱',
-                    'Boa noite! Amanhã é um novo dia para cometer os mesmos erros de sempre. 🤡',
-                    'Boa noite! Já escovou os dentes ou vai dormir com bafo de dragão? 🐉',
-                    'Boa noite! O grupo vai ficar em paz agora que você finalmente vai fechar o olho. 😴'
+                    'Boa noite! Sonhe com os anjos (ou com o pix que nunca cai). 💸'
                 ];
             }
 
@@ -812,8 +738,14 @@ _Não perca tempo, compartilhe agora!_`.trim();
  ┣ ⚖️ !julgar @alvo ➾ !culpado/!inocente
  ┣ 💍 !casar ➾ !descasar ➾ !casais
  ┣ 🤫 !fofoca ➾ !socar ➾ !beijar
- ┣ 🐂 !gado ➾ !corno ➾ !matar ➾
+ ┣ 🐂 !gado ➾ !corno ➾ !matar
+ ┣ ⚔️ !rinha @user1 @user2
  ┗ 🖼️ !f _(Figurinha)_ ➾ !perfil
+
+🤡 *ZUEIRA & EXPOSED* ┣ 📉 !qi ➾ 👴 !calvo ➾ 🧟‍♂️ !feio
+ ┣ 💸 !serasa ➾ 💼 !clt
+ ┣ 🍼 !gravida ➾ ⚰️ !vasco
+ ┗ 💻 !historico ➾ 🗞️ !fakenews
 
 ⚔️ *GUERRA & STATUS*
  ┣ 👹 !boss ➾ !atacar
@@ -898,20 +830,7 @@ _Não perca tempo, compartilhe agora!_`.trim();
         if (text === '!piada') {
             const piadas = [
                 { pergunta: "O que o pato disse para a pata? (Dica: é um trocadilho amoroso)", resposta: "vem quá" },
-                { pergunta: "Por que a plantinha não vai ao médico? (Dica: ela é...)", resposta: "porque ela já tem plantão" },
-                { pergunta: "O que o tijolo disse para o outro tijolo? (Dica: é uma relação profissional)", resposta: "há um tijolo entre nós" },
-                { pergunta: "Qual é a cidade que não tem luz? (Dica: é um trocadilho)", resposta: "luziania" },
-                { pergunta: "Por que o computador foi preso? (Dica: ele fez algo ilegal com a internet)", resposta: "porque ele rodou um programa" },
-                { pergunta: "Qual o animal que mais gosta de música? (Dica: é um animal de fazenda)", resposta: "o porquinho" },
-                { pergunta: "Por que o livro de matemática se suicidou? (Dica: ele tinha muitos...)", resposta: "porque ele tinha muitos problemas" },
-                { pergunta: "Qual a diferença entre a lagoa e a padaria? (Dica: um tem peixe, o outro tem...)", resposta: "na lagoa há sapos, na padaria há pães" },
-                { pergunta: "Por que a aranha é muito rica? (Dica: ela tem várias delas)", resposta: "porque ela tem muitas teias" },
-                { pergunta: "Como se chama o cão que trabalha no circo? (Dica: ele é um...)", resposta: "cão-palhaço" },
-                { pergunta: "Qual é o cúmulo da paciência? (Dica: tem a ver com algo muito pequeno)", resposta: "esperar um mosquito fazer xixi" },
-                { pergunta: "O que o zero disse para o oito? (Dica: é sobre o cinto)", resposta: "que cinto apertado você usa" },
-                { pergunta: "Por que a girafa se dá bem com todo mundo? (Dica: ela é...)", resposta: "porque ela é muito alta" },
-                { pergunta: "Por que a geladeira é burra? (Dica: ela sempre esquece de...)", resposta: "porque ela só sabe guardar as coisas" },
-                { pergunta: "O que o sal disse para o açúcar? (Dica: é sobre ser doce)", resposta: "você é muito doce para mim" }
+                { pergunta: "Por que a plantinha não vai ao médico? (Dica: ela é...)", resposta: "porque ela já tem plantão" }
             ];
 
             const sorteada = piadas[Math.floor(Math.random() * piadas.length)];
@@ -942,7 +861,6 @@ _Não perca tempo, compartilhe agora!_`.trim();
             }
         }
 
-       // --- COMANDO !PENALTI (MELHORADO E MAIS DIVERTIDO) ---
         if (text.startsWith('!penalti')) {
             const args = text.replace('!penalti', '').trim();
             const escolha = parseInt(args);
@@ -951,7 +869,6 @@ _Não perca tempo, compartilhe agora!_`.trim();
             let placar = lerArquivoSeguro(arquivoPlacar);
             if (!placar[senderId]) placar[senderId] = 0;
 
-            // Se o usuário não digitou o número, abre o menu
             if (!escolha || escolha < 1 || escolha > 3) {
                 await sock.sendMessage(sender, { react: { text: '⚽', key: msg.key } });
                 return await sock.sendMessage(sender, { 
@@ -961,12 +878,11 @@ _Não perca tempo, compartilhe agora!_`.trim();
                 }, { quoted: msg });
             }
 
-            // Lógica: Goleiro escolhe um canto de 1 a 3
             const cantoGoleiro = Math.floor(Math.random() * 3) + 1;
             const acertou = escolha !== cantoGoleiro;
 
             if (acertou) {
-                const ganho = 50 + Math.floor(Math.random() * 50); // Bônus aleatório entre 50 e 100
+                const ganho = 50 + Math.floor(Math.random() * 50); 
                 placar[senderId] += ganho;
                 fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
                 
@@ -996,12 +912,7 @@ _Não perca tempo, compartilhe agora!_`.trim();
                 } else if (mention) {
                     const frasesBan = [
                         `👋 O @${mention.split('@')[0]} decidiu tirar férias permanentes do grupo. Aproveita a liberdade! ✈️`,
-                        `🚫 O banhammer passou por aqui e o @${mention.split('@')[0]} foi o escolhido da vez. Tchauzinho! 👋`,
-                        `🤡 @${mention.split('@')[0]} foi promovido a "ex-membro". Parabéns pela conquista! 😂`,
-                        `💨 @${mention.split('@')[0]} foi convidado a se retirar porque estava brilhando demais... ou não. Vaza! 🏃‍♂️`,
-                        `🛑 @${mention.split('@')[0]} entrou para a galeria dos que tentaram, mas não conseguiram. Até a próxima! 💅`,
-                        `💤 @${mention.split('@')[0]} foi colocar o grupo pra dormir, mas acabou sendo ele quem foi dormir... fora daqui! 😴`,
-                        `🚪 A porta da rua é serventia da casa, @${mention.split('@')[0]}! Boa sorte na caminhada. 🚶‍♂️`
+                        `🚫 O banhammer passou por aqui e o @${mention.split('@')[0]} foi o escolhido da vez. Tchauzinho! 👋`
                     ];
                     const sorteioBan = frasesBan[Math.floor(Math.random() * frasesBan.length)];
                     await sock.sendMessage(sender, { text: sorteioBan, mentions: [mention] }, { quoted: msg });
@@ -1014,7 +925,6 @@ _Não perca tempo, compartilhe agora!_`.trim();
             }
         }
 
-        // --- COMANDO !PESQUISAR (REFEITO PARA WIKIPÉDIA - BLINDADO) ---
         if (text.startsWith('!pesquisar ')) {
             const termo = text.replace('!pesquisar ', '').trim();
             if (!termo) return await sock.sendMessage(sender, { text: "❌ O que você quer pesquisar?" }, { quoted: quoteMsg });
@@ -1028,28 +938,23 @@ _Não perca tempo, compartilhe agora!_`.trim();
             }, { quoted: quoteMsg });
 
             try {
-                // Configuração de Headers para evitar bloqueio da Wikipédia (Eles bloqueiam bots sem User-Agent)
                 const axiosConfig = {
                     headers: {
                         'User-Agent': 'BondeDoBrasilBot/1.0 (Bot do WhatsApp) axios/1.x'
                     }
                 };
 
-                // 1. Faz uma busca inteligente para achar o título exato do artigo
                 const searchUrl = `https://pt.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(termo)}&utf8=&format=json`;
                 const searchRes = await axios.get(searchUrl, axiosConfig);
 
-                // Se não achou nenhum resultado na busca
                 if (!searchRes.data?.query?.search || searchRes.data.query.search.length === 0) {
                     return await sock.sendMessage(sender, { text: "❌ Não encontrei absolutamente nada sobre isso na Wikipédia. Tente usar outras palavras!" }, { quoted: quoteMsg });
                 }
 
-                // Pega o título do resultado mais relevante (o primeiro da lista)
                 const tituloExato = searchRes.data.query.search[0].title;
-                const tituloFormatado = encodeURIComponent(tituloExato.replace(/ /g, '_')); // Troca espaços por _ para não bugar a URL
+                const tituloFormatado = encodeURIComponent(tituloExato.replace(/ /g, '_')); 
 
                 try {
-                    // 2. Agora sim, puxa o resumo usando o título certinho
                     const res = await axios.get(`https://pt.wikipedia.org/api/rest_v1/page/summary/${tituloFormatado}`, axiosConfig);
                     
                     if (res.data && res.data.extract) {
@@ -1059,9 +964,8 @@ _Não perca tempo, compartilhe agora!_`.trim();
                         throw new Error("Página encontrada, mas sem resumo (extract).");
                     }
                 } catch (restError) {
-                    // PLANO B: Se a API de resumo falhar, pega o trecho (snippet) da pesquisa original e limpa a sujeira do HTML
                     let snippet = searchRes.data.query.search[0].snippet;
-                    snippet = snippet.replace(/<[^>]*>?/gm, ''); // Expressão regular que apaga as tags <span class="searchmatch"> da Wikipédia
+                    snippet = snippet.replace(/<[^>]*>?/gm, ''); 
                     
                     const respostaTextoFallback = `🔍 *RESULTADO: ${tituloExato.toUpperCase()}*\n\n${snippet}...\n\n🔗 *Fonte:* https://pt.wikipedia.org/wiki/${tituloFormatado}`;
                     await sock.sendMessage(sender, { text: respostaTextoFallback }, { quoted: quoteMsg });
@@ -1073,9 +977,6 @@ _Não perca tempo, compartilhe agora!_`.trim();
             }
         }
 
-        // ==========================================
-        // 🔮 A BOLA 8 MÁGICA (!bola8)
-        // ==========================================
         if (text.startsWith('!bola8')) {
             const pergunta = text.replace('!bola8', '').trim();
             if (!pergunta) {
@@ -1104,9 +1005,6 @@ _Não perca tempo, compartilhe agora!_`.trim();
             }, { quoted: msg });
         }
 
-        // ==========================================
-        // ❤️ MEDIDOR DE CASAL / SHIPP (!shippar)
-        // ==========================================
         if (text.startsWith('!shippar')) {
             const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
             if (!mention) {
@@ -1134,6 +1032,179 @@ _Não perca tempo, compartilhe agora!_`.trim();
                 gifPlayback: true,
                 caption: `💘 *MÁQUINA DO AMOR* 💘\n\nAnalisando a química entre @${p1} e @${p2}...\n\n*Resultado:* ${porcentagem}% Compatíveis! 💞\n\n*Veredito:* ${diagnostico}`,
                 mentions: [participant, mention]
+            }, { quoted: msg });
+        }
+
+        if (text.startsWith('!calvo')) {
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            if (!mention) return await sock.sendMessage(sender, { text: "❌ Marque o futuro careca!" }, { quoted: msg });
+            
+            const calvicie = Math.floor(Math.random() * 101);
+            let diag = "";
+            if (calvicie < 20) diag = "Cabelo de propaganda de shampoo! Tá seguro. 💇‍♂️";
+            else if (calvicie < 50) diag = "Aquelas entradinhas perigosas já estão aparecendo... prepara o boné! 🧢";
+            else if (calvicie < 80) diag = "Já dá pra usar a testa como outdoor! Aeroporto de mosquito. 🛬";
+            else diag = "100% CALVO! A cabeça tá brilhando mais que bola de cristal. Bem-vindo à tropa do Vegeta! 🎱";
+
+            await sock.sendMessage(sender, { react: { text: '👴', key: msg.key } });
+            await sock.sendMessage(sender, { text: `👴 *RAIO-X CAPILAR* 👴\n\nO @${mention.split('@')[0]} é ${calvicie}% CALVO!\n\n${diag}`, mentions: [mention] }, { quoted: msg });
+        }
+
+        if (text.startsWith('!qi')) {
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            if (!mention) return await sock.sendMessage(sender, { text: "❌ Marque o gênio incompreendido!" }, { quoted: msg });
+            
+            const qi = Math.floor(Math.random() * 250) - 50; 
+            let diag = "";
+            if (qi < 0) diag = "QI NEGATIVO! Uma porta tem mais capacidade cognitiva. 🚪🤡";
+            else if (qi < 50) diag = "Tico e Teco estão de greve. Esquece o que ia falar no meio da frase. 🧠💨";
+            else if (qi < 90) diag = "QI de temperatura ambiente. Sobrevive por milagre. 🌡️";
+            else if (qi < 130) diag = "Pessoa normal. Paga imposto e sofre em silêncio. 🧍‍♂️";
+            else diag = "ALBERT EINSTEIN DO ZAP! O cérebro desse aqui transcendeu. 🌌🤯";
+
+            await sock.sendMessage(sender, { react: { text: '🧠', key: msg.key } });
+            await sock.sendMessage(sender, { text: `🧠 *TESTE DE QI* 🧠\n\nO QI do @${mention.split('@')[0]} é de absurdos *${qi}*!\n\n${diag}`, mentions: [mention] }, { quoted: msg });
+        }
+
+        if (text.startsWith('!serasa')) {
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            if (!mention) return await sock.sendMessage(sender, { text: "❌ Marque o caloteiro!" }, { quoted: msg });
+            
+            const divida = (Math.random() * 50000).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            const score = Math.floor(Math.random() * 1000);
+            
+            await sock.sendMessage(sender, { react: { text: '💸', key: msg.key } });
+            await sock.sendMessage(sender, { 
+                text: `🏢 *SISTEMA SERASA EXPERIAN* 🏢\n\n🔍 Consultando CPF do @${mention.split('@')[0]}...\n\n📉 *Score:* ${score}/1000\n💰 *Dívida Ativa:* ${divida}\n\n🚨 *SITUAÇÃO:* Nome mais sujo que pau de galinheiro! O agiota já está na porta. CORRE! 🏃‍♂️💨`, 
+                mentions: [mention] 
+            }, { quoted: msg });
+        }
+
+        if (text.startsWith('!historico')) {
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            if (!mention) return await sock.sendMessage(sender, { text: "❌ Marque a vítima do vazamento!" }, { quoted: msg });
+            
+            const buscas = [
+                "como apagar nome do serasa simpatia", "teste pra saber se sou corno online", 
+                "fotos do luan santana sem camisa", "como disfarçar que peidei no onibus", 
+                "como ganhar dinheiro dormindo", "sintomas de gravidez pelo whatsapp",
+                "o que fazer se o agiota mandar mensagem", "como clonar zap gratis",
+                "simpatia pra ex voltar chorando", "curso de agiota para iniciantes",
+                "como saber se sou feio ou apenas exótico", "remédio caseiro pra dor de chifre"
+            ];
+            
+            const b1 = buscas[Math.floor(Math.random() * buscas.length)];
+            let b2 = buscas[Math.floor(Math.random() * buscas.length)];
+            while (b1 === b2) b2 = buscas[Math.floor(Math.random() * buscas.length)];
+
+            await sock.sendMessage(sender, { react: { text: '🚨', key: msg.key } });
+            await sock.sendMessage(sender, { 
+                text: `🚨 *VAZAMENTO DE DADOS!* 🚨\n\nO FBI invadiu o roteador do @${mention.split('@')[0]} e encontrou as últimas buscas do Google:\n\n🔍 _"${b1}"_\n🔍 _"${b2}"_\n\nQue nojeira, cara... perdi o respeito! 🤢😂`, 
+                mentions: [mention] 
+            }, { quoted: msg });
+        }
+
+        if (text.startsWith('!fakenews')) {
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            if (!mention) return await sock.sendMessage(sender, { text: "❌ Marque o protagonista da fofoca!" }, { quoted: msg });
+            
+            const noticias = [
+                "foi pego roubando pão de queijo na padaria e fugiu de mototaxi.",
+                "perdeu todo o salário no Jogo do Tigrinho e agora tá morando num Celta 2012.",
+                "foi visto(a) aos beijos com o(a) ex no bailão. Que decadência!",
+                "caiu no golpe do Pix agendado tentando comprar um iPhone 15 no Facebook.",
+                "foi expulso(a) de um rodízio de pizza por tentar esconder fatias no bolso da jaqueta.",
+                "tá processando o barbeiro/cabeleireiro porque cortou 2 dedinhos a mais."
+            ];
+            
+            const manchete = noticias[Math.floor(Math.random() * noticias.length)];
+
+            await sock.sendMessage(sender, { react: { text: '📰', key: msg.key } });
+            await sock.sendMessage(sender, { 
+                text: `📰 *PLANTÃO CHOQUEI - BONDE VIP* 📰\n\nURGENTE: Fontes confirmam que @${mention.split('@')[0]} ${manchete}\n\nSerá que é verdade? Deixe sua opinião! 🚨📸`, 
+                mentions: [mention] 
+            }, { quoted: msg });
+        }
+
+        if (text.startsWith('!rinha')) {
+            const mentions = msg.message.extendedTextMessage?.contextInfo?.mentionedJid || [];
+            if (mentions.length < 2) return await sock.sendMessage(sender, { text: "❌ Marque DUAS pessoas para a rinha! Ex: !rinha @fulano @ciclano" }, { quoted: msg });
+            
+            const lutador1 = mentions[0];
+            const lutador2 = mentions[1];
+            const vencedor = Math.random() > 0.5 ? lutador1 : lutador2;
+            const perdedor = vencedor === lutador1 ? lutador2 : lutador1;
+
+            const finalizacoes = [
+                "com uma voadora com os dois pés no peito!",
+                "usando um golpe sujo: jogou areia no olho!",
+                "com um argumento tão burro que o adversário desistiu da vida.",
+                "depois de invocar a fúria do agiota!",
+                "batendo com uma garrafa de Corote vazia!"
+            ];
+            
+            await sock.sendMessage(sender, { react: { text: '⚔️', key: msg.key } });
+            await sock.sendMessage(sender, { 
+                text: `⚔️ *RINHA DE GALO CLANDESTINA* ⚔️\n\nNo canto esquerdo: @${lutador1.split('@')[0]}\nNo canto direito: @${lutador2.split('@')[0]}\n\n💥 *RESULTADO:* O @${vencedor.split('@')[0]} AMASSOU o @${perdedor.split('@')[0]} ${finalizacoes[Math.floor(Math.random() * finalizacoes.length)]}\n\nPagamento das apostas no PV! 💸`, 
+                mentions: [lutador1, lutador2] 
+            }, { quoted: msg });
+        }
+
+        if (text.startsWith('!vasco')) {
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            if (!mention) return await sock.sendMessage(sender, { text: "❌ Marque quem vai pro gigante da colina!" }, { quoted: msg });
+            
+            await sock.sendMessage(sender, { react: { text: '⚽', key: msg.key } });
+            await sock.sendMessage(sender, { 
+                video: { url: 'https://media.tenor.com/SGXS9keeDLAAAAPo/vasco-meme-afundando.mp4' }, 
+                gifPlayback: true,
+                caption: `🚨 *REFORÇO NA COLINA!* 🚨\n\nInfelizmente o @${mention.split('@')[0]} não resistiu e *FOI JOGAR NO VASCO!* ⚰️⚽\n\nDescanse em paz... e tente não ser rebaixado lá também! 🕊️`, 
+                mentions: [mention] 
+            }, { quoted: msg });
+        }
+
+        if (text.startsWith('!gravida')) {
+            const mentions = msg.message.extendedTextMessage?.contextInfo?.mentionedJid || [];
+            if (mentions.length === 0) return await sock.sendMessage(sender, { text: "❌ Marque a possível grávida!" }, { quoted: msg });
+            
+            const gravida = mentions[0];
+            let pai = mentions[1] ? `@${mentions[1].split('@')[0]}` : "o vizinho";
+
+            const resultado = Math.random() > 0.3 ? "POSITIVO ➕" : "NEGATIVO ➖";
+            let msgExtra = resultado.includes("POSITIVO") ? `Parabéns, papai ${pai}! Já pode ir comprar fralda e leite ninho! 🍼💸` : `Ufa! Escapou do chá de revelação! Pode voltar pro bar. 🍻`;
+
+            await sock.sendMessage(sender, { react: { text: '🍼', key: msg.key } });
+            await sock.sendMessage(sender, { 
+                text: `🏥 *CLÍNICA DO BONDE* 🏥\n\nO resultado do exame da @${gravida.split('@')[0]} saiu!\n\n🩺 *Diagnóstico:* ${resultado}\n\n${msgExtra}`, 
+                mentions: mentions 
+            }, { quoted: msg });
+        }
+
+        if (text.startsWith('!feio')) {
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            if (!mention) return await sock.sendMessage(sender, { text: "❌ Marque o desprovido de beleza!" }, { quoted: msg });
+            
+            const feiura = Math.floor(Math.random() * 101);
+            let diag = "";
+            if (feiura < 20) diag = "Até que é pegável. Dá pro gasto no escuro. 🔦";
+            else if (feiura < 50) diag = "Rosto exótico. Parece um joelho batido. 🦵";
+            else if (feiura < 80) diag = "Feio que dói! Se olhar no espelho o vidro quebra. 🪞💥";
+            else diag = "DEUS ME LIVRE! Parece um filhote de cruz credo. Nasceu do avesso! 👹🔥";
+
+            await sock.sendMessage(sender, { react: { text: '👹', key: msg.key } });
+            await sock.sendMessage(sender, { text: `🧟‍♂️ *ESCALA DA BELEZA* 🧟‍♂️\n\nO @${mention.split('@')[0]} é ${feiura}% FEIO!\n\n${diag}`, mentions: [mention] }, { quoted: msg });
+        }
+
+        if (text.startsWith('!clt')) {
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            if (!mention) return await sock.sendMessage(sender, { text: "❌ Marque o vagabundo que precisa de emprego!" }, { quoted: msg });
+            
+            await sock.sendMessage(sender, { react: { text: '💼', key: msg.key } });
+            await sock.sendMessage(sender, { 
+                video: { url: 'https://media.tenor.com/--B5p25gWrAAAAPo/clt-cachorro.mp4' }, 
+                gifPlayback: true,
+                caption: `💼 *FIM DAS FÉRIAS, VAGABUNDO!* 💼\n\nA carteira de trabalho do @${mention.split('@')[0]} foi assinada com sucesso!\n\nAcorda às 5h, pega 2 ônibus lotados e vai pro salário mínimo! O patrão tá te chamando! 🚌🏭`, 
+                mentions: [mention] 
             }, { quoted: msg });
         }
 
@@ -1166,11 +1237,7 @@ _Não perca tempo, compartilhe agora!_`.trim();
         }
 
         // ==========================================
-        // ⚖️ O TRIBUNAL DO BONDE ⚖️
-        // ==========================================
-        // ==========================================
-        // ==========================================
-        // ⚖️ O TRIBUNAL DO BONDE (VERSÃO DEFINITIVA) ⚖️
+        // ⚖️ O TRIBUNAL DO BONDE (VERSÃO DEFINITIVA)
         // ==========================================
         if (text.startsWith('!julgar')) {
             if (!isGroup) return await sock.sendMessage(sender, { text: "❌ O tribunal só funciona em grupos!" }, { quoted: quoteMsg });
@@ -1179,8 +1246,6 @@ _Não perca tempo, compartilhe agora!_`.trim();
             const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
             if (!mention) return await sock.sendMessage(sender, { text: "❌ Marque o réu que vai a julgamento! Ex: !julgar @membro" }, { quoted: quoteMsg });
             
-            // --- TRAVA DE IMUNIDADE ABSOLUTA PARA ADM E DONO ---
-            // Se for ADM ou você (dono), o tribunal nem abre.
             if (groupAdmins.includes(mention) || mention.includes('5527992997083')) {
                 return await sock.sendMessage(sender, { 
                     text: "❌ *ORDEM JUDICIAL:* A Elite (ADM/Dono) possui imunidade diplomática total! O tribunal não tem jurisdição sobre a chefia. 👑", 
@@ -1193,7 +1258,7 @@ _Não perca tempo, compartilhe agora!_`.trim();
             tribunal.ativo = true;
             tribunal.vitima = mention;
             tribunal.acusador = participant;
-            tribunal.votos = {}; // Limpa votos anteriores
+            tribunal.votos = {}; 
 
             const msgAbertura = `⚖️ *O TRIBUNAL DO BONDE ESTÁ ABERTO!* ⚖️\n\nO promotor @${participant.split('@')[0]} acusou o(a) @${mention.split('@')[0]} de falar besteira!\n\nJúri, vocês têm *1 MINUTO* para decidir o destino dele(a)!\nFloodem o chat com:\n🔴 *!culpado*\n🟢 *!inocente*\n\n_Se for inocentado, o acusador sofrerá a punição!_`;
             
@@ -1213,7 +1278,6 @@ _Não perca tempo, compartilhe agora!_`.trim();
                 Object.values(tribunal.votos).forEach(voto => voto === 'culpado' ? culpados++ : inocentes++);
 
                 if (culpados > inocentes) {
-                    // VERIFICAÇÃO FINAL DE SEGURANÇA: Se a vítima for ADM (impossível, mas por precaução), não muta
                     if (groupAdmins.includes(tribunal.vitima) || tribunal.vitima.includes('5527992997083')) {
                         await sock.sendMessage(sender, { text: "⚖️ O réu foi condenado, mas possui imunidade de ADM! Justiça perdoada." });
                     } else {
@@ -1230,7 +1294,6 @@ _Não perca tempo, compartilhe agora!_`.trim();
                         });
                     }
                 } else {
-                    // Punição do acusador (se ele for ADM, ele não toma mute)
                     if (groupAdmins.includes(tribunal.acusador) || tribunal.acusador.includes('5527992997083')) {
                         await sock.sendMessage(sender, { text: "⚖️ O promotor foi condenado por falsa acusação, mas como é ADM, está imune ao mute! 👑" });
                     } else {
@@ -1247,7 +1310,6 @@ _Não perca tempo, compartilhe agora!_`.trim();
             }, 60000);
         }
 
-        // --- SISTEMA DE VOTAÇÃO (CORRIGIDO) ---
         if (text === '!culpado' || text === '!inocente') {
             if (!tribunal.ativo) return;
             if (participant === tribunal.vitima || participant === tribunal.acusador) return;
@@ -1257,13 +1319,11 @@ _Não perca tempo, compartilhe agora!_`.trim();
             if (!isLid) await sock.sendMessage(sender, { react: { text: '⚖️', key: msg.key } });
         }
 
-       // --- COMANDO !MATAR (VERSÃO BRUTAL) ---
         if (text.startsWith('!matar')) {
             const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
             
             if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione alguém para eliminar, covarde!", quoted: msg });
             
-            // Trava de segurança: Ninguém mata a elite nem o bot
             const isDono = mention.includes('5527992997083');
             const isAdm = groupAdmins.includes(mention);
             const isBot = mention.includes(sock.user.id.split(':')[0]);
@@ -1415,12 +1475,10 @@ _Não perca tempo, compartilhe agora!_`.trim();
             }
         }
 
-        // --- COMANDO !GADO (BLINDADO E ZUERO) ---
         if (text.startsWith('!gado')) {
             const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
             if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione o alvo do gado!", quoted: msg });
             
-            // Trava de segurança: Elite não é gado
             if (groupAdmins.includes(mention) || mention.includes('5527992997083')) {
                 return await sock.sendMessage(sender, { text: "❌ *ERRO:* A Elite é imune a esse teste. Não ouse chamar o ADM de gado! 👑", quoted: msg });
             }
@@ -1435,18 +1493,16 @@ _Não perca tempo, compartilhe agora!_`.trim();
             else msgGado = "é 100% GADO SUPREMO! Esse aí se chamar de 'amor' ele assina até o testamento no nome da pessoa. PUTA MERDA! 🚩🚩🚩";
 
             await sock.sendMessage(sender, { 
-                image: { url: 'https://i.postimg.cc/kG8qP5rF/gado.jpg' }, // Dica: coloque uma imagem de boi aqui
+                image: { url: 'https://i.postimg.cc/kG8qP5rF/gado.jpg' }, 
                 caption: `🐂 *TESTE DO GADO - O VEREDITO* 🐂\n\nO @${alvo} é ${porcentagem}% gado!\n\n${msgGado}`, 
                 mentions: [mention] 
             }, { quoted: msg });
         }
 
-        // --- COMANDO !CORNO (BLINDADO E ZUERO) ---
         if (text.startsWith('!corno')) {
             const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
             if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione quem você quer testar o chifre!", quoted: msg });
             
-            // Trava de segurança: Elite não usa chapéu de chifre
             if (groupAdmins.includes(mention) || mention.includes('5527992997083')) {
                 return await sock.sendMessage(sender, { text: "❌ *ERRO:* A Elite é fiel! O chifre não sobe aqui. 👑", quoted: msg });
             }
@@ -1494,7 +1550,6 @@ _Não perca tempo, compartilhe agora!_`.trim();
             }
         }
 
-        // --- COMANDO !FOFOCA (VERSÃO VENENOSA) ---
         if (text.startsWith('!fofoca')) {
             if (!isGroup) return await sock.sendMessage(sender, { text: "❌ Isso só funciona em grupos!", quoted: msg });
             await sock.sendMessage(sender, { react: { text: '🤫', key: msg.key } });
@@ -1503,7 +1558,6 @@ _Não perca tempo, compartilhe agora!_`.trim();
                 const metadata = await sock.groupMetadata(sender);
                 const ppts = metadata.participants;
 
-                // Filtra para não envolver ADM na fofoca (pra não dar treta com a chefia)
                 const membrosComuns = ppts.filter(p => !groupAdmins.includes(p.id) && !p.id.includes('5527992997083'));
 
                 if (membrosComuns.length < 2) {
@@ -1513,7 +1567,6 @@ _Não perca tempo, compartilhe agora!_`.trim();
                 const alvo1 = membrosComuns[Math.floor(Math.random() * membrosComuns.length)];
                 const alvo2 = membrosComuns[Math.floor(Math.random() * membrosComuns.length)];
 
-                // Garante que não sejam a mesma pessoa
                 if (alvo1.id === alvo2.id) return await sock.sendMessage(sender, { text: `❌ O @${alvo1.id.split('@')[0]} tentou fofocar sozinho, mas deu vergonha. Tente de novo! 😂`, mentions: [alvo1.id], quoted: msg });
 
                 const fofocas = [
@@ -1621,31 +1674,23 @@ _Não perca tempo, compartilhe agora!_`.trim();
             await sock.sendMessage(sender, { text: res, mentions: listaMentions }, { quoted: msg });
         }
 
-        // ==========================================
-        // ❇️ PROMOVER A ADM (APENAS PARA ADMS) - COM GIF
-        // ==========================================
         if (text.startsWith('!adm')) {
-            // 1. Verifica se quem enviou é ADM
             if (!isAdmin) {
                 return await sock.sendMessage(sender, { text: "❌ Apenas ADMs podem promover membros a ADM!" }, { quoted: msg });
             }
 
-            // 2. Verifica se houve marcação
             const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
             if (!mention) {
                 return await sock.sendMessage(sender, { text: "❌ Marque quem você quer promover! Ex: !adm @membro" }, { quoted: msg });
             }
 
-            // 3. Verifica se o alvo já é ADM
             if (groupAdmins.includes(mention)) {
                 return await sock.sendMessage(sender, { text: "⚠️ Esta pessoa já é ADM." }, { quoted: msg });
             }
 
             try {
-                // 4. Executa a promoção no WhatsApp
                 await sock.groupParticipantsUpdate(sender, [mention], "promote");
                 
-                // 5. Envia a mensagem com GIF de Poder
                 await sock.sendMessage(sender, { 
                     video: { url: 'https://media.tenor.com/nXJyFnaE2P0AAAPo/crown-marina.mp4' },
                     gifPlayback: true,
@@ -1658,12 +1703,12 @@ _Não perca tempo, compartilhe agora!_`.trim();
             }
         }
 
-        // --- COMANDO !PERFIL (ANALISTA DE PERSONALIDADE ZUERA) ---
         if (text.startsWith('!perfil')) {
             const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
             if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione alguém para eu revelar a verdadeira face! 😂", quoted: msg });
 
-            // Trava de segurança: Ninguém analisa a Elite!
+            const profilePic = await getProfilePic(sock, mention);
+
             if (groupAdmins.includes(mention) || mention.includes('5527992997083')) {
                 return await sock.sendMessage(sender, { text: "❌ *ERRO DE ANÁLISE:* O perfil da Elite é confidencial e perfeito demais para ser analisado! 👑", quoted: msg });
             }
@@ -1671,8 +1716,8 @@ _Não perca tempo, compartilhe agora!_`.trim();
             const autor = participant.split('@')[0];
             const alvo = mention.split('@')[0];
 
-            const adjetivos = ["Carente", "Caótico", "Oportunista", "Iludido", "Pé frio", "Fofoqueiro nível pro", "Aventureiro de WhatsApp"];
-            const ocupacoes = ["Influencer de fofoca", "Doutor em mandar áudio inútil", "Especialista em dar vácuo", "Estagiário de desastre"];
+            const adjetivos = ["Carente", "Caótico", "Oportunista", "Iludido", "Pé frio", "Fofoqueiro nível pro", "Aventureiro de WhatsApp", "Dramático", "Sem noção", "Viciado em treta"];
+            const ocupacoes = ["Influencer de fofoca", "Doutor em mandar áudio inútil", "Especialista em dar vácuo", "Estagiário de desastre", "CEO do desemprego", "Auditor de status alheio", "Mestre das desculpas esfarrapadas"];
             const segredos = [
                 "já chorou assistindo propaganda de margarina.",
                 "tem uma conta secreta pra stalkear o ex e curte foto de 2018 sem querer.",
@@ -1688,7 +1733,11 @@ _Não perca tempo, compartilhe agora!_`.trim();
                 "já mandou áudio falando mal de alguém no grupo errado.",
                 "tá devendo até o pensamento pra agiota virtual.",
                 "finge que tá estudando quando na verdade tá jogando joguinho de fazenda.",
-                "tem um crush platônico no(a) entregador(a) de pizza."
+                "tem um crush platônico no(a) entregador(a) de pizza.",
+                "dorme com a luz acesa porque tem medo de ver o saldo bancário no escuro.",
+                "já editou a mensagem pra corrigir o erro de português, mas a pessoa já tinha visto.",
+                "usa filtro em todas as fotos porque a realidade não ajuda.",
+                "tem pastas escondidas no celular cheia de print de conversas de 2020."
             ];
 
             const perfil = {
@@ -1707,448 +1756,10 @@ _Não perca tempo, compartilhe agora!_`.trim();
                               `_Análise feita por pedido do @${autor}_`;
 
             await sock.sendMessage(sender, { 
-                text: msgPerfil, 
+                image: profilePic, 
+                caption: msgPerfil, 
                 mentions: [participant, mention] 
             }, { quoted: msg });
-        }
-
-        // --- COMANDO !SOCAR (VERSÃO BRUTAL) ---
-        if (text.startsWith('!socar')) {
-            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
-            
-            if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione alguém para levar um soco, lutador!", quoted: msg });
-            
-            // Trava de segurança: Elite e Bot não levam soco
-            const isDono = mention.includes('5527992997083');
-            const isAdm = groupAdmins.includes(mention);
-            const isBot = mention.includes(sock.user.id.split(':')[0]);
-
-            if (isAdm || isDono || isBot) {
-                return await sock.sendMessage(sender, { 
-                    text: "❌ *ERRO DE COMBATE:* Você não tem nível para socar a Elite ou o Bot! O contra-ataque seria fatal. 🛡️", 
-                    quoted: msg 
-                });
-            }
-
-            if (mention === participant) return await sock.sendMessage(sender, { text: "❌ Oxi, tá querendo dar um soco em si mesmo? Bateu a cabeça? 😂", quoted: msg });
-
-            const autor = participant.split('@')[0];
-            const alvo = mention.split('@')[0];
-            
-            // Lógica de Soco Crítico (50% de chance de causar mais dano)
-            const isCritico = Math.random() < 0.5;
-            
-            const frasesSoco = [
-                `TOMAAAAAAAA 😤😤!!!! O @${autor} deu um socão no @${alvo} que até o Wi-Fi desconectou! 🤜`,
-                `VRAU! 💥 O @${autor} perdeu a paciência e mandou o @${alvo} pra lona com um direto!`,
-                `EITA! O @${autor} não perdoou e desceu o cacete no @${alvo}! 🥊`,
-                `O clima fechou! O @${autor} aplicou um cruzado certeiro no @${alvo}! 💥`,
-                `@${autor} girou o braço e acertou um murro em cheio na cara do @${alvo}! 👊`,
-                `O @${autor} mandou o @${alvo} voar longe com essa pancada! 🚀`
-            ];
-
-            let sorteioSoco = frasesSoco[Math.floor(Math.random() * frasesSoco.length)];
-            
-            if (isCritico) {
-                sorteioSoco += `\n\n⚡ *SOCO CRÍTICO!* O @${alvo} ficou grogue!`;
-            }
-
-            await sock.sendMessage(sender, { 
-                video: { url: 'https://media.tenor.com/6Cp5tiRwh-YAAAPo/meme-memes.mp4' }, 
-                gifPlayback: true, 
-                caption: `🥊 *RINGUE DO BONDE*\n\n${sorteioSoco}`,
-                mentions: [participant, mention] 
-            }, { quoted: msg }); 
-        }
-
-        if (text.startsWith('!descasar')) {
-            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
-            if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione quem você quer largar, seu indeciso!", quoted: msg });
-
-            const p1 = participant; 
-            const p2 = mention;     
-
-            const index = listaCasais.findIndex(c => (c.p1 === p1 && c.p2 === p2) || (c.p1 === p2 && c.p2 === p1));
-            if (index === -1) {
-                return await sock.sendMessage(sender, { text: "❌ Vocês nem casados estão! Tá tentando divorciar de quem não tem compromisso? 😂", quoted: msg });
-            }
-
-            listaCasais.splice(index, 1);
-            salvarCasais(); 
-
-            const frasesDivorcio = [
-                `💔 O divórcio saiu! @${p1.split('@')[0]} e @${p2.split('@')[0]} não aguentaram a pressão e deram fim nisso! 🥂`,
-                `📉 Fim da linha! @${p1.split('@')[0]} e @${p2.split('@')[0]} assinaram o papel e cada um pro seu lado. Vida de solteiro é mais barato! 💸`,
-                `🏃‍♂️ Correram! @${p1.split('@')[0]} e @${p2.split('@')[0]} decidiram que o amor era só uma ilusão de ótica. Livreeee! 💨`,
-                `⚖️ Cartório do Caos informa: @${p1.split('@')[0]} e @${p2.split('@')[0]} estão oficialmente divorciados. O churrasco acabou! 🥩`,
-                `🚪 A porta da rua é serventia da casa! @${p1.split('@')[0]} e @${p2.split('@')[0]} agora são apenas conhecidos. Deu ruim! 🤡`
-            ];
-
-            await sock.sendMessage(sender, { react: { text: '💔', key: msg.key } });
-            await sock.sendMessage(sender, { text: frasesDivorcio[Math.floor(Math.random() * frasesDivorcio.length)], mentions: [p1, p2], quoted: msg });
-        }
-
-        if (text.startsWith('!casar')) {
-            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
-            if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione alguém para casar, senão vai ficar encalhado!", quoted: msg });
-
-            listaCasais = lerArquivoSeguro(arquivoCasais);
-            const p1 = participant; 
-            const p2 = mention;     
-
-            const jaTemRelacionamento = listaCasais.find(c => c.p1 === p1 || c.p2 === p1 || c.p1 === p2 || c.p2 === p2);
-            if (jaTemRelacionamento) {
-                return await sock.sendMessage(sender, { text: "🚫 CRIME DE BIGAMIA! Um de vocês já está comprometido. Divorcie-se primeiro, seu safado! 😂", quoted: msg });
-            }
-
-            listaCasais.push({ p1, p2 }); 
-            try {
-                fs.writeFileSync(arquivoCasais, JSON.stringify(listaCasais, null, 2));
-                console.log("✅ Casamento salvo no disco com sucesso!");
-            } catch (err) {
-                console.error("❌ Erro ao salvar casamento no disco:", err);
-            }
-
-            const frases = [
-                `💍 O @${p1.split('@')[0]} casou com @${p2.split('@')[0]}!`,
-                `💒 Alerta de união duvidosa! @${p1.split('@')[0]} e @${p2.split('@')[0]} casaram.`,
-                `💘 O amor venceu! @${p1.split('@')[0]} e @${p2.split('@')[0]} agora formam o casal mais improvável do grupo! 😂`,
-                `🥂 A vida de solteiro acabou para o @${p1.split('@')[0]}! @${p2.split('@')[0]}, prepara o divórcio que a gente já vai começar a contar o tempo! 🤡`,
-                `💍 O @${p1.split('@')[0]} cansou da vida de solteiro e fisgou o @${p2.split('@')[0]}! Agora é oficial, bora pro churrasco de comemoração! 🥩`,
-                `🤵👰 Alguém avisa o cartório que o @${p1.split('@')[0]} e o @${p2.split('@')[0]} perderam o juízo e casaram! 💒`,
-                `🔥 O @${p1.split('@')[0]} não aguentou a pressão e pediu o @${p2.split('@')[0]} em casamento. O mico é grande, mas a união é sagrada! 🤣`,
-                `💖 É oficial: @${p1.split('@')[0]} e @${p2.split('@')[0]} decidiram dividir a conta de luz (e a paciência)! Casaram! ⚡`
-            ];
-            
-            await sock.sendMessage(sender, { react: { text: '💍', key: msg.key } });
-            await sock.sendMessage(sender, { 
-                video: { url: "https://media.tenor.com/h981yJykAXYAAAPo/la-haut-dessin-anime.mp4" }, 
-                gifPlayback: true,
-                caption: frases[Math.floor(Math.random() * frases.length)], 
-                mentions: [p1, p2] 
-            }, { quoted: msg });
-        }
-
-        if (text === '!casais') {
-            try {
-                if (fs.existsSync(arquivoCasais)) {
-                    const dados = fs.readFileSync(arquivoCasais, 'utf8');
-                    listaCasais = (dados && dados.trim().length > 0) ? JSON.parse(dados) : [];
-                } else {
-                    listaCasais = [];
-                }
-            } catch (e) {
-                console.error("❌ Erro ao ler casais.json no comando !casais:", e);
-                listaCasais = [];
-            }
-
-            if (!listaCasais || listaCasais.length === 0) return await sock.sendMessage(sender, { text: "❌ Ninguém casou ainda! Estão todos encalhados.", quoted: msg });
-
-            const frasesZueiras = [
-                "🏆 *CARTÓRIO DO CAOS - CASAIS DO MOMENTO* 🏆",
-                "🔥 *OS LOUCOS QUE DECIDIRAM SOFRER JUNTOS* 🔥",
-                "💒 *LISTA DE QUEM PERDEU A LIBERDADE (E A DIGNIDADE)* 💒",
-                "🤡 *REDE GLOBO DE CASAMENTOS DUVIDOSOS* 🤡",
-                "💖 *ALERTA DE ROMANCE: CUIDADO, CONTÉM EXCESSO DE MICO!* 💖",
-                "💀 *UNIDADES DE CUIDADOS INTENSIVOS (CASAL)* 💀",
-                "💍 *OS QUE ACHARAM QUE O AMOR NÃO ACABA (COITADOS)* 💍",
-                "📉 *RANKING DE QUEM VAI TER QUE DIVIDIR O PIX* 📉",
-                "🧨 *CASAMENTOS COM PRAZO DE VALIDADE CURTO* 🧨"
-            ];
-            let texto = frasesZueiras[Math.floor(Math.random() * frasesZueiras.length)] + "\n\n";
-            let listaMentions = [];
-
-            listaCasais.forEach((c, i) => {
-                const id1 = c.p1.split('@')[0];
-                const id2 = c.p2.split('@')[0];
-                texto += `${i + 1}. @${id1} ❤️ @${id2}\n`;
-                listaMentions.push(c.p1);
-                listaMentions.push(c.p2);
-            });
-            
-            texto += "\n🤡 Quem será o próximo trouxa a cair na armadilha? Digite !casar @alguém";
-            await sock.sendMessage(sender, { react: { text: '💍', key: msg.key } });
-            await sock.sendMessage(sender, { text: texto, mentions: listaMentions, quoted: msg });
-        }
-
-        if (text.startsWith('!beijar')) {
-            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
-            if (mention) {
-                const quemBeija = participant.split('@')[0];
-                const quemRecebe = mention.split('@')[0];
-                const frasesBeijo = [
-                    `O @${quemBeija} está dando um beijão no @${quemRecebe}! Que clima de romance... 💋`,
-                    `Oh lá lá! O @${quemBeija} tascou um beijo apaixonado no @${quemRecebe}! 👩‍❤️‍💋‍👨`,
-                    `O amor está no ar! @${quemBeija} beijou o @${quemRecebe} e deixou todo mundo sem graça. 😍`,
-                    `Clima de romance! @${quemBeija} e @${quemRecebe} protagonizaram um beijão de cinema! 💘`
-                ];
-                const sorteioBeijo = frasesBeijo[Math.floor(Math.random() * frasesBeijo.length)];
-                
-                await sock.sendMessage(sender, { 
-                    video: { url: "https://media.tenor.com/eCNrTq7wOpgAAAPo/kiss.mp4" }, 
-                    gifPlayback: true,
-                    caption: sorteioBeijo, 
-                    mentions: [participant, mention] 
-                }, { quoted: msg }); 
-            } else {
-                await sock.sendMessage(sender, { text: "❌ Mencione alguém para beijar!", quoted: msg });
-            }
-        }
-
-        if (text === '!backup') {
-            const meuNumero = '5527992997083@s.whatsapp.net';
-            if (participant !== meuNumero) return;
-            try {
-                const arquivos = [arquivoPlacar, arquivoCargos, arquivoCasais, arquivoRank];
-                for (const arquivo of arquivos) {
-                    if (fs.existsSync(arquivo)) {
-                        await sock.sendMessage(sender, { 
-                            document: fs.readFileSync(arquivo), 
-                            fileName: arquivo.replace('./', ''), 
-                            mimetype: 'application/json' 
-                        });
-                    }
-                }
-                await sock.sendMessage(sender, { text: "✅ Backup enviado com sucesso!" });
-            } catch (e) {
-                await sock.sendMessage(sender, { text: "❌ Erro ao enviar backup: " + e.message });
-            }
-        }
-
-        if (text === '!boss') {
-            if (raidBoss.ativo) {
-                const frasesDeboche = ["⚠️ O chefe já tá na área, seu cego! Quer que eu chame dois pra você perder mais rápido? 😂", "😤 Já tem um monstro destruindo tudo! Pega sua espada e ataca o que já tá aqui, preguiçoso!"];
-                return await sock.sendMessage(sender, { text: frasesDeboche[Math.floor(Math.random() * frasesDeboche.length)], quoted: msg });
-            }
-            raidBoss.ativo = true;
-            raidBoss.hp = 500;
-            raidBoss.maxHp = 500;
-            const msgBoss = await sock.sendMessage(sender, { 
-                video: { url: 'https://media.tenor.com/CGTSjjR7FIIAAAPo/game-interface-video-game.mp4' }, 
-                gifPlayback: true,
-                caption: `👹 *BOSS INVOCADO!* 👹\n\nHP: ${raidBoss.hp}/${raidBoss.maxHp}\n\nTodos ataquem com *!atacar* antes que ele destrua o grupo!` 
-            }, { quoted: msg });
-            raidBoss.idMensagem = msgBoss.key.id;
-        }
-
-        if (text === '!atacar') {
-            if (!raidBoss.ativo) return await sock.sendMessage(sender, { text: "❌ Não tem monstro aqui. Tá batendo no vento?" });
-            let dano = Math.floor(Math.random() * 50) + 10;
-            let mensagemFuria = "";
-
-            if (ataquesFuria[participant]) {
-                dano *= 2; 
-                mensagemFuria = "\n🔥 *DANO CRÍTICO DE FÚRIA!*";
-                delete ataquesFuria[participant]; 
-            }
-
-            raidBoss.hp -= dano;
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
-            if (raidBoss.hp <= 0) {
-                raidBoss.ativo = false;
-                let placar = lerArquivoSeguro(arquivoPlacar);
-                placar[participant] = (placar[participant] || 0) + 200;
-                fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
-                
-                await sock.sendMessage(sender, { 
-                    video: { url: 'https://media.tenor.com/NgTSh0Bq5lYAAAPo/wearwolfwere-werewolfwhere.mp4' }, 
-                    gifPlayback: true,
-                    caption: `🎉 VITÓRIA! O Boss foi derrotado! @${participant.split('@')[0]} deu o golpe final e ganhou 200 pontos!`,
-                    mentions: [participant]
-                }, { quoted: msg });
-            } else {
-                await sock.sendMessage(sender, { text: `⚔️ Você causou ${dano} de dano!${mensagemFuria}\nHP do Boss: ${raidBoss.hp}/${raidBoss.maxHp}` });
-            }
-        }
-
-        if (text === '!fechar') {
-            if (!isAdmin) {
-                await sock.sendMessage(sender, { text: "Ih, ala! O engraçadinho quer fechar o grupo? Deixa isso com quem manda! 🤡" }, { quoted: msg });
-            } else {
-                await sock.sendMessage(sender, { text: "Grupo fechado! 🤐" }, { quoted: msg });
-                try {
-                    await sock.groupSettingUpdate(sender, { announcement: true });
-                } catch (e) {
-                    await sock.groupSettingUpdate(sender, 'announcement');
-                }
-            }
-        }
-
-        if (text === '!abrir') {
-            if (!isAdmin) {
-                await sock.sendMessage(sender, { text: "Negativo! Só ADM manda aqui! 😂" }, { quoted: msg });
-            } else {
-                await sock.sendMessage(sender, { text: "Grupo aberto! Podem soltar a bagunça! 🔓" }, { quoted: msg });
-                try {
-                    await sock.groupSettingUpdate(sender, { announcement: false });
-                } catch (e) {
-                    await sock.groupSettingUpdate(sender, 'not_announcement');
-                }
-            }
-        }
-
-        if (text === '!avisoadm') { 
-            if (!msg.key.remoteJid.endsWith('@g.us')) return await sock.sendMessage(sender, { text: 'Este comando só funciona em grupos!', quoted: msg });
-            try {
-                const metadata = await sock.groupMetadata(msg.key.remoteJid);
-                const participantes = metadata.participants;
-                const autorId = msg.key.participant || msg.key.remoteJid;
-                const autorDados = participantes.find(p => p.id === autorId);
-                if (!autorDados || autorDados.admin === null) return await sock.sendMessage(sender, { text: '❌ Sai pra lá, apenas administradores podem usar este comando.', quoted: msg });
-
-                const admins = participantes.filter(p => p.admin !== null).map(p => p.id);
-                if (admins.length === 0) return await sock.sendMessage(sender, { text: 'Não encontrei administradores neste grupo.', quoted: msg });
-
-                const frasesAlerta = [
-                    `🚨 *ALERTA VERMELHO!* 🚨\n\nOs ADMs foram convocados para uma reunião de emergência! O circo está pegando fogo! 🔥`,
-                    `📢 *CHAMADA GERAL DE ADMS!* 📢\n\nLarguem o que estão fazendo! O grupo precisa de vocês antes que a casa caia! 🏃‍♂️`
-                ];
-                const sorteioAlerta = frasesAlerta[Math.floor(Math.random() * frasesAlerta.length)];
-                const mençãoAdm = `${sorteioAlerta} \n\n${admins.map(adm => `@${adm.split('@')[0]}`).join(' ')}`;
-
-                await sock.sendMessage(sender, { text: mençãoAdm, mentions: admins }, { quoted: msg });
-            } catch (error) {
-                await sock.sendMessage(sender, { text: '❌ O sistema de alarme falhou... os ADMs estão soltos!', quoted: msg });
-            }
-        }
-
-        if (text === '!musica') {
-            const desafios = [
-                { frase: "Numa folha qualquer eu desenho um sol amarelo, e com cinco ou seis retas é fácil fazer um...", resposta: "castelo" },
-                { frase: "Pela luz dos olhos teus, o que se vê, não é exatamente o que se vê, o que a gente vê, não é exatamente o que a gente...", resposta: "vê" },
-                { frase: "Eu não sou daqui, marinheiro só, eu não tenho amor, marinheiro...", resposta: "só" }
-            ];
-            const sorteio = desafios[Math.floor(Math.random() * desafios.length)];
-            await sock.sendMessage(sender, { react: { text: '🎤', key: msg.key } });
-            
-            const msgJogo = await sock.sendMessage(sender, { 
-                caption: `🎤 *DESAFIO MESTRE (VALENDO 50 PONTOS)* 🎤\n\n"${sorteio.frase}..."\n\n*Responda EM CIMA desta mensagem!*`,
-                video: { url: 'https://media.tenor.com/8DDZDteRUFgAAAPo/muzeke.mp4' },
-                gifPlayback: true
-            }, { quoted: msg });
-
-            jogoEmoji.ativo = true; 
-            jogoEmoji.resposta = sorteio.resposta;
-            jogoEmoji.idMensagem = msgJogo.key.id;
-        }
-
-        if (text.startsWith('!forca')) {
-            const palavrasHard = ['abstrato', 'efemeridade', 'paradoxo', 'onisciente', 'idiossincrasia', 'inexoravel'];
-            const palavrasMedio = ['arquitetura', 'paradigma', 'recursividade', 'criptografia', 'abstração', 'framework'];
-            
-            const nivel = Math.random() > 0.5 ? 'hard' : 'medio';
-            const listaPalavras = nivel === 'hard' ? palavrasHard : palavrasMedio;
-            const listaDicas = { 'abstrato': 'Algo não concreto', 'efemeridade': 'Dura pouco', 'paradoxo': 'Contradição', 'onisciente': 'Sabe tudo', 'idiossincrasia': 'Peculiaridade', 'inexoravel': 'Invitável', 'arquitetura': 'Estrutura', 'paradigma': 'Modelo', 'recursividade': 'Função que chama a si', 'criptografia': 'Proteção de dados', 'abstração': 'Esconder detalhes', 'framework': 'Ferramentas' };
-
-            jogoForca.palavra = listaPalavras[Math.floor(Math.random() * listaPalavras.length)];
-            jogoForca.dica = listaDicas[jogoForca.palavra] || 'Sem dica';
-            jogoForca.descobertas = Array(jogoForca.palavra.length).fill('_');
-            jogoForca.tentativas = [];
-            jogoForca.ativo = true;
-            jogoForca.erros = 0;
-            jogoForca.maxErros = 6;
-
-            const msgForca = await sock.sendMessage(sender, { 
-                video: { url: 'https://media.tenor.com/7HUogy7rXs4AAAPo/feel-me-think-about-it.mp4' }, 
-                gifPlayback: true,
-                caption: `💀 *JOGO DA FORCA (${nivel.toUpperCase()})*\n\nDica: ${jogoForca.dica}\n\nPalavra: ${jogoForca.descobertas.join(' ')}` 
-            }, { quoted: msg });
-            jogoForca.idMensagem = msgForca.key.id; 
-            return;
-        }
-
-        if (jogoForca.ativo && !jogoForca.processando) {
-            const contextInfo = msg.message?.extendedTextMessage?.contextInfo || msg.message?.imageMessage?.contextInfo || msg.message?.videoMessage?.contextInfo;
-            if (contextInfo?.stanzaId === jogoForca.idMensagem && !text.startsWith('!')) {
-                jogoForca.processando = true;
-                const resposta = text.toLowerCase().trim();
-                const autor = msg.key.participant || msg.key.remoteJid;
-
-                if (resposta.length > 1) {
-                    if (resposta === jogoForca.palavra) {
-                        jogoForca.ativo = false;
-                        await sock.sendMessage(sender, { text: `🎉 ACERTOU! A palavra era *${jogoForca.palavra.toUpperCase()}*`, quoted: msg });
-                    }
-                } else if (resposta.length === 1) {
-                    if (!jogoForca.tentativas.includes(resposta)) {
-                        jogoForca.tentativas.push(resposta);
-                        if (jogoForca.palavra.includes(resposta)) {
-                            for (let i = 0; i < jogoForca.palavra.length; i++) if (jogoForca.palavra[i] === resposta) jogoForca.descobertas[i] = resposta;
-                            await sock.sendMessage(sender, { text: `Boa! ${jogoForca.descobertas.join(' ')}` });
-                        } else {
-                            jogoForca.erros++;
-                            await sock.sendMessage(sender, { text: `❌ Errou! ${jogoForca.maxErros - jogoForca.erros} vidas restando.` });
-                        }
-                    }
-                }
-                setTimeout(() => { jogoForca.processando = false; }, 1000); 
-            }
-        }
-
-        if (text.startsWith('!desmute')) {
-            if (!isAdmin) return await sock.sendMessage(sender, { text: "Você não é ADM!" });
-            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
-            if (mention && mutados[mention]) {
-                delete mutados[mention];
-                fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
-                await sock.sendMessage(sender, { text: "Desmutado!😎😂", mentions: [mention] });
-            }
-        }
-
-        if (text.startsWith('!mute')) {
-            if (!isAdmin) return await sock.sendMessage(sender, { text: "Somente ADMs podem mutar!" });
-            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
-            if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione o alvo!", quoted: msg });
-            
-            const MEU_ID_REAL = "96057379803159@lid"; 
-            const meuNumero = "5527992997083";
-            
-            if (mention === MEU_ID_REAL || String(mention).includes(meuNumero)) {
-                return await sock.sendMessage(sender, { text: "❌ Nem tenta! O criador é intocável! 👑", quoted: msg });
-            }
-
-            const tempo = text.includes('h') ? 3600000 : 1800000;
-            mutados[mention] = Date.now() + tempo;
-            fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
-            await sock.sendMessage(sender, { text: "Você está falando demais, dá um tempo seu rabugento.😂❌", mentions: [mention] }, { quoted: msg });
-        }
-
-        // --- COMANDO !CLIMA (VERSÃO DEBOCHADA E 100% PT-BR) ---
-        if (text.startsWith('!clima')) {
-            const cidade = text.replace('!clima', '').trim();
-            if (!cidade) return await sock.sendMessage(sender, { text: "❌ O gênio, esqueceu a cidade! Ex: !clima Cariacica", quoted: msg });
-
-            // Zueiras customizadas por tipo de tempo
-            const piadas = {
-                sol: ["Tá um sol que parece o próprio inferno! 🔥", "Dia perfeito pra fritar um ovo no asfalto. 🍳", "Cuidado pra não derreter, hein! ☀️"],
-                chuva: ["Chovendo? Ótimo, desculpa perfeita pra não fazer nada! 🌧️", "Combo: chuva, netflix e solidão. ☕", "Traz o guarda-chuva ou vira um rato molhado! 🐭"],
-                nublado: ["Tempo nublado, igual ao seu futuro. ☁️", "Parece que vai chover... ou não. O tempo tá indeciso igual você! 🌩️", "Céu cinza, perfeito pra dormir o dia todo. 💤"]
-            };
-
-            try {
-                // Força o idioma para pt-br na chamada da API
-                const res = await axios.get(`https://wttr.in/${encodeURIComponent(cidade)}?format=j1&lang=pt-br`);
-                const cond = res.data.current_condition[0];
-                const temp = cond.temp_C;
-                const desc = cond.lang_pt[0].value; // Descrição já vem em PT-BR
-                
-                // Classificação automática da zueira
-                let tipo = 'nublado';
-                if (desc.toLowerCase().includes('sol') || desc.toLowerCase().includes('limpo')) tipo = 'sol';
-                if (desc.toLowerCase().includes('chuva') || desc.toLowerCase().includes('garoa')) tipo = 'chuva';
-
-                const fraseBot = piadas[tipo][Math.floor(Math.random() * piadas[tipo].length)];
-
-                const msgClima = `🌤 *TEMPO NO BONDE: ${cidade.toUpperCase()}*\n\n` +
-                                 `🌡 *Temperatura:* ${temp}°C\n` +
-                                 `☁️ *Condição:* ${desc}\n\n` +
-                                 `💬 *Analista do NeymarBOT:* ${fraseBot}`;
-
-                await sock.sendMessage(sender, { text: msgClima }, { quoted: msg });
-            } catch (err) {
-                await sock.sendMessage(sender, { text: "❌ Cidade não encontrada! O satélite tá ruim ou você inventou essa cidade? 😂", quoted: msg });
-            }
         }
 
         // --- SALVAMENTO FINAL DE RANKING ---
