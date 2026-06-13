@@ -256,14 +256,10 @@ async function connectToWhatsApp() {
             const msgCorpo = msg.message;
             if (!msgCorpo) return;
 
-            const msgViewOnceV1 = msgCorpo.viewOnceMessage?.message;
-            const msgViewOnceV2 = msgCorpo.viewOnceMessageV2?.message;
-            const msgViewOnceExt = msgCorpo.viewOnceMessageV2Extension?.message;
-            
-            const innerViewOnce = msgViewOnceV1 || msgViewOnceV2 || msgViewOnceExt;
-            const mandouViewOnce = !!(innerViewOnce && (innerViewOnce.imageMessage || innerViewOnce.videoMessage));
-            const midiaNormal = msgCorpo.imageMessage || msgCorpo.videoMessage || msgCorpo.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage || msgCorpo.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage;
-            const midia = mandouViewOnce || midiaNormal;
+            // BUSCA NUCLEAR: Transforma a mensagem toda em texto para achar a mídia em QUALQUER buraco do código
+            const msgStr = JSON.stringify(msgCorpo);
+            const mandouViewOnce = msgStr.includes('viewOnceMessage') || msgStr.includes('"viewOnce":true');
+            const midia = mandouViewOnce || msgStr.includes('imageMessage') || msgStr.includes('videoMessage');
 
             const padraoApresentacao = /\|/g;
             const enviouTextoCorreto = (text && (text.match(padraoApresentacao) || []).length >= 3);
@@ -2083,8 +2079,7 @@ _Não perca tempo, compartilhe agora!_`.trim();
             const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
             if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione alguém para eu revelar a verdadeira face! 😂", quoted: msg });
 
-            const profilePic = await getProfilePic(sock, mention);
-
+            // Trava de segurança: Ninguém analisa a Elite!
             if (groupAdmins.includes(mention) || mention.includes('5527992997083')) {
                 return await sock.sendMessage(sender, { text: "❌ *ERRO DE ANÁLISE:* O perfil da Elite é confidencial e perfeito demais para ser analisado! 👑", quoted: msg });
             }
@@ -2102,18 +2097,9 @@ _Não perca tempo, compartilhe agora!_`.trim();
                 "se pudesse, viveria debaixo de um cobertor comendo miojo cru e bebendo achocolatado.",
                 "tem medo de atender telefone e prefere fingir que tá sem sinal no meio da sala.",
                 "já tentou copiar dancinha do TikTok e distendeu o ligamento do joelho.",
-                "tem uma coleção de figurinhas polêmicas que não tem coragem de mandar no grupo.",
                 "escondeu o histórico do navegador antes de emprestar o celular pro sobrinho.",
-                "acha que é o DJ oficial do grupo, mas só toca música que ninguém conhece.",
-                "é o tipo de pessoa que lê a mensagem, não responde e depois esquece que existe.",
-                "já mandou áudio falando mal de alguém no grupo errado.",
                 "tá devendo até o pensamento pra agiota virtual.",
-                "finge que tá estudando quando na verdade tá jogando joguinho de fazenda.",
-                "tem um crush platônico no(a) entregador(a) de pizza.",
-                "dorme com a luz acesa porque tem medo de ver o saldo bancário no escuro.",
-                "já editou a mensagem pra corrigir o erro de português, mas a pessoa já tinha visto.",
-                "usa filtro em todas as fotos porque a realidade não ajuda.",
-                "tem pastas escondidas no celular cheia de print de conversas de 2020."
+                "finge que tá estudando quando na verdade tá jogando fazendinha."
             ];
 
             const perfil = {
@@ -2131,11 +2117,23 @@ _Não perca tempo, compartilhe agora!_`.trim();
                               `🤫 *Segredo Sombrio:* ${perfil.segredo}\n\n` +
                               `_Análise feita por pedido do @${autor}_`;
 
-            await sock.sendMessage(sender, { 
-                image: profilePic, 
-                caption: msgPerfil, 
-                mentions: [participant, mention] 
-            }, { quoted: msg });
+            try {
+                // Tenta puxar a foto oficial do WhatsApp da pessoa
+                const ppUrl = await sock.profilePictureUrl(mention, 'image');
+                
+                await sock.sendMessage(sender, { 
+                    image: { url: ppUrl }, 
+                    caption: msgPerfil, 
+                    mentions: [participant, mention] 
+                }, { quoted: msg });
+                
+            } catch (err) {
+                // Se a pessoa ocultou a foto, manda SÓ O TEXTO! Sem travar o bot.
+                await sock.sendMessage(sender, { 
+                    text: `*(Foto ocultada pela privacidade)* 🕵️‍♂️\n\n${msgPerfil}`, 
+                    mentions: [participant, mention] 
+                }, { quoted: msg });
+            }
         }
         // ==========================================
         // 🌤️ COMANDO !CLIMA (VERSÃO BLINDADA CONTRA QUEDAS)
