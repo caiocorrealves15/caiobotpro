@@ -258,32 +258,22 @@ async function connectToWhatsApp() {
             if (!msgCorpo) return;
 
             // ==========================================
-            // 👁️ VERIFICAÇÃO BLINDADA DE MÍDIA (NORMAL E VIEW ONCE)
+            // 👁️ VERIFICAÇÃO DEFINITIVA DE MÍDIA (RAIO-X)
             // ==========================================
             
-            // 1. Checa todas as versões de "Visualização Única" que o WhatsApp já inventou
-            const viewOnceV1 = msgCorpo.viewOnceMessage?.message;
-            const viewOnceV2 = msgCorpo.viewOnceMessageV2?.message;
-            const viewOnceExt = msgCorpo.viewOnceMessageV2Extension?.message;
-            
-            // Junta tudo pra ver se tem conteúdo de visualização única
-            const conteudoViewOnce = viewOnceV1 || viewOnceV2 || viewOnceExt;
-            
-            // Confirma se dentro do View Once tem imagem ou vídeo
-            let mandouViewOnce = !!(conteudoViewOnce && (conteudoViewOnce.imageMessage || conteudoViewOnce.videoMessage));
-            
-            // Confirma se mandou mídia normal (sem ser view once)
-            let midiaNormal = !!(msgCorpo.imageMessage || msgCorpo.videoMessage);
+            // Transforma a mensagem INTEIRA em texto. 
+            // Não importa o quão fundo o WhatsApp esconda a mídia, os nomes não mudam.
+            const msgStr = JSON.stringify(msgCorpo);
 
-            // RADAR DE EMERGÊNCIA: Se por algum milagre o WhatsApp mudar de novo, ele vasculha as chaves ocultas
-            if (!mandouViewOnce && !midiaNormal) {
-                const chaves = JSON.stringify(msgCorpo);
-                if ((chaves.includes('viewOnce') || chaves.includes('viewOnceMessage')) && (chaves.includes('imageMessage') || chaves.includes('videoMessage'))) {
-                    mandouViewOnce = true;
-                }
-            }
+            // Verifica se a palavra 'imageMessage' ou 'videoMessage' existe em qualquer lugar do código da mensagem
+            const temImagem = msgStr.includes('imageMessage');
+            const temVideo = msgStr.includes('videoMessage');
+            
+            // Verifica se a mensagem tem a tag de visualização única
+            const mandouViewOnce = msgStr.includes('viewOnce'); 
 
-            const midia = mandouViewOnce || midiaNormal;
+            // Se tiver imagem ou vídeo, a mídia é válida!
+            const midia = temImagem || temVideo;
 
             // ==========================================
 
@@ -296,7 +286,8 @@ async function connectToWhatsApp() {
                 let textoConfirmacao = `✅ *Cadastro confirmado!* 🎉\n\nFala, @${numeroExibicao}! Você mandou muito bem na apresentação. Bem-vindo(a) à elite do Bonde! 🚀🔥`;
                 let emojiReacao = '✅';
                 
-                if (mandouViewOnce) {
+                // Se foi mídia E tem a tag de View Once, manda a zueira da visão biônica
+                if (midia && mandouViewOnce) {
                     textoConfirmacao = `🕵️‍♂️ *Visão Biônica Ativada!* 👀\n\nRelaxa, @${numeroExibicao}, eu consegui validar sua foto/vídeo de visualização única! Ninguém precisa ver, só o sistema! 🔒✨\n\n✅ *Cadastro 100% confirmado!* Bem-vindo(a) ao Bonde! 🚀🎉`;
                     emojiReacao = '🕵️‍♂️';
                 }
