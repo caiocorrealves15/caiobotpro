@@ -2368,27 +2368,31 @@ _Não perca tempo, compartilhe agora!_`.trim();
         // ==========================================
         if (text === '!fechar') {
             if (!isAdmin) {
-                await sock.sendMessage(sender, { text: "Ih, ala! O engraçadinho quer fechar o grupo? Deixa isso com quem manda! 🤡" }, { quoted: msg });
-            } else {
-                await sock.sendMessage(sender, { text: "Grupo fechado! 🤐" }, { quoted: msg });
-                try {
-                    await sock.groupSettingUpdate(sender, { announcement: true });
-                } catch (e) {
-                    await sock.groupSettingUpdate(sender, 'announcement');
-                }
+                return await sock.sendMessage(sender, { text: "Ih, ala! O engraçadinho quer fechar o grupo? Deixa isso com quem manda! 🤡" }, { quoted: msg });
+            } 
+            
+            try {
+                // Sintaxe moderna do Baileys para fechar o grupo
+                await sock.groupSettingUpdate(sender, 'announcement');
+                await sock.sendMessage(sender, { text: "🔒 *Grupo fechado!* Só a Elite (Admins) fala agora. 🤐" }, { quoted: msg });
+            } catch (e) {
+                console.error("Erro ao fechar grupo:", e);
+                await sock.sendMessage(sender, { text: "❌ Não consegui fechar o grupo. Tem certeza que **EU (o bot)** sou administrador aqui? Coloca a coroa em mim! 👑" }, { quoted: msg });
             }
         }
 
         if (text === '!abrir') {
             if (!isAdmin) {
-                await sock.sendMessage(sender, { text: "Negativo! Só ADM manda aqui! 😂" }, { quoted: msg });
-            } else {
-                await sock.sendMessage(sender, { text: "Grupo aberto! Podem soltar a bagunça! 🔓" }, { quoted: msg });
-                try {
-                    await sock.groupSettingUpdate(sender, { announcement: false });
-                } catch (e) {
-                    await sock.groupSettingUpdate(sender, 'not_announcement');
-                }
+                return await sock.sendMessage(sender, { text: "Negativo! Só ADM manda aqui! 😂" }, { quoted: msg });
+            } 
+            
+            try {
+                // Sintaxe moderna do Baileys para abrir o grupo
+                await sock.groupSettingUpdate(sender, 'not_announcement');
+                await sock.sendMessage(sender, { text: "🔓 *Grupo aberto!* Podem soltar a bagunça! 🎉" }, { quoted: msg });
+            } catch (e) {
+                console.error("Erro ao abrir grupo:", e);
+                await sock.sendMessage(sender, { text: "❌ Não consegui abrir o grupo. O bot precisa de cargo de administrador! 👑" }, { quoted: msg });
             }
         }
 
@@ -2396,30 +2400,47 @@ _Não perca tempo, compartilhe agora!_`.trim();
         // 🔇 MUTE / DESMUTE (!mute / !desmute)
         // ==========================================
         if (text.startsWith('!mute')) {
-            if (!isAdmin) return await sock.sendMessage(sender, { text: "Somente ADMs podem mutar!" });
+            if (!isAdmin) return await sock.sendMessage(sender, { text: "❌ Somente ADMs podem mutar!" }, { quoted: msg });
             const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
-            if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione o alvo!", quoted: msg });
+            if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione o alvo! Ex: !mute @fulano" }, { quoted: msg });
             
             const MEU_ID_REAL = "96057379803159@lid"; 
             const meuNumero = "5527992997083";
             
             if (mention === MEU_ID_REAL || String(mention).includes(meuNumero)) {
-                return await sock.sendMessage(sender, { text: "❌ Nem tenta! O criador é intocável! 👑", quoted: msg });
+                return await sock.sendMessage(sender, { text: "❌ Nem tenta! O criador é intocável! 👑" }, { quoted: msg });
             }
 
-            const tempo = text.includes('h') ? 3600000 : 1800000;
+            // Impede de mutar outro ADM
+            if (groupAdmins.includes(mention)) {
+                return await sock.sendMessage(sender, { text: "❌ Você não pode mutar outro administrador! A hierarquia precisa ser respeitada. 🛡️" }, { quoted: msg });
+            }
+
+            const tempo = text.includes('h') ? 3600000 : 1800000; // Padrão: 30 minutos, se tiver 'h' vira 1 hora
             mutados[mention] = Date.now() + tempo;
             fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
-            await sock.sendMessage(sender, { text: "Você está falando demais, dá um tempo seu rabugento.😂❌", mentions: [mention] }, { quoted: msg });
+            
+            await sock.sendMessage(sender, { 
+                text: `🔇 *MUDO!* O @${mention.split('@')[0]} falou demais e tomou um mute!\n\n_(Obs: Certifique-se de que o bot é ADM para ele conseguir apagar as mensagens dessa pessoa)_ 🤫`, 
+                mentions: [mention] 
+            }, { quoted: msg });
         }
 
         if (text.startsWith('!desmute')) {
-            if (!isAdmin) return await sock.sendMessage(sender, { text: "Você não é ADM!" });
+            if (!isAdmin) return await sock.sendMessage(sender, { text: "❌ Você não é ADM!" }, { quoted: msg });
             const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
-            if (mention && mutados[mention]) {
+            
+            if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione quem você quer desmutar!" }, { quoted: msg });
+
+            if (mutados[mention]) {
                 delete mutados[mention];
                 fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
-                await sock.sendMessage(sender, { text: "Desmutado!😎😂", mentions: [mention] });
+                await sock.sendMessage(sender, { 
+                    text: `🔊 *MILAGRE!* O @${mention.split('@')[0]} foi desmutado e já pode voltar a falar besteira! 😎`, 
+                    mentions: [mention] 
+                }, { quoted: msg });
+            } else {
+                await sock.sendMessage(sender, { text: "❌ Essa pessoa não está mutada na minha lista!" }, { quoted: msg });
             }
         }
         // ==========================================
