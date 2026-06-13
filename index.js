@@ -2573,42 +2573,39 @@ _Não perca tempo, compartilhe agora!_`.trim();
             }
         }
        // ==========================================
-        // 🌤️ COMANDO !CLIMA (NOVO SATÉLITE OPEN-METEO - FOCO NO BRASIL)
+        // 🌤️ COMANDO !CLIMA (SATÉLITE GLOBAL INTELIGENTE)
         // ==========================================
         if (text.startsWith('!clima')) {
             const cidade = text.replace('!clima', '').trim();
-            if (!cidade) return await sock.sendMessage(sender, { text: "❌ Ô gênio, esqueceu a cidade! Ex: !clima Guarapari", quoted: msg });
+            if (!cidade) return await sock.sendMessage(sender, { text: "❌ Ô gênio, esqueceu a cidade! Ex: !clima Monteiro Paraíba", quoted: msg });
 
             await sock.sendMessage(sender, { react: { text: '🌤️', key: msg.key } });
 
             try {
-                // 1. Busca as coordenadas exatas da cidade (Pede 5 resultados para ter margem de escolha)
-                const geoRes = await axios.get(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cidade)}&count=5&language=pt`);
+                // 1. Busca as coordenadas com Nominatim (OpenStreetMap) - Ele é super inteligente pra entender "Cidade Estado"
+                const geoRes = await axios.get(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cidade)}&format=json&addressdetails=1&limit=1`, {
+                    headers: { 'User-Agent': 'BondeDoBrasilBot/2.0' }
+                });
                 
-                if (!geoRes.data.results || geoRes.data.results.length === 0) {
-                    return await sock.sendMessage(sender, { text: `❌ A cidade "${cidade}" não existe ou o mapa engoliu! 😂 Tente escrever o nome certinho.`, quoted: msg });
+                if (!geoRes.data || geoRes.data.length === 0) {
+                    return await sock.sendMessage(sender, { text: `❌ A cidade "${cidade}" não existe ou o mapa engoliu! 😂 Tente escrever só o nome da cidade, ou Cidade + Estado.`, quoted: msg });
                 }
 
-                // 2. FILTRO INTELIGENTE: Procura primeiro no Brasil!
-                let local = geoRes.data.results.find(r => r.country_code === "BR" || r.country === "Brasil" || r.country === "Brazil");
+                const local = geoRes.data[0];
+                const lat = local.lat;
+                const lon = local.lon;
                 
-                // Se não achar nada no Brasil (ex: cara pesquisou Paris ou Miami), pega o primeiro resultado mesmo
-                if (!local) {
-                    local = geoRes.data.results[0];
-                }
+                // Pega o nome certinho (cidade, vila ou o nome geral)
+                const nomeCidade = local.address.city || local.address.town || local.address.village || local.address.municipality || local.name;
+                const estado = local.address.state || local.address.country || "Desconhecido";
 
-                const lat = local.latitude;
-                const lon = local.longitude;
-                const nomeCidade = local.name;
-                const estado = local.admin1 || local.country; // Pega o estado (ex: Espírito Santo) ou o País se for gringa
-
-                // 3. Busca o clima ao vivo batendo nas coordenadas exatas
+                // 2. Busca o clima ao vivo batendo nas coordenadas exatas (Open-Meteo não falha)
                 const climaRes = await axios.get(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
                 const current = climaRes.data.current_weather;
                 const temp = current.temperature;
                 const code = current.weathercode;
 
-                // 4. Traduz os códigos meteorológicos mundiais (WMO) para PT-BR
+                // 3. Traduz os códigos meteorológicos mundiais (WMO) para PT-BR
                 let desc = "Desconhecido";
                 let tipo = "nublado";
                 
@@ -2643,7 +2640,7 @@ _Não perca tempo, compartilhe agora!_`.trim();
                 }, { quoted: msg });
                 
             } catch (err) {
-                console.error("Erro na API de Clima Open-Meteo:", err.message);
+                console.error("Erro na API de Clima:", err.message);
                 await sock.sendMessage(sender, { text: "❌ Deu pau no satélite! Tente de novo em alguns minutos.", quoted: msg });
             }
         }
