@@ -2146,8 +2146,15 @@ _Não perca tempo, compartilhe agora!_`.trim();
                 return await sock.sendMessage(sender, { text: "❌ Vocês nem casados estão! Tá tentando divorciar de quem não tem compromisso? 😂", quoted: msg });
             }
 
+            // Remove o casal da lista
             listaCasais.splice(index, 1);
-            salvarCasais(); 
+            
+            // Força o salvamento no banco de dados
+            try {
+                fs.writeFileSync(arquivoCasais, JSON.stringify(listaCasais, null, 2));
+            } catch (err) {
+                console.error("❌ Erro ao salvar o divórcio no disco:", err);
+            }
 
             const frasesDivorcio = [
                 `💔 O divórcio saiu! @${p1.split('@')[0]} e @${p2.split('@')[0]} não aguentaram a pressão e deram fim nisso! 🥂`,
