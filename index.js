@@ -2574,80 +2574,84 @@ _Não perca tempo, compartilhe agora!_`.trim();
         }
 
         // ==========================================
-        // 🎵 SISTEMA DE MÚSICA (!play) - O DJ DO BONDE (API TRIPLA BLINDADA)
+        // 🎵 SISTEMA DE MÚSICA (!play) - BLINDAGEM ANTI-CRASH
         // ==========================================
         if (text.startsWith('!play')) {
             const musica = text.replace('!play', '').trim();
-
-            if (!musica) {
-                return await sock.sendMessage(sender, { text: "❌ Tá querendo ouvir o silêncio? Digita o nome da música! Ex: !play Save your tears" }, { quoted: msg });
-            }
+            if (!musica) return await sock.sendMessage(sender, { text: "❌ Digita o nome da música! Ex: !play Save your tears" }, { quoted: msg });
 
             await sock.sendMessage(sender, { react: { text: '🎧', key: msg.key } });
-            await sock.sendMessage(sender, { text: `🔍 *DJ NeymarBOT na pista!*\n\nProcurando por _"${musica}"_... Aguenta aí que o grave já vai bater!` }, { quoted: msg });
+            await sock.sendMessage(sender, { text: `🔍 *DJ NeymarBOT na pista!*\n\nBuscando: _"${musica}"_... ⏳` }, { quoted: msg });
 
             try {
-                // 1. Pesquisa o vídeo no YouTube (O motor de busca continua o mesmo)
+                // 1. Pesquisa no YouTube
                 const resultados = await ytSearch(musica);
                 const video = resultados.videos.length > 0 ? resultados.videos[0] : null;
 
-                if (!video) {
-                    return await sock.sendMessage(sender, { text: "❌ Não achei nenhuma música com esse nome. Você inventou isso aí? 😂" }, { quoted: msg });
-                }
+                if (!video) return await sock.sendMessage(sender, { text: "❌ Não achei essa música." }, { quoted: msg });
+                if (video.seconds > 600) return await sock.sendMessage(sender, { text: "❌ Áudio muito longo (max 10 min) pra não explodir meu servidor!" }, { quoted: msg });
 
-                // Trava de segurança: Bloqueia áudios maiores que 10 minutos
-                if (video.seconds > 600) { 
-                    return await sock.sendMessage(sender, { text: `❌ A música *"${video.title}"* tem mais de 10 minutos! Tá achando que eu sou o Spotify Premium? Escolhe uma menor! 🤡` }, { quoted: msg });
-                }
-
-                // 2. Manda a "Capa do CD" com as informações
-                const infoMsg = `🎵 *TOCANDO AGORA NO BONDE VIP* 🎵\n\n` +
-                                `🎶 *Faixa:* ${video.title}\n` +
-                                `⏱️ *Duração:* ${video.timestamp}\n` +
-                                `👀 *Views:* ${video.views.toLocaleString('pt-BR')}\n` +
-                                `🔗 *Canal:* ${video.author.name}\n\n` +
-                                `_Extraindo o áudio dos servidores secretos..._ 🕺💃`;
-                
-                await sock.sendMessage(sender, { 
-                    image: { url: video.thumbnail }, 
-                    caption: infoMsg 
-                }, { quoted: msg });
-
-                // 3. O PULO DO GATO: Usa APIs públicas feitas para burlar o YouTube
+                // 2. Tenta pegar o link de download nas APIs públicas
                 let downloadUrl = "";
-                
                 try {
-                    // Tentativa 1: API Ryzendesu (Super rápida)
-                    const resApi = await axios.get(`https://api.ryzendesu.vip/api/downloader/ytmp3?url=${video.url}`);
-                    downloadUrl = resApi.data.url || resApi.data.data?.url;
+                    const res1 = await axios.get(`https://api.siputzx.my.id/api/d/ytmp3?url=${video.url}`);
+                    downloadUrl = res1.data.data.dl;
                 } catch (e1) {
                     try {
-                        // Tentativa 2: API Siputzx (Plano B)
-                        const resApi2 = await axios.get(`https://api.siputzx.my.id/api/d/ytmp3?url=${video.url}`);
-                        downloadUrl = resApi2.data.data.dl;
+                        const res2 = await axios.get(`https://bk9.fun/download/ytmp3?url=${video.url}`);
+                        downloadUrl = res2.data.BK9.dl;
                     } catch (e2) {
-                        // Tentativa 3: API Vreden (O Último Recurso)
-                        const resApi3 = await axios.get(`https://api.vreden.web.id/api/ytmp3?url=${video.url}`);
-                        downloadUrl = resApi3.data.result.download.url;
+                        throw new Error("As APIs foram bloqueadas pelo YouTube.");
                     }
                 }
 
-                if (!downloadUrl) throw new Error("Nenhuma API conseguiu quebrar o bloqueio.");
+                if (!downloadUrl) throw new Error("Link vazio.");
 
-                // 4. Envia o áudio usando o link direto!
-                // O Baileys faz o trabalho sujo de converter e enviar sem forçar a memória do seu servidor
-                await sock.sendMessage(sender, { 
-                    audio: { url: downloadUrl }, 
-                    mimetype: 'audio/mpeg', 
-                    ptt: false 
-                }, { quoted: msg });
+                // 3. A BARREIRA DE SEGURANÇA (O QUE IMPEDE O BOT DE REINICIAR)
+                // O bot faz o download do arquivo para a própria memória primeiro
+                const responseAudio = await axios({
+                    url: downloadUrl,
+                    method: 'GET',
+                    responseType: 'arraybuffer', // Baixa os bytes puros
+                    timeout: 25000 // Desiste se demorar mais de 25 segundos
+                });
 
-                await sock.sendMessage(sender, { react: { text: '✅', key: msg.key } });
+                // CHECAGEM DE VIDA OU MORTE: Avalia se o arquivo recebido é HTML (Erro)
+                const contentType = responseAudio.headers['content-type'];
+                if (contentType && contentType.includes('text/html')) {
+                    throw new Error("A API retornou um erro do Cloudflare em vez da música.");
+                }
+
+                // 4. Salva no disco temporariamente e envia
+                const tempFile = `./musica_${Date.now()}.mp3`;
+                try {
+                    // Grava o arquivo MP3 seguro
+                    fs.writeFileSync(tempFile, responseAudio.data);
+
+                    // Manda a foto da música
+                    await sock.sendMessage(sender, { 
+                        image: { url: video.thumbnail }, 
+                        caption: `🎵 *TOCANDO AGORA:* ${video.title}\n⏱️ *Duração:* ${video.timestamp}\n\n_DJ NeymarBOT soltou o beat!_ 🕺` 
+                    }, { quoted: msg });
+
+                    // Manda o áudio em si
+                    await sock.sendMessage(sender, { 
+                        audio: { url: tempFile }, 
+                        mimetype: 'audio/mpeg', 
+                        ptt: false 
+                    }, { quoted: msg });
+
+                    await sock.sendMessage(sender, { react: { text: '✅', key: msg.key } });
+
+                } finally {
+                    // 5. FAXINA: Apaga a música do HD do servidor pra não lotar a memória
+                    if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
+                }
 
             } catch (erro) {
-                console.error("Erro no comando !play:", erro);
+                console.error("Erro no !play:", erro.message);
                 await sock.sendMessage(sender, { react: { text: '❌', key: msg.key } });
-                await sock.sendMessage(sender, { text: "❌ O YouTube ligou o modo FBI e barrou a extração do áudio! Tente de novo com outra música. 😭" }, { quoted: msg });
+                await sock.sendMessage(sender, { text: `❌ O YouTube barrou o download ou a música falhou! Tenta pesquisar com outro nome. (Motivo: ${erro.message})` }, { quoted: msg });
             }
         }
        // ==========================================
