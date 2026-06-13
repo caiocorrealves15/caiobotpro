@@ -2496,45 +2496,58 @@ _Não perca tempo, compartilhe agora!_`.trim();
                 await sock.sendMessage(sender, { text: "❌ Essa pessoa não está mutada na minha lista!" }, { quoted: msg });
             }
         }
-        // ==========================================
-        // 🌤️ COMANDO !CLIMA (VERSÃO BLINDADA CONTRA QUEDAS)
+       // ==========================================
+        // 🌤️ COMANDO !CLIMA (NOVO SATÉLITE OPEN-METEO - NÃO CAI!)
         // ==========================================
         if (text.startsWith('!clima')) {
             const cidade = text.replace('!clima', '').trim();
-            if (!cidade) return await sock.sendMessage(sender, { text: "❌ O gênio, esqueceu a cidade! Ex: !clima Cariacica", quoted: msg });
-
-            // Zueiras customizadas por tipo de tempo
-            const piadas = {
-                sol: ["Tá um sol que parece o próprio inferno! 🔥", "Dia perfeito pra fritar um ovo no asfalto. 🍳", "Cuidado pra não derreter, hein! ☀️"],
-                chuva: ["Chovendo? Ótimo, desculpa perfeita pra não fazer nada! 🌧️", "Combo: chuva, netflix e solidão. ☕", "Traz o guarda-chuva ou vira um rato molhado! 🐭"],
-                nublado: ["Tempo nublado, igual ao seu futuro. ☁️", "Parece que vai chover... ou não. O tempo tá indeciso igual você! 🌩️", "Céu cinza, perfeito pra dormir o dia todo. 💤"]
-            };
+            if (!cidade) return await sock.sendMessage(sender, { text: "❌ Ô gênio, esqueceu a cidade! Ex: !clima Guarapari", quoted: msg });
 
             await sock.sendMessage(sender, { react: { text: '🌤️', key: msg.key } });
 
             try {
-                // Configuração para fingir ser um navegador (evita o bloqueio do site)
-                const axiosConfig = {
-                    headers: { 'User-Agent': 'BondeDoBrasilBot/1.0' },
-                    timeout: 10000 // Limite de 10 segundos para não travar o bot
-                };
+                // 1. Busca as coordenadas exatas da cidade (Não falha com nomes compostos)
+                const geoRes = await axios.get(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cidade)}&count=1&language=pt`);
+                
+                if (!geoRes.data.results || geoRes.data.results.length === 0) {
+                    return await sock.sendMessage(sender, { text: `❌ A cidade "${cidade}" não existe ou o mapa engoliu! 😂 Tente escrever o nome certinho.`, quoted: msg });
+                }
 
-                // Força o idioma para pt-br na chamada da API
-                const res = await axios.get(`https://wttr.in/${encodeURIComponent(cidade)}?format=j1&lang=pt-br`, axiosConfig);
-                const cond = res.data.current_condition[0];
-                const temp = cond.temp_C;
+                const local = geoRes.data.results[0];
+                const lat = local.latitude;
+                const lon = local.longitude;
+                const nomeCidade = local.name;
+                const estado = local.admin1 || local.country; // Pega o estado ou o País se for cidade pequena
+
+                // 2. Busca o clima ao vivo batendo nas coordenadas exatas
+                const climaRes = await axios.get(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+                const current = climaRes.data.current_weather;
+                const temp = current.temperature;
+                const code = current.weathercode;
+
+                // 3. Traduz os códigos meteorológicos mundiais (WMO) para PT-BR
+                let desc = "Desconhecido";
+                let tipo = "nublado";
                 
-                // Leitura blindada: Se o site não retornar a tradução PT-BR, ele pega em inglês pra não dar erro
-                const desc = cond.lang_pt?.[0]?.value || cond.weatherDesc?.[0]?.value || "Desconhecido";
-                
-                // Classificação automática da zueira
-                let tipo = 'nublado';
-                if (desc.toLowerCase().includes('sol') || desc.toLowerCase().includes('limpo') || desc.toLowerCase().includes('clear') || desc.toLowerCase().includes('sunny')) tipo = 'sol';
-                if (desc.toLowerCase().includes('chuva') || desc.toLowerCase().includes('garoa') || desc.toLowerCase().includes('rain')) tipo = 'chuva';
+                if (code === 0) { desc = "Céu Limpo ☀️"; tipo = "sol"; }
+                else if (code >= 1 && code <= 3) { desc = "Parcialmente Nublado ⛅"; tipo = "nublado"; }
+                else if (code === 45 || code === 48) { desc = "Nevoeiro 🌫️"; tipo = "nublado"; }
+                else if (code >= 51 && code <= 67) { desc = "Chovendo 🌧️"; tipo = "chuva"; }
+                else if (code >= 71 && code <= 77) { desc = "Neve ❄️"; tipo = "nublado"; }
+                else if (code >= 80 && code <= 82) { desc = "Pancadas de Chuva 🌦️"; tipo = "chuva"; }
+                else if (code >= 85 && code <= 86) { desc = "Nevasca 🌨️"; tipo = "nublado"; }
+                else if (code >= 95) { desc = "Tempestade ⛈️"; tipo = "chuva"; }
+
+                // Zueiras baseadas no tempo
+                const piadas = {
+                    sol: ["Tá um sol que parece o próprio inferno! 🔥", "Dia perfeito pra fritar um ovo no asfalto. 🍳", "Cuidado pra não derreter, hein! ☀️"],
+                    chuva: ["Chovendo? Ótimo, desculpa perfeita pra não fazer nada! 🌧️", "Combo: chuva, netflix e solidão. ☕", "Traz o guarda-chuva ou vira um rato molhado! 🐭"],
+                    nublado: ["Tempo nublado, igual ao seu futuro. ☁️", "Parece que vai chover... ou não. O tempo tá indeciso igual você! 🌩️", "Céu cinza, perfeito pra dormir o dia todo. 💤"]
+                };
 
                 const fraseBot = piadas[tipo][Math.floor(Math.random() * piadas[tipo].length)];
 
-                const msgClima = `🌤 *TEMPO NO BONDE: ${cidade.toUpperCase()}*\n\n` +
+                const msgClima = `🌤 *TEMPO NO BONDE: ${nomeCidade.toUpperCase()} - ${estado.toUpperCase()}*\n\n` +
                                  `🌡 *Temperatura:* ${temp}°C\n` +
                                  `☁️ *Condição:* ${desc}\n\n` +
                                  `💬 *Analista do NeymarBOT:* ${fraseBot}`;
@@ -2547,8 +2560,8 @@ _Não perca tempo, compartilhe agora!_`.trim();
                 }, { quoted: msg });
                 
             } catch (err) {
-                console.error("Erro na API de Clima:", err.message); // Vai te mostrar no terminal se a API caiu de vez
-                await sock.sendMessage(sender, { text: "❌ Cidade não encontrada ou o satélite do clima pifou! 😂 Tente de novo.", quoted: msg });
+                console.error("Erro na API de Clima Open-Meteo:", err.message);
+                await sock.sendMessage(sender, { text: "❌ Deu pau no satélite! Tente de novo em alguns minutos.", quoted: msg });
             }
         }
 
