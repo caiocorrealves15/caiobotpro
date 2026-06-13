@@ -2573,7 +2573,7 @@ _Não perca tempo, compartilhe agora!_`.trim();
             }
         }
        // ==========================================
-        // 🌤️ COMANDO !CLIMA (NOVO SATÉLITE OPEN-METEO - NÃO CAI!)
+        // 🌤️ COMANDO !CLIMA (NOVO SATÉLITE OPEN-METEO - FOCO NO BRASIL)
         // ==========================================
         if (text.startsWith('!clima')) {
             const cidade = text.replace('!clima', '').trim();
@@ -2582,26 +2582,33 @@ _Não perca tempo, compartilhe agora!_`.trim();
             await sock.sendMessage(sender, { react: { text: '🌤️', key: msg.key } });
 
             try {
-                // 1. Busca as coordenadas exatas da cidade (Não falha com nomes compostos)
-                const geoRes = await axios.get(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cidade)}&count=1&language=pt`);
+                // 1. Busca as coordenadas exatas da cidade (Pede 5 resultados para ter margem de escolha)
+                const geoRes = await axios.get(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cidade)}&count=5&language=pt`);
                 
                 if (!geoRes.data.results || geoRes.data.results.length === 0) {
                     return await sock.sendMessage(sender, { text: `❌ A cidade "${cidade}" não existe ou o mapa engoliu! 😂 Tente escrever o nome certinho.`, quoted: msg });
                 }
 
-                const local = geoRes.data.results[0];
+                // 2. FILTRO INTELIGENTE: Procura primeiro no Brasil!
+                let local = geoRes.data.results.find(r => r.country_code === "BR" || r.country === "Brasil" || r.country === "Brazil");
+                
+                // Se não achar nada no Brasil (ex: cara pesquisou Paris ou Miami), pega o primeiro resultado mesmo
+                if (!local) {
+                    local = geoRes.data.results[0];
+                }
+
                 const lat = local.latitude;
                 const lon = local.longitude;
                 const nomeCidade = local.name;
-                const estado = local.admin1 || local.country; // Pega o estado ou o País se for cidade pequena
+                const estado = local.admin1 || local.country; // Pega o estado (ex: Espírito Santo) ou o País se for gringa
 
-                // 2. Busca o clima ao vivo batendo nas coordenadas exatas
+                // 3. Busca o clima ao vivo batendo nas coordenadas exatas
                 const climaRes = await axios.get(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
                 const current = climaRes.data.current_weather;
                 const temp = current.temperature;
                 const code = current.weathercode;
 
-                // 3. Traduz os códigos meteorológicos mundiais (WMO) para PT-BR
+                // 4. Traduz os códigos meteorológicos mundiais (WMO) para PT-BR
                 let desc = "Desconhecido";
                 let tipo = "nublado";
                 
