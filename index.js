@@ -654,7 +654,7 @@ async function connectToWhatsApp() {
         if (lowerText === '!link') {
             await sock.sendMessage(sender, { react: { text: '🔗', key: msg.key } });
             
-            const linkDoGrupo = "https://chat.whatsapp.com/HT7DEVaIjiE7hZ8PDThZ5a?s=cl&p=i&ilr=0";
+            const linkDoGrupo = "https://chat.whatsapp.com/C4T7j30vgtE8IqLmQGFoEb?s=cl&p=i&ilr=0";
             
             const textoChamativo = `
 ╔════════════════════════╗
@@ -2565,7 +2565,7 @@ _Não perca tempo, compartilhe agora!_`.trim();
         }
 
        // ==========================================
-        // 🎵 SISTEMA DE MÚSICA (!play) - API COBALT (INFALÍVEL E SEM ERRO)
+        // 🎵 SISTEMA DE MÚSICA (!play) - FORMATO NATIVO DO WHATSAPP (MP4/M4A)
         // ==========================================
         if (text.startsWith('!play')) {
             const musica = text.replace('!play', '').trim();
@@ -2575,83 +2575,62 @@ _Não perca tempo, compartilhe agora!_`.trim();
             await sock.sendMessage(sender, { text: `🔍 *DJ NeymarBOT na pista!*\n\nBuscando: _"${musica}"_... ⏳` }, { quoted: msg });
 
             try {
-                // 1. Pesquisa no YouTube usando yt-search
+                // 1. Pesquisa no YouTube
                 const resultados = await ytSearch(musica);
                 const video = resultados.videos.length > 0 ? resultados.videos[0] : null;
 
                 if (!video) return await sock.sendMessage(sender, { text: "❌ Não achei essa música." }, { quoted: msg });
                 if (video.seconds > 600) return await sock.sendMessage(sender, { text: "❌ Áudio muito longo (max 10 min) pra não explodir meu servidor!" }, { quoted: msg });
 
-                // Manda a capa do vídeo
+                // Manda a capa
                 await sock.sendMessage(sender, { 
                     image: { url: video.thumbnail }, 
-                    caption: `🎵 *TOCANDO AGORA:* ${video.title}\n⏱️ *Duração:* ${video.timestamp}\n\n_Extraindo o áudio pelo satélite Cobalt..._ 🚀` 
+                    caption: `🎵 *TOCANDO AGORA:* ${video.title}\n⏱️ *Duração:* ${video.timestamp}\n\n_Sincronizando áudio..._ 🚀` 
                 }, { quoted: msg });
 
-                const tempFile = `./musica_${Date.now()}.mp3`;
-                let downloadUrl = "";
+                const ytdl = require('@distube/ytdl-core');
+                
+                // 2. A SOLUÇÃO: Força o YouTube a entregar APENAS o formato mp4(m4a) que o WhatsApp aceita
+                const stream = ytdl(video.url, { 
+                    filter: format => format.container === 'mp4' && !format.hasVideo && format.hasAudio 
+                });
+                
+                let pedacosDeAudio = [];
 
-                // TENTATIVA 1: O Santo Graal (Cobalt API - Burla o YT fácil e é super rápido)
-                try {
-                    const cobaltRes = await axios.post('https://api.cobalt.tools/api/json', {
-                        url: video.url,
-                        isAudioOnly: true,
-                        aFormat: 'mp3'
-                    }, {
-                        headers: {
-                            'Accept': 'application/json',
-                            'Content-Type': 'application/json',
-                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                        }
-                    });
-                    downloadUrl = cobaltRes.data.url;
-                } catch (e1) {
-                    console.log("Cobalt falhou, partindo para o plano B...");
-                    // TENTATIVA 2: Ryzendesu API
-                    try {
-                        const ryzenRes = await axios.get(`https://api.ryzendesu.vip/api/downloader/ytmp3?url=${encodeURIComponent(video.url)}`);
-                        downloadUrl = ryzenRes.data.url || ryzenRes.data.data?.url;
-                    } catch (e2) {
-                        // TENTATIVA 3: Siputzx API
-                        const siputzx = await axios.get(`https://api.siputzx.my.id/api/d/ytmp3?url=${encodeURIComponent(video.url)}`);
-                        downloadUrl = siputzx.data.data.dl;
-                    }
-                }
-
-                if (!downloadUrl) throw new Error("Todas as APIs foram bloqueadas pelo YouTube.");
-
-                // BAIXA E SALVA NO DISCO PARA EVITAR CRASH (Como você tem 2GB de RAM, roda liso!)
-                const responseAudio = await axios({
-                    url: downloadUrl,
-                    method: 'GET',
-                    responseType: 'arraybuffer',
-                    timeout: 40000 
+                stream.on('data', (chunk) => {
+                    pedacosDeAudio.push(chunk);
                 });
 
-                // Trava de segurança final: se o site mandar erro em formato de texto, o bot recusa!
-                if (responseAudio.headers['content-type'] && responseAudio.headers['content-type'].includes('text/html')) {
-                    throw new Error("A API mandou uma página de bloqueio em vez da música.");
-                }
+                stream.on('end', async () => {
+                    try {
+                        // Junta os pedaços num único arquivo na memória
+                        const audioCompleto = Buffer.concat(pedacosDeAudio);
+                        
+                        // Envia como MP4 (o WhatsApp vai reconhecer e mostrar o play de áudio na hora)
+                        await sock.sendMessage(sender, { 
+                            audio: audioCompleto, 
+                            mimetype: 'audio/mp4', 
+                            ptt: false 
+                        }, { quoted: msg });
 
-                // Escreve a música salva na memória
-                fs.writeFileSync(tempFile, responseAudio.data);
+                        await sock.sendMessage(sender, { react: { text: '✅', key: msg.key } });
+                    } catch (errEnvio) {
+                        console.error("Erro na hora de enviar pro Zap:", errEnvio);
+                        await sock.sendMessage(sender, { react: { text: '❌', key: msg.key } });
+                        await sock.sendMessage(sender, { text: "❌ O WhatsApp engasgou e recusou o formato do áudio!" }, { quoted: msg });
+                    }
+                });
 
-                // Envia o áudio pro zap
-                await sock.sendMessage(sender, { 
-                    audio: { url: tempFile }, 
-                    mimetype: 'audio/mpeg', 
-                    ptt: false 
-                }, { quoted: msg });
-
-                await sock.sendMessage(sender, { react: { text: '✅', key: msg.key } });
-
-                // FAXINA: Limpa a memória apagando a música enviada
-                if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
+                stream.on('error', async (err) => {
+                    console.error("Erro no YTDL:", err.message);
+                    await sock.sendMessage(sender, { react: { text: '❌', key: msg.key } });
+                    await sock.sendMessage(sender, { text: `❌ O YouTube bloqueou a música e não quis entregar o arquivo! Motivo: ${err.message}` }, { quoted: msg });
+                });
 
             } catch (erro) {
-                console.error("Erro no !play:", erro.message);
+                console.error("Erro geral no play:", erro.message);
                 await sock.sendMessage(sender, { react: { text: '❌', key: msg.key } });
-                await sock.sendMessage(sender, { text: `❌ O YouTube blindou o vídeo e derrubou nossos três servidores! Tente com outra música ou aguarde a API voltar.` }, { quoted: msg });
+                await sock.sendMessage(sender, { text: `❌ Falha no sistema de busca. Tente novamente.` }, { quoted: msg });
             }
         }
        // ==========================================
