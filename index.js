@@ -249,21 +249,29 @@ sock.ev.on('creds.update', saveCreds);
         // --- 2. SISTEMA DE CADASTRO (AUTO-APROVAÇÃO E COBRANÇA) ---
         if (membrosPendentes[participant]) {
             const msgCorpo = msg.message;
+            if (!msgCorpo) return;
 
-            // 1. Detecção robusta de ViewOnce (incluindo a versão mais nova Extension)
-            const type = Object.keys(msgCorpo)[0];
-            const isViewOnce = type === 'viewOnceMessage' || type === 'viewOnceMessageV2' || type === 'viewOnceMessageV2Extension';
+            // --- BUSCA BLINDADA: Ignora a ordem das chaves do WhatsApp ---
+            // Tenta pegar o conteúdo de visualização única em qualquer uma das versões possíveis
+            const msgViewOnceV1 = msgCorpo.viewOnceMessage?.message;
+            const msgViewOnceV2 = msgCorpo.viewOnceMessageV2?.message;
+            const msgViewOnceExt = msgCorpo.viewOnceMessageV2Extension?.message;
             
-            // Se for viewOnce, extraímos a mensagem interna, se não, usamos a própria mensagem
-            const innerMessage = isViewOnce ? msgCorpo[type].message : msgCorpo;
+            // Junta o que ele encontrou (se for undefined, o || pula pro próximo)
+            const innerViewOnce = msgViewOnceV1 || msgViewOnceV2 || msgViewOnceExt;
             
-            // Verifica mídia em qualquer formato
-            const midia = innerMessage?.imageMessage || innerMessage?.videoMessage;
-            const mandouViewOnce = isViewOnce && !!midia;
+            // É ViewOnce se encontrou o objeto acima E se lá dentro tem imagem/vídeo
+            const mandouViewOnce = !!(innerViewOnce && (innerViewOnce.imageMessage || innerViewOnce.videoMessage));
+            
+            // Verifica mídia normal (sem ser view once, imagem/vídeo direta ou respondida)
+            const midiaNormal = msgCorpo.imageMessage || msgCorpo.videoMessage || msgCorpo.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage || msgCorpo.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage;
+            
+            // É mídia se mandou view once OU mandou foto/vídeo normal
+            const midia = mandouViewOnce || midiaNormal;
 
             // Validação de texto para apresentação
             const padraoApresentacao = /\|/g;
-            const enviouTextoCorreto = (text.match(padraoApresentacao) || []).length >= 3;
+            const enviouTextoCorreto = (text && (text.match(padraoApresentacao) || []).length >= 3);
 
             const numeroExibicao = participant.split('@')[0];
 
@@ -1611,6 +1619,43 @@ _Não perca tempo, compartilhe agora!_`.trim();
 
             res += "\n🤖 *Dica: Seja ativo e compre seu cargo!*";
             await sock.sendMessage(sender, { text: res, mentions: listaMentions }, { quoted: msg });
+        }
+
+        // ==========================================
+        // ❇️ PROMOVER A ADM (APENAS PARA ADMS) - COM GIF
+        // ==========================================
+        if (text.startsWith('!adm')) {
+            // 1. Verifica se quem enviou é ADM
+            if (!isAdmin) {
+                return await sock.sendMessage(sender, { text: "❌ Apenas ADMs podem promover membros a ADM!" }, { quoted: msg });
+            }
+
+            // 2. Verifica se houve marcação
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            if (!mention) {
+                return await sock.sendMessage(sender, { text: "❌ Marque quem você quer promover! Ex: !adm @membro" }, { quoted: msg });
+            }
+
+            // 3. Verifica se o alvo já é ADM
+            if (groupAdmins.includes(mention)) {
+                return await sock.sendMessage(sender, { text: "⚠️ Esta pessoa já é ADM." }, { quoted: msg });
+            }
+
+            try {
+                // 4. Executa a promoção no WhatsApp
+                await sock.groupParticipantsUpdate(sender, [mention], "promote");
+                
+                // 5. Envia a mensagem com GIF de Poder
+                await sock.sendMessage(sender, { 
+                    video: { url: 'https://media.tenor.com/nXJyFnaE2P0AAAPo/crown-marina.mp4' },
+                    gifPlayback: true,
+                    caption: `❇️ *NOVO ADM NO BONDE!* 👑\n\nParabéns @${mention.split('@')[0]}, você agora faz parte da Elite! Use seu poder com sabedoria. 🛡️`, 
+                    mentions: [mention] 
+                }, { quoted: msg });
+                
+            } catch (e) {
+                await sock.sendMessage(sender, { text: "❌ Falha ao promover. Verifique se o bot também é ADM no grupo!" }, { quoted: msg });
+            }
         }
 
         // --- COMANDO !PERFIL (ANALISTA DE PERSONALIDADE ZUERA) ---
