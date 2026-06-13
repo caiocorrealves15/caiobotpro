@@ -363,7 +363,7 @@ async function connectToWhatsApp() {
         }
 
         if (text.startsWith('!')) {
-            const comandosExistentes = ['!menu', '!comprar', '!calvo', '!qi', '!serasa', '!historico', '!fakenews', '!rinha', '!vasco', '!gravida', '!feio', '!clt', '!bola8', '!perfil', '!culpado', '!inocente', '!shippar',  '!julgar', '!loja', '!pesquisar', '!backup', '!dar_pontos', '!atacar', '!boss', '!rank', '!casar', '!casais', '!piada', '!avisoadm', '!descasar', '!emoji', '!sortear', '!cadastros', '!perguntas', '!jogar', '!forca', '!jogosoff', '!jogoson', '!limpar', '!fixar', '!status', '!link', '!tier', '!ranking', '!placar', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute', '!gado', '!corno', '!fofoca', '!roubar', '!cargos', '!comprar_cargo', '!dar_cargo'];
+            const comandosExistentes = ['!menu', '!comprar', '!roleta', '!bafometro', '!verdade', '!fuga', '!corrida', '!macumba', '!calvo', '!qi', '!serasa', '!historico', '!fakenews', '!rinha', '!vasco', '!gravida', '!feio', '!clt', '!bola8', '!perfil', '!culpado', '!inocente', '!shippar',  '!julgar', '!loja', '!pesquisar', '!backup', '!dar_pontos', '!atacar', '!boss', '!rank', '!casar', '!casais', '!piada', '!avisoadm', '!descasar', '!emoji', '!sortear', '!cadastros', '!perguntas', '!jogar', '!forca', '!jogosoff', '!jogoson', '!limpar', '!fixar', '!status', '!link', '!tier', '!ranking', '!placar', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute', '!gado', '!corno', '!fofoca', '!roubar', '!cargos', '!comprar_cargo', '!dar_cargo'];
             const cmdDigitado = text.split(' ')[0]; 
             
             if (!comandosExistentes.includes(cmdDigitado)) {
@@ -721,46 +721,50 @@ _Não perca tempo, compartilhe agora!_`.trim();
  👑 *CEO:* @5527992997083
 
 💎 *MERCADO & ECONOMIA*
- ┣ 🛒 !loja ➾ _Itens VIP_
- ┣ 💰 !roubar ➾ _Assaltar_
- ┣ 💳 !comprar_cargo [nome]
- ┣ 🎁 !comprar [item]
- ┗ 🏆 !ranking / !rank
+ ┣ 🛒 !loja ➾ 💰 !roubar
+ ┣ 💳 !comprar_cargo ➾ 🎁 !comprar
+ ┗ 🏆 !ranking ➾ 🥇 !rank
 
 🎲 *DIVERSÃO & SORTE*
- ┣ 👾 !jogar ➾ !forca ➾ !penalti
- ┣ 🧠 !perguntas ➾ !musica
- ┣ 🎬 !emoji ➾ !piada
- ┣ 🎱 !bola8 [pergunta]
- ┗ 💘 !shippar @mencao
+ ┣ 👾 !jogar ➾ 🏎️ !fuga
+ ┣ 🏇 !corrida ➾ 🔫 !roleta
+ ┣ 💀 !forca ➾ ⚽ !penalti
+ ┣ 🧠 !perguntas ➾ 🎤 !musica
+ ┣ 🎬 !emoji ➾ 🤡 !piada
+ ┗ 🎱 !bola8 ➾ 💘 !shippar
 
 😈 *CAOS & TRETA*
- ┣ ⚖️ !julgar @alvo ➾ !culpado/!inocente
- ┣ 💍 !casar ➾ !descasar ➾ !casais
- ┣ 🤫 !fofoca ➾ !socar ➾ !beijar
- ┣ 🐂 !gado ➾ !corno ➾ !matar
- ┣ ⚔️ !rinha @user1 @user2
- ┗ 🖼️ !f _(Figurinha)_ ➾ !perfil
+ ┣ ⚖️ !julgar ➾ 💍 !casar
+ ┣ 💔 !descasar ➾ 💞 !casais
+ ┣ 🤫 !fofoca ➾ 🥊 !socar
+ ┣ 💋 !beijar ➾ 🪄 !macumba
+ ┣ 🐂 !gado ➾ 🦌 !corno
+ ┣ 🔪 !matar ➾ ⚔️ !rinha
+ ┗ 🖼️ !f _(Sticker)_ ➾ 👤 !perfil
 
-🤡 *ZUEIRA & EXPOSED* ┣ 📉 !qi ➾ 👴 !calvo ➾ 🧟‍♂️ !feio
- ┣ 💸 !serasa ➾ 💼 !clt
- ┣ 🍼 !gravida ➾ ⚰️ !vasco
- ┗ 💻 !historico ➾ 🗞️ !fakenews
+🤡 *ZUEIRA & EXPOSED* 
+ ┣ 📉 !qi ➾ 👴 !calvo
+ ┣ 🧟‍♂️ !feio ➾ 🍻 !bafometro
+ ┣ 🤥 !verdade ➾ 💸 !serasa
+ ┣ 💼 !clt ➾ 🍼 !gravida
+ ┣ ⚰️ !vasco ➾ 💻 !historico
+ ┗ 🗞️ !fakenews
 
 ⚔️ *GUERRA & STATUS*
- ┣ 👹 !boss ➾ !atacar
- ┗ 🎖️ !cargos ➾ !tier
+ ┣ 👹 !boss ➾ ⚔️ !atacar
+ ┗ 🎖️ !cargos ➾ 📊 !tier
 
 🚨 *CONTROLE (ADMS)*
- ┣ 🔨 !ban ➾ !mute ➾ !desmute
- ┣ 🔒 !fechar/abrir ➾ !adm
- ┣ 🕹️ !jogoson/off ➾ !dar_pontos
- ┗ 📣 !avisoadm ➾ !cadastros
+ ┣ 🔨 !ban ➾ 🔇 !mute
+ ┣ 🔊 !desmute ➾ 🔒 !fechar
+ ┣ 🔓 !abrir ➾ 👑 !adm
+ ┣ 🕹️ !jogoson ➾ 🚫 !jogosoff
+ ┣ 💰 !dar_pontos ➾ 📣 !avisoadm
+ ┗ 📋 !cadastros
 
 🛠️ *SISTEMA*
- ┣ 🌤️ !clima [cidade]
- ┣ 🔍 !pesquisar [algo]
- ┣ 🔗 !link ➾ !backup
+ ┣ 🌤️ !clima ➾ 🔍 !pesquisar
+ ┣ 🔗 !link ➾ 💾 !backup
  ┗ 📛 !menu
 
 ━━━━━━━━━━━━━━━━━━━━
@@ -825,6 +829,220 @@ _Não perca tempo, compartilhe agora!_`.trim();
                     caption: frasesDerrota[Math.floor(Math.random() * frasesDerrota.length)]
                 }, { quoted: msg });
             }
+        }
+
+        // ==========================================
+        // 1. 🔫 ROLETA RUSSA (!roleta) - ALTO RISCO, ALTA RECOMPENSA
+        // ==========================================
+        if (text === '!roleta') {
+            await sock.sendMessage(sender, { react: { text: '🔫', key: msg.key } });
+            
+            // Trava para ADM/Dono não se mutar sem querer
+            if (groupAdmins.includes(participant) || participant.includes('5527992997083')) {
+                return await sock.sendMessage(sender, { 
+                    text: "👑 *A Elite não brinca com a vida!* Deixa a roleta russa pros meros mortais.", quoted: msg 
+                });
+            }
+
+            const tambor = Math.floor(Math.random() * 6) + 1; // 1 chance em 6 de atirar
+            
+            if (tambor === 1) {
+                // Deu ruim: Mute de 2 minutos
+                mutados[participant] = Date.now() + 120000;
+                fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
+                
+                await sock.sendMessage(sender, { 
+                    video: { url: 'https://media.tenor.com/Ui9-MdUsQO0AAAPo/skeleton-falling.mp4' }, 
+                    gifPlayback: true,
+                    caption: `💥 *POU!* 💥\n\nO @${participant.split('@')[0]} apertou o gatilho e a arma disparou!\n\nFoi de base! Mute de 2 minutos pra aprender a dar valor à vida! ⚰️`, 
+                    mentions: [participant] 
+                }, { quoted: msg });
+            } else {
+                // Deu bom: Ganha pontos por sobreviver
+                let placar = lerArquivoSeguro(arquivoPlacar);
+                placar[participant] = (placar[participant] || 0) + 100;
+                fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
+                
+                await sock.sendMessage(sender, { 
+                    video: { url: 'https://media.tenor.com/KD0--RdfA18AAAPo/dance-ai-animal.mp4' }, 
+                    gifPlayback: true,
+                    caption: `💨 *CLIQUE VAZIO...* 💨\n\nSorte do caramba! O @${participant.split('@')[0]} sobreviveu à Roleta Russa e levou *100 pontos* pelo trauma psicológico! 💰`, 
+                    mentions: [participant] 
+                }, { quoted: msg });
+            }
+        }
+
+        // ==========================================
+        // 2. 🍻 BAFÔMETRO DO BONDE (!bafometro)
+        // ==========================================
+        if (text.startsWith('!bafometro')) {
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0] || participant;
+            const alvo = mention.split('@')[0];
+            
+            await sock.sendMessage(sender, { react: { text: '🍻', key: msg.key } });
+
+            const nivelAlcool = Math.floor(Math.random() * 101);
+            let diagnostico = "";
+
+            if (nivelAlcool === 0) diagnostico = "Puro suco de santidade. Só bebeu água com gás e Dolly. 👼";
+            else if (nivelAlcool < 30) diagnostico = "Deu um gole no vinho do padre e tá fingindo que tá tonto. Fraco! 🍷";
+            else if (nivelAlcool < 60) diagnostico = "Tá no brilho! Já começou a rir de piada sem graça e mandar áudio pro ex. 📱🤡";
+            else if (nivelAlcool < 90) diagnostico = "COMPLETAMENTE EMBRIAGADO! Abraçando poste e chorando por saudade de quem não conhece. 🍺😵‍💫";
+            else diagnostico = "COMA ALCOÓLICO! A veia tá bombeando Corote puro! Chama o SAMU antes que ele beije um cachorro de rua! 🚑🚨";
+
+            await sock.sendMessage(sender, { 
+                video: { url: 'https://media.tenor.com/Hi_hSejk4tgAAAPo/tammie-sutherland-tammie.mp4' }, 
+                gifPlayback: true,
+                caption: `🚔 *BLITZ DO BAFÔMETRO* 🚔\n\nAssopra aqui, @${alvo}!\n\n📊 *Nível de Álcool:* ${nivelAlcool}%\n📝 *Laudo:* ${diagnostico}`, 
+                mentions: [mention] 
+            }, { quoted: msg });
+        }
+
+        // ==========================================
+        // 3. 🤥 MÁQUINA DA VERDADE (!verdade)
+        // ==========================================
+        if (text.startsWith('!verdade')) {
+            const afirmacao = text.replace('!verdade', '').trim();
+            if (!afirmacao) return await sock.sendMessage(sender, { text: "❌ Oxe, digita a fofoca! Ex: !verdade O Cleyton é calvo?" }, { quoted: msg });
+
+            await sock.sendMessage(sender, { react: { text: '🤖', key: msg.key } });
+
+            const isVerdade = Math.random() > 0.5;
+            const resVerdade = [
+                "✅ O polígrafo apitou: ISSO É A MAIS PURA VERDADE! Não tem como negar.",
+                "✅ Fato comprovado cientificamente. Podem assinar embaixo!",
+                "✅ O sistema não mente. É verdade absoluta! Já pode espalhar a fofoca."
+            ];
+            const resMentira = [
+                "❌ BIIIP! BIIIP! ALARME DE MENTIROSO! 🤥 Mais falso que nota de 3 reais.",
+                "❌ Mentira lavada! O polígrafo até pegou fogo de tanta falsidade.",
+                "❌ Caô puro! A pessoa que falou isso tem diploma de Pinóquio."
+            ];
+
+            const respostaFinal = isVerdade ? resVerdade[Math.floor(Math.random() * resVerdade.length)] : resMentira[Math.floor(Math.random() * resMentira.length)];
+
+            await sock.sendMessage(sender, { 
+                video: { url: 'https://media.tenor.com/YxZWYZxt-mQAAAPo/you-see-this-peak.mp4' }, 
+                gifPlayback: true,
+                caption: `🚨 *MÁQUINA DA VERDADE DO RATINHO* 🚨\n\n🗣️ *A afirmação:* "${afirmacao}"\n\n${respostaFinal}` 
+            }, { quoted: msg });
+        }
+
+        // ==========================================
+        // 4. 🏎️ FUGA DA POLÍCIA (!fuga) - MINI RPG
+        // ==========================================
+        if (text.startsWith('!fuga')) {
+            const args = text.replace('!fuga', '').trim();
+            const veiculo = parseInt(args);
+
+            if (!veiculo || veiculo < 1 || veiculo > 3) {
+                await sock.sendMessage(sender, { react: { text: '🚨', key: msg.key } });
+                return await sock.sendMessage(sender, { 
+                    video: { url: 'https://media.tenor.com/bBJVwTdMtvgAAAPo/pay-pay-pig.mp4' }, 
+                    gifPlayback: true,
+                    caption: `🚨 *VOCÊ ACABOU DE ROUBAR O BANCO DO ZAP!* 🚨\n\nA viatura tá na cola! Escolha seu veículo de fuga rápido:\n\n1️⃣ Celta Rebaixado com escada no teto\n2️⃣ Moto CG Titan cortando giro\n3️⃣ Patinete Elétrico sem freio\n\nDigite: !fuga [1, 2 ou 3]`
+                }, { quoted: msg });
+            }
+
+            let placar = lerArquivoSeguro(arquivoPlacar);
+            if (!placar[participant]) placar[participant] = 0;
+
+            const sobreviveu = Math.random() > 0.6; // 40% de chance de escapar (é difícil!)
+
+            if (sobreviveu) {
+                const grana = Math.floor(Math.random() * 200) + 100; // Ganha entre 100 e 300
+                placar[participant] += grana;
+                fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
+
+                await sock.sendMessage(sender, { 
+                    video: { url: 'https://media.tenor.com/KLtkyO5aAg4AAAPo/run-run-forest.mp4' }, 
+                    gifPlayback: true,
+                    caption: `🏎️ *FUGA BEM SUCEDIDA!* 💨\n\nVocê usou a opção ${veiculo}, despistou a polícia dando fuga pelo beco e escondeu o malote!\n\n💰 *Você lavou:* +${grana} pontos!\n📊 *Saldo atual:* ${placar[participant]} pts.`
+                }, { quoted: msg });
+            } else {
+                const multa = Math.floor(Math.random() * 100) + 50; 
+                placar[participant] = Math.max(0, placar[participant] - multa);
+                fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
+
+                await sock.sendMessage(sender, { 
+                    video: { url: 'https://media.tenor.com/_SJRU8_nDKYAAAPo/monkey-monkey-in-jail.mp4' }, 
+                    gifPlayback: true,
+                    caption: `🚔 *DEU RUIM! PERDEU, PLAYBOY!* 🚔\n\nO pneu do seu veículo ${veiculo} furou e a ROTA te enquadrou de jeito!\n\n💸 *Multa paga:* -${multa} pontos!\n📊 *Saldo atual:* ${placar[participant]} pts.`
+                }, { quoted: msg });
+            }
+        }
+
+        // ==========================================
+        // 5. 🏇 CORRIDA DO BICHO (!corrida)
+        // ==========================================
+        if (text.startsWith('!corrida')) {
+            const args = text.replace('!corrida', '').trim();
+            const aposta = parseInt(args);
+
+            if (!aposta || aposta < 1 || aposta > 3) {
+                await sock.sendMessage(sender, { react: { text: '🏇', key: msg.key } });
+                return await sock.sendMessage(sender, { 
+                    video: { url: 'https://media.tenor.com/LemH9cVat2QAAAPo/horse-horse-smile.mp4' }, 
+                    gifPlayback: true,
+                    caption: `🏇 *JOCKEY CLUB DO BONDE VIP* 🏇\n\nFaça sua aposta em qual bicho vai ganhar a corrida (Custa 50 pontos para entrar, prêmio de 150):\n\n1️⃣ 🐕 Caramelo com fome\n2️⃣ 🐴 Cavalo Manco\n3️⃣ 🐢 Tartaruga Ninja\n\nDigite: !corrida [1, 2 ou 3]`
+                }, { quoted: msg });
+            }
+
+            let placar = lerArquivoSeguro(arquivoPlacar);
+            const saldo = placar[participant] || 0;
+
+            if (saldo < 50) return await sock.sendMessage(sender, { text: "❌ Você não tem 50 pontos pra apostar, caloteiro!" }, { quoted: msg });
+
+            // Desconta a aposta
+            placar[participant] -= 50;
+            const bichoVencedor = Math.floor(Math.random() * 3) + 1;
+            const nomesBichos = { 1: "🐕 Caramelo", 2: "🐴 Cavalo Manco", 3: "🐢 Tartaruga Ninja" };
+
+            if (aposta === bichoVencedor) {
+                placar[participant] += 150;
+                fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
+                await sock.sendMessage(sender, { 
+                    video: { url: 'https://media.tenor.com/UXES3V3dTjkAAAPo/dhulbahante-dhulo.mp4' }, 
+                    gifPlayback: true,
+                    caption: `🏆 *FINAL DA CORRIDA!* 🏆\n\nO bicho vencedor foi o ${nomesBichos[bichoVencedor]}!\n\nVocê acertou a aposta e ganhou *150 pontos*! Tá rico!`
+                }, { quoted: msg });
+            } else {
+                fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
+                await sock.sendMessage(sender, { 
+                    video: { url: 'https://media.tenor.com/K_OnHPppGfAAAAPo/horse-horse-tongue-out.mp4' }, 
+                    gifPlayback: true,
+                    caption: `📉 *ZEBRA NA PISTA!* 📉\n\nO bicho vencedor foi o ${nomesBichos[bichoVencedor]}!\n\nSeu animal tropeçou na própria pata e você perdeu seus 50 pontos. Vai trabalhar pra recuperar! 😂`
+                }, { quoted: msg });
+            }
+        }
+
+        // ==========================================
+        // 6. 🪄 MANDAR MACUMBA (!macumba)
+        // ==========================================
+        if (text.startsWith('!macumba')) {
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            if (!mention) return await sock.sendMessage(sender, { text: "❌ Pra quem vai o feitiço? Marque o alvo!" }, { quoted: msg });
+            if (mention === participant) return await sock.sendMessage(sender, { text: "❌ Jogar praga em si mesmo? Você precisa de terapia, não de magia! 😂", quoted: msg });
+
+            await sock.sendMessage(sender, { react: { text: '🪄', key: msg.key } });
+
+            const feitiços = [
+                "Caganeira explosiva toda vez que estiver no transporte público.",
+                "Chifre duplo com LED piscante no escuro.",
+                "Bateria do celular sempre acabando em 3% na hora da fofoca boa.",
+                "Dedinho do pé batendo na quina do móvel 3x ao dia.",
+                "Ficar calvo em menos de 6 meses e não ter dinheiro pro implante.",
+                "Mandar mensagem errada pro chefe confessando que tá bebendo na terça."
+            ];
+
+            const praga = feitiços[Math.floor(Math.random() * feitiços.length)];
+
+            await sock.sendMessage(sender, { 
+                video: { url: 'https://media.tenor.com/TmeM8DWY_cQAAAPo/macumba-tambor.mp4' }, 
+                gifPlayback: true,
+                caption: `🔮 *TRABALHO FEITO NA ENCRUZILHADA DO ZAP!* 🔮\n\nO @${participant.split('@')[0]} acendeu a vela preta e jogou uma mandinga pesada no @${mention.split('@')[0]}!\n\n🕯️ *A MALDIÇÃO:* ${praga}\n\nReza 10 Ave Marias pra ver se sai! 👹`, 
+                mentions: [participant, mention] 
+            }, { quoted: msg });
         }
 
         if (text === '!piada') {
@@ -1339,7 +1557,7 @@ _Não perca tempo, compartilhe agora!_`.trim();
             // Trava a execução para não cair no "Comando Inválido"
             return;
         }
-        
+
         if (text.startsWith('!matar')) {
             const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
             
