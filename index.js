@@ -402,7 +402,7 @@ async function connectToWhatsApp() {
             return await sock.sendMessage(sender, { text: "🔓 *JOGOS ATIVADOS!* Podem soltar a bagunça! 🎉", quoted: msg });
         }
 
-        const comandosDeJogo = ['!piada', '!casar', '!descasar', '!forca', '!penalti', '!sortear', '!emoji', '!jogar', '!musica', '!perguntas'];
+        const comandosDeJogo = ['!piada', '!casar', '!descasar', '!forca', '!penalti', '!sortear', '!emoji', '!jogar', '!musica', '!perguntas', '!roleta', '!fuga', '!corrida', '!cassino', '!bola8', '!shippar', '!decidir'];
         if (!jogosLiberados && comandosDeJogo.some(cmd => text.startsWith(cmd))) {
             if (isAdmin) {
                 await sock.sendMessage(sender, { text: "🤖 Os jogos estão trancados, mas você é ADM, vou abrir uma exceção! 👑", quoted: msg });
@@ -2360,6 +2360,66 @@ _Não perca tempo, compartilhe agora!_`.trim();
                     text: `*(Foto ocultada pela privacidade)* 🕵️‍♂️\n\n${msgPerfil}`, 
                     mentions: [participant, mention] 
                 }, { quoted: msg });
+            }
+        }
+
+        // ==========================================
+        // 🔒 CONTROLE DE GRUPO (!fechar / !abrir)
+        // ==========================================
+        if (text === '!fechar') {
+            if (!isAdmin) {
+                await sock.sendMessage(sender, { text: "Ih, ala! O engraçadinho quer fechar o grupo? Deixa isso com quem manda! 🤡" }, { quoted: msg });
+            } else {
+                await sock.sendMessage(sender, { text: "Grupo fechado! 🤐" }, { quoted: msg });
+                try {
+                    await sock.groupSettingUpdate(sender, { announcement: true });
+                } catch (e) {
+                    await sock.groupSettingUpdate(sender, 'announcement');
+                }
+            }
+        }
+
+        if (text === '!abrir') {
+            if (!isAdmin) {
+                await sock.sendMessage(sender, { text: "Negativo! Só ADM manda aqui! 😂" }, { quoted: msg });
+            } else {
+                await sock.sendMessage(sender, { text: "Grupo aberto! Podem soltar a bagunça! 🔓" }, { quoted: msg });
+                try {
+                    await sock.groupSettingUpdate(sender, { announcement: false });
+                } catch (e) {
+                    await sock.groupSettingUpdate(sender, 'not_announcement');
+                }
+            }
+        }
+
+        // ==========================================
+        // 🔇 MUTE / DESMUTE (!mute / !desmute)
+        // ==========================================
+        if (text.startsWith('!mute')) {
+            if (!isAdmin) return await sock.sendMessage(sender, { text: "Somente ADMs podem mutar!" });
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione o alvo!", quoted: msg });
+            
+            const MEU_ID_REAL = "96057379803159@lid"; 
+            const meuNumero = "5527992997083";
+            
+            if (mention === MEU_ID_REAL || String(mention).includes(meuNumero)) {
+                return await sock.sendMessage(sender, { text: "❌ Nem tenta! O criador é intocável! 👑", quoted: msg });
+            }
+
+            const tempo = text.includes('h') ? 3600000 : 1800000;
+            mutados[mention] = Date.now() + tempo;
+            fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
+            await sock.sendMessage(sender, { text: "Você está falando demais, dá um tempo seu rabugento.😂❌", mentions: [mention] }, { quoted: msg });
+        }
+
+        if (text.startsWith('!desmute')) {
+            if (!isAdmin) return await sock.sendMessage(sender, { text: "Você não é ADM!" });
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            if (mention && mutados[mention]) {
+                delete mutados[mention];
+                fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
+                await sock.sendMessage(sender, { text: "Desmutado!😎😂", mentions: [mention] });
             }
         }
         // ==========================================
