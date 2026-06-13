@@ -12,6 +12,7 @@ const arquivoMutados = ARQUIVO_MUTADOS;
 const arquivoPlacar = path.join(dataPath, 'placar.json');
 const arquivoCargos = path.join(dataPath, 'cargos.json');
 const arquivoCasais = path.join(dataPath, 'casais.json');
+const cooldownRoleta = {};
 const cookies = process.env.COOKIES_JSON ? JSON.parse(process.env.COOKIES_JSON) : [];
 const { Sticker, StickerTypes } = require('wa-sticker-formatter');
 const ytSearch = require('yt-search'); 
@@ -922,6 +923,24 @@ _Não perca tempo, compartilhe agora!_`.trim();
                 });
             }
 
+            // --- SISTEMA DE COOLDOWN (LIMITE DE TEMPO) ---
+            const agora = Date.now();
+            const tempoCooldownRoleta = 15 * 60 * 1000; // 15 minutos em milissegundos
+            
+            if (typeof cooldownRoleta !== 'undefined' && cooldownRoleta[participant] && (agora - cooldownRoleta[participant]) < tempoCooldownRoleta) {
+                const tempoRestante = Math.ceil((tempoCooldownRoleta - (agora - cooldownRoleta[participant])) / (60 * 1000));
+                return await sock.sendMessage(sender, { 
+                    text: `⏳ *CALMA LÁ, SUICIDA!* Você já brincou com a sorte recentemente. A arma está esfriando... Volte daqui a ${tempoRestante} minutos. 😂`, 
+                    quoted: msg 
+                });
+            }
+
+            // Se passou pelo limite, atualiza a hora do tiro
+            if (typeof cooldownRoleta !== 'undefined') {
+                cooldownRoleta[participant] = agora;
+            }
+            // ---------------------------------------------
+
             const tambor = Math.floor(Math.random() * 6) + 1; // 1 chance em 6 de atirar
             
             if (tambor === 1) {
@@ -948,32 +967,6 @@ _Não perca tempo, compartilhe agora!_`.trim();
                     mentions: [participant] 
                 }, { quoted: msg });
             }
-        }
-
-        // ==========================================
-        // 2. 🍻 BAFÔMETRO DO BONDE (!bafometro)
-        // ==========================================
-        if (text.startsWith('!bafometro')) {
-            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0] || participant;
-            const alvo = mention.split('@')[0];
-            
-            await sock.sendMessage(sender, { react: { text: '🍻', key: msg.key } });
-
-            const nivelAlcool = Math.floor(Math.random() * 101);
-            let diagnostico = "";
-
-            if (nivelAlcool === 0) diagnostico = "Puro suco de santidade. Só bebeu água com gás e Dolly. 👼";
-            else if (nivelAlcool < 30) diagnostico = "Deu um gole no vinho do padre e tá fingindo que tá tonto. Fraco! 🍷";
-            else if (nivelAlcool < 60) diagnostico = "Tá no brilho! Já começou a rir de piada sem graça e mandar áudio pro ex. 📱🤡";
-            else if (nivelAlcool < 90) diagnostico = "COMPLETAMENTE EMBRIAGADO! Abraçando poste e chorando por saudade de quem não conhece. 🍺😵‍💫";
-            else diagnostico = "COMA ALCOÓLICO! A veia tá bombeando Corote puro! Chama o SAMU antes que ele beije um cachorro de rua! 🚑🚨";
-
-            await sock.sendMessage(sender, { 
-                video: { url: 'https://media.tenor.com/Hi_hSejk4tgAAAPo/tammie-sutherland-tammie.mp4' }, 
-                gifPlayback: true,
-                caption: `🚔 *BLITZ DO BAFÔMETRO* 🚔\n\nAssopra aqui, @${alvo}!\n\n📊 *Nível de Álcool:* ${nivelAlcool}%\n📝 *Laudo:* ${diagnostico}`, 
-                mentions: [mention] 
-            }, { quoted: msg });
         }
 
         // ==========================================
