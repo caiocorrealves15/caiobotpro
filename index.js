@@ -384,7 +384,7 @@ async function connectToWhatsApp() {
         }
 
         if (text.startsWith('!')) {
-            const comandosExistentes = ['!menu', '!todos', '!pix', '!fantasmas', '!lembrete', '!apagar', '!decidir', '!cassino', '!conselho', '!resumo', '!regras', '!comprar', '!roleta', '!bafometro', '!verdade', '!fuga', '!corrida', '!macumba', '!calvo', '!qi', '!serasa', '!historico', '!fakenews', '!rinha', '!vasco', '!gravida', '!feio', '!clt', '!bola8', '!perfil', '!culpado', '!inocente', '!shippar',  '!julgar', '!loja', '!pesquisar', '!backup', '!dar_pontos', '!atacar', '!boss', '!rank', '!casar', '!casais', '!piada', '!avisoadm', '!descasar', '!emoji', '!sortear', '!cadastros', '!perguntas', '!jogar', '!forca', '!jogosoff', '!jogoson', '!limpar', '!fixar', '!status', '!link', '!tier', '!ranking', '!placar', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute', '!gado', '!corno', '!fofoca', '!roubar', '!cargos', '!comprar_cargo', '!dar_cargo'];
+            const comandosExistentes = ['!menu', '!todos', '!pix', '!play', '!fantasmas', '!lembrete', '!apagar', '!decidir', '!cassino', '!conselho', '!resumo', '!regras', '!comprar', '!roleta', '!bafometro', '!verdade', '!fuga', '!corrida', '!macumba', '!calvo', '!qi', '!serasa', '!historico', '!fakenews', '!rinha', '!vasco', '!gravida', '!feio', '!clt', '!bola8', '!perfil', '!culpado', '!inocente', '!shippar',  '!julgar', '!loja', '!pesquisar', '!backup', '!dar_pontos', '!atacar', '!boss', '!rank', '!casar', '!casais', '!piada', '!avisoadm', '!descasar', '!emoji', '!sortear', '!cadastros', '!perguntas', '!jogar', '!forca', '!jogosoff', '!jogoson', '!limpar', '!fixar', '!status', '!link', '!tier', '!ranking', '!placar', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute', '!gado', '!corno', '!fofoca', '!roubar', '!cargos', '!comprar_cargo', '!dar_cargo'];
             const cmdDigitado = text.split(' ')[0]; 
             
             if (!comandosExistentes.includes(cmdDigitado)) {
@@ -2570,6 +2570,68 @@ _Não perca tempo, compartilhe agora!_`.trim();
                 }, { quoted: msg });
             } else {
                 await sock.sendMessage(sender, { text: "❌ Essa pessoa não está mutada na minha lista!" }, { quoted: msg });
+            }
+        }
+
+        // ==========================================
+        // 🎵 SISTEMA DE MÚSICA (!play) - O DJ DO BONDE
+        // ==========================================
+        if (text.startsWith('!play')) {
+            const musica = text.replace('!play', '').trim();
+
+            if (!musica) {
+                return await sock.sendMessage(sender, { react: { text: '🤦‍♂️', key: msg.key } });
+                return await sock.sendMessage(sender, { text: "❌ Tá querendo ouvir o silêncio? Digita o nome da música! Ex: !play DJ Arana" }, { quoted: msg });
+            }
+
+            await sock.sendMessage(sender, { react: { text: '🎧', key: msg.key } });
+            await sock.sendMessage(sender, { text: `🔍 *DJ NeymarBOT na pista!*\n\nProcurando por _"${musica}"_... Aguenta aí que o grave já vai bater!` }, { quoted: msg });
+
+            try {
+                // Importa o baixador blindado
+                const ytdl = require('@distube/ytdl-core');
+
+                // 1. Pesquisa o vídeo no YouTube (usa o ytSearch que você já tem instalado)
+                const resultados = await ytSearch(musica);
+                const video = resultados.videos.length > 0 ? resultados.videos[0] : null;
+
+                if (!video) {
+                    return await sock.sendMessage(sender, { text: "❌ Não achei nenhuma música com esse nome. Você inventou isso aí? 😂" }, { quoted: msg });
+                }
+
+                // Trava de segurança: Bloqueia áudios maiores que 10 minutos pra não explodir a memória do seu bot
+                if (video.seconds > 600) { 
+                    return await sock.sendMessage(sender, { text: `❌ A música *"${video.title}"* tem mais de 10 minutos! Tá achando que eu sou o Spotify Premium? Escolhe uma menor! 🤡` }, { quoted: msg });
+                }
+
+                // 2. Manda a "Capa do CD" com as informações antes de mandar o áudio
+                const infoMsg = `🎵 *TOCANDO AGORA NO BONDE VIP* 🎵\n\n` +
+                                `🎶 *Faixa:* ${video.title}\n` +
+                                `⏱️ *Duração:* ${video.timestamp}\n` +
+                                `👀 *Views:* ${video.views.toLocaleString('pt-BR')}\n` +
+                                `🔗 *Canal:* ${video.author.name}\n\n` +
+                                `_Baixando o áudio, prepara o passinho..._ 🕺💃`;
+                
+                await sock.sendMessage(sender, { 
+                    image: { url: video.thumbnail }, 
+                    caption: infoMsg 
+                }, { quoted: msg });
+
+                // 3. Puxa a música do YouTube na melhor qualidade e manda pro Zap
+                const stream = ytdl(video.url, { filter: 'audioonly', quality: 'highestaudio' });
+
+                await sock.sendMessage(sender, { 
+                    audio: { stream: stream }, 
+                    mimetype: 'audio/mp4', 
+                    ptt: false // false = manda como música normal. Se colocar true, ele manda como mensagem de voz!
+                }, { quoted: msg });
+
+                await sock.sendMessage(sender, { react: { text: '✅', key: msg.key } });
+
+            } catch (erro) {
+                console.error("Erro no comando !play:", erro);
+                await sock.sendMessage(sender, { react: { text: '❌', key: msg.key } });
+                await sock.sendMessage(sender, { text: "❌ O YouTube percebeu a pirataria e cortou meu barato! Deu erro ao baixar. Tenta com o link direto ou com outra música." }, { quoted: msg });
             }
         }
        // ==========================================
