@@ -2564,8 +2564,8 @@ _Não perca tempo, compartilhe agora!_`.trim();
             }
         }
 
-        // ==========================================
-        // 🎵 SISTEMA DE MÚSICA (!play) - MOTOR HÍBRIDO (YTDL + API)
+       // ==========================================
+        // 🎵 SISTEMA DE MÚSICA (!play) - API COBALT (INFALÍVEL E SEM ERRO)
         // ==========================================
         if (text.startsWith('!play')) {
             const musica = text.replace('!play', '').trim();
@@ -2575,7 +2575,7 @@ _Não perca tempo, compartilhe agora!_`.trim();
             await sock.sendMessage(sender, { text: `🔍 *DJ NeymarBOT na pista!*\n\nBuscando: _"${musica}"_... ⏳` }, { quoted: msg });
 
             try {
-                // 1. Pesquisa no YouTube
+                // 1. Pesquisa no YouTube usando yt-search
                 const resultados = await ytSearch(musica);
                 const video = resultados.videos.length > 0 ? resultados.videos[0] : null;
 
@@ -2585,70 +2585,73 @@ _Não perca tempo, compartilhe agora!_`.trim();
                 // Manda a capa do vídeo
                 await sock.sendMessage(sender, { 
                     image: { url: video.thumbnail }, 
-                    caption: `🎵 *TOCANDO AGORA:* ${video.title}\n⏱️ *Duração:* ${video.timestamp}\n\n_Extraindo o áudio, aguarde..._ 🕺` 
+                    caption: `🎵 *TOCANDO AGORA:* ${video.title}\n⏱️ *Duração:* ${video.timestamp}\n\n_Extraindo o áudio pelo satélite Cobalt..._ 🚀` 
                 }, { quoted: msg });
 
                 const tempFile = `./musica_${Date.now()}.mp3`;
-                let sucessoDownload = false;
+                let downloadUrl = "";
 
-                // TENTATIVA 1: Usando o pacote ytdl-core internamente (O mais rápido)
+                // TENTATIVA 1: O Santo Graal (Cobalt API - Burla o YT fácil e é super rápido)
                 try {
-                    const ytdl = require('@distube/ytdl-core');
-                    const stream = ytdl(video.url, { filter: 'audioonly', quality: 'highestaudio' });
-                    
-                    // Em vez de empurrar pro WhatsApp (o que causava o erro vermelho), salvamos no HD primeiro!
-                    const fileStream = fs.createWriteStream(tempFile);
-                    stream.pipe(fileStream);
-
-                    await new Promise((resolve, reject) => {
-                        fileStream.on('finish', resolve);
-                        fileStream.on('error', reject);
+                    const cobaltRes = await axios.post('https://api.cobalt.tools/api/json', {
+                        url: video.url,
+                        isAudioOnly: true,
+                        aFormat: 'mp3'
+                    }, {
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                        }
                     });
-                    sucessoDownload = true;
-                } catch (erroYtdl) {
-                    console.log("ytdl-core falhou, partindo para o Plano B (API)...");
-                }
-
-                // TENTATIVA 2: Se o pacote interno falhar, usa uma API diferente (Plano B)
-                if (!sucessoDownload) {
-                    const resApi = await axios.get(`https://api.vreden.web.id/api/ytmp3?url=${video.url}`);
-                    const downloadUrl = resApi.data.result.download.url;
-                    
-                    if (!downloadUrl) throw new Error("APIs bloqueadas.");
-
-                    const responseAudio = await axios({
-                        url: downloadUrl,
-                        method: 'GET',
-                        responseType: 'arraybuffer',
-                        timeout: 30000 
-                    });
-
-                    if (responseAudio.headers['content-type'].includes('text/html')) {
-                        throw new Error("Erro de bloqueio do Cloudflare.");
+                    downloadUrl = cobaltRes.data.url;
+                } catch (e1) {
+                    console.log("Cobalt falhou, partindo para o plano B...");
+                    // TENTATIVA 2: Ryzendesu API
+                    try {
+                        const ryzenRes = await axios.get(`https://api.ryzendesu.vip/api/downloader/ytmp3?url=${encodeURIComponent(video.url)}`);
+                        downloadUrl = ryzenRes.data.url || ryzenRes.data.data?.url;
+                    } catch (e2) {
+                        // TENTATIVA 3: Siputzx API
+                        const siputzx = await axios.get(`https://api.siputzx.my.id/api/d/ytmp3?url=${encodeURIComponent(video.url)}`);
+                        downloadUrl = siputzx.data.data.dl;
                     }
-
-                    fs.writeFileSync(tempFile, responseAudio.data);
-                    sucessoDownload = true;
                 }
 
-                if (sucessoDownload) {
-                    // Manda o áudio em si
-                    await sock.sendMessage(sender, { 
-                        audio: { url: tempFile }, 
-                        mimetype: 'audio/mpeg', 
-                        ptt: false 
-                    }, { quoted: msg });
+                if (!downloadUrl) throw new Error("Todas as APIs foram bloqueadas pelo YouTube.");
 
-                    await sock.sendMessage(sender, { react: { text: '✅', key: msg.key } });
+                // BAIXA E SALVA NO DISCO PARA EVITAR CRASH (Como você tem 2GB de RAM, roda liso!)
+                const responseAudio = await axios({
+                    url: downloadUrl,
+                    method: 'GET',
+                    responseType: 'arraybuffer',
+                    timeout: 40000 
+                });
+
+                // Trava de segurança final: se o site mandar erro em formato de texto, o bot recusa!
+                if (responseAudio.headers['content-type'] && responseAudio.headers['content-type'].includes('text/html')) {
+                    throw new Error("A API mandou uma página de bloqueio em vez da música.");
                 }
 
-                // FAXINA FINAL: Apaga a música do HD do servidor
+                // Escreve a música salva na memória
+                fs.writeFileSync(tempFile, responseAudio.data);
+
+                // Envia o áudio pro zap
+                await sock.sendMessage(sender, { 
+                    audio: { url: tempFile }, 
+                    mimetype: 'audio/mpeg', 
+                    ptt: false 
+                }, { quoted: msg });
+
+                await sock.sendMessage(sender, { react: { text: '✅', key: msg.key } });
+
+                // FAXINA: Limpa a memória apagando a música enviada
                 if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
 
             } catch (erro) {
                 console.error("Erro no !play:", erro.message);
                 await sock.sendMessage(sender, { react: { text: '❌', key: msg.key } });
-                await sock.sendMessage(sender, { text: `❌ O YouTube blindou o vídeo e me impediu de baixar! Tente com outra música. (As proteções deles mudam toda hora 😭)` }, { quoted: msg });
+                await sock.sendMessage(sender, { text: `❌ O YouTube blindou o vídeo e derrubou nossos três servidores! Tente com outra música ou aguarde a API voltar.` }, { quoted: msg });
             }
         }
        // ==========================================
