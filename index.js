@@ -510,6 +510,59 @@ async function connectToWhatsApp() {
             }
         }
 
+        // ==========================================
+        // 👹 SISTEMA DE BOSS (!boss / !atacar)
+        // ==========================================
+        if (text === '!boss') {
+            if (raidBoss.ativo) {
+                const frasesDeboche = [
+                    "⚠️ O chefe já tá na área, seu cego! Quer que eu chame dois pra você perder mais rápido? 😂", 
+                    "😤 Já tem um monstro destruindo tudo! Pega sua espada e ataca o que já tá aqui, preguiçoso!"
+                ];
+                return await sock.sendMessage(sender, { text: frasesDeboche[Math.floor(Math.random() * frasesDeboche.length)], quoted: msg });
+            }
+            raidBoss.ativo = true;
+            raidBoss.hp = 500;
+            raidBoss.maxHp = 500;
+            const msgBoss = await sock.sendMessage(sender, { 
+                video: { url: 'https://media.tenor.com/CGTSjjR7FIIAAAPo/game-interface-video-game.mp4' }, 
+                gifPlayback: true,
+                caption: `👹 *BOSS INVOCADO!* 👹\n\nHP: ${raidBoss.hp}/${raidBoss.maxHp}\n\nTodos ataquem com *!atacar* antes que ele destrua o grupo!` 
+            }, { quoted: msg });
+            raidBoss.idMensagem = msgBoss.key.id;
+        }
+
+        if (text === '!atacar') {
+            if (!raidBoss.ativo) return await sock.sendMessage(sender, { text: "❌ Não tem monstro aqui. Tá batendo no vento?" });
+            let dano = Math.floor(Math.random() * 50) + 10;
+            let mensagemFuria = "";
+
+            if (ataquesFuria[participant]) {
+                dano *= 2; 
+                mensagemFuria = "\n🔥 *DANO CRÍTICO DE FÚRIA!*";
+                delete ataquesFuria[participant]; 
+            }
+
+            raidBoss.hp -= dano;
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            if (raidBoss.hp <= 0) {
+                raidBoss.ativo = false;
+                let placar = lerArquivoSeguro(arquivoPlacar);
+                placar[participant] = (placar[participant] || 0) + 200;
+                fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
+                
+                await sock.sendMessage(sender, { 
+                    video: { url: 'https://media.tenor.com/NgTSh0Bq5lYAAAPo/wearwolfwere-werewolfwhere.mp4' }, 
+                    gifPlayback: true,
+                    caption: `🎉 VITÓRIA! O Boss foi derrotado! @${participant.split('@')[0]} deu o golpe final e ganhou 200 pontos!`,
+                    mentions: [participant]
+                }, { quoted: msg });
+            } else {
+                await sock.sendMessage(sender, { text: `⚔️ Você causou ${dano} de dano!${mensagemFuria}\nHP do Boss: ${raidBoss.hp}/${raidBoss.maxHp}` });
+            }
+        }
+
         if (text.startsWith('!emoji')) {
             const desafios = [
                 { emojis: '⏳🏜️🪰🕶️', resposta: 'duna', gif: 'https://tenor.com/pt-BR/view/mike-dune-mike-paul-dune-mikes-book-reviews-dune-mikes-book-reviews-paul-mike-atreides-gif-22418379' },
