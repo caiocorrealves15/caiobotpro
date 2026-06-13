@@ -256,10 +256,35 @@ async function connectToWhatsApp() {
             const msgCorpo = msg.message;
             if (!msgCorpo) return;
 
-            // BUSCA NUCLEAR: Transforma a mensagem toda em texto para achar a mídia em QUALQUER buraco do código
-            const msgStr = JSON.stringify(msgCorpo);
-            const mandouViewOnce = msgStr.includes('viewOnceMessage') || msgStr.includes('"viewOnce":true');
-            const midia = mandouViewOnce || msgStr.includes('imageMessage') || msgStr.includes('videoMessage');
+            // ==========================================
+            // 👁️ VERIFICAÇÃO BLINDADA DE MÍDIA (NORMAL E VIEW ONCE)
+            // ==========================================
+            
+            // 1. Checa todas as versões de "Visualização Única" que o WhatsApp já inventou
+            const viewOnceV1 = msgCorpo.viewOnceMessage?.message;
+            const viewOnceV2 = msgCorpo.viewOnceMessageV2?.message;
+            const viewOnceExt = msgCorpo.viewOnceMessageV2Extension?.message;
+            
+            // Junta tudo pra ver se tem conteúdo de visualização única
+            const conteudoViewOnce = viewOnceV1 || viewOnceV2 || viewOnceExt;
+            
+            // Confirma se dentro do View Once tem imagem ou vídeo
+            let mandouViewOnce = !!(conteudoViewOnce && (conteudoViewOnce.imageMessage || conteudoViewOnce.videoMessage));
+            
+            // Confirma se mandou mídia normal (sem ser view once)
+            let midiaNormal = !!(msgCorpo.imageMessage || msgCorpo.videoMessage);
+
+            // RADAR DE EMERGÊNCIA: Se por algum milagre o WhatsApp mudar de novo, ele vasculha as chaves ocultas
+            if (!mandouViewOnce && !midiaNormal) {
+                const chaves = JSON.stringify(msgCorpo);
+                if ((chaves.includes('viewOnce') || chaves.includes('viewOnceMessage')) && (chaves.includes('imageMessage') || chaves.includes('videoMessage'))) {
+                    mandouViewOnce = true;
+                }
+            }
+
+            const midia = mandouViewOnce || midiaNormal;
+
+            // ==========================================
 
             const padraoApresentacao = /\|/g;
             const enviouTextoCorreto = (text && (text.match(padraoApresentacao) || []).length >= 3);
@@ -291,7 +316,6 @@ async function connectToWhatsApp() {
             }
             return;
         }
-
         const agora = Date.now();
         if (!contagemFlood[participant]) contagemFlood[participant] = [];
         contagemFlood[participant] = contagemFlood[participant].filter(t => agora - t < 1000);
@@ -1877,6 +1901,9 @@ _Não perca tempo, compartilhe agora!_`.trim();
             }, { quoted: msg });
         }
 
+        // ==========================================
+        // 🛒 SISTEMA DE LOJA VIP E COMPRAS
+        // ==========================================
         if (text === '!loja') {
             let placar = lerArquivoSeguro(arquivoPlacar);
             const saldo = placar[participant] || 0;
@@ -1886,17 +1913,17 @@ _Não perca tempo, compartilhe agora!_`.trim();
 *--- STATUS & PROTEÇÃO ---*
 1️⃣ *MUTE (1 min)* - 100 pts | !comprar mute @mencao
 2️⃣ *DESMUTE* - 300 pts | !comprar desmute
-3️⃣ *FÚRIA* - 400 pts | !comprar fúria
+3️⃣ *FÚRIA* - 400 pts | !comprar furia
 4️⃣ *ESCUDO (1h)* - 600 pts | !comprar escudo
 5️⃣ *VIP (Cargo)* - 800 pts | !comprar vip
 
 *--- DOMÍNIO & ESTRATÉGIA ---*
-6️⃣ *⛓️ CORRENTE* - 900 pts | !comprar corrente
+6️⃣ *⛓️ CORRENTE* - 900 pts | !comprar corrente @mencao
 7️⃣ *🔮 ORÁCULO* - 700 pts | !comprar oraculo @mencao
 
 *--- GESTÃO DE GRUPO (ELITE) ---*
 8️⃣ *👑 ADM DE FACHADA* - 3500 pts | !comprar adm
-   (Limpar mensagens, fixar, etc)
+   (Acesso: !limpar, !fixar, !status)
 9️⃣ *📅 SORTE (Bônus)* - 1500 pts | !comprar sorte
 🔟 *🔑 CHAVE MESTRA* - 2000 pts | !comprar chave
 
@@ -1908,31 +1935,35 @@ _Não perca tempo, compartilhe agora!_`.trim();
         if (text.startsWith('!comprar') || text.startsWith('!limpar') || text.startsWith('!fixar') || text.startsWith('!status')) {
             if (text.startsWith('!comprar')) {
                 const args = text.split(' ');
-                const item = args[1];
+                let item = args[1]?.toLowerCase();
                 const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
                 
+                // Normaliza palavras com acento para evitar erros de digitação dos membros
+                if (item === 'fúria') item = 'furia';
+                if (item === 'oráculo') item = 'oraculo';
+
                 let placar = lerArquivoSeguro(arquivoPlacar);
                 let cargos = lerArquivoSeguro(arquivoCargos);
                 const saldo = placar[participant] || 0;
 
                 const itens = {
-                    'mute': 100, 'desmute': 300, 'fúria': 400, 'escudo': 600, 
+                    'mute': 100, 'desmute': 300, 'furia': 400, 'escudo': 600, 
                     'vip': 800, 'corrente': 900, 'oraculo': 700, 
                     'adm': 3500, 'sorte': 1500, 'chave': 2000
                 };
 
-                if (!itens[item]) return await sock.sendMessage(sender, { text: "❌ Item não encontrado!", quoted: msg });
-                if (saldo < itens[item]) return await sock.sendMessage(sender, { text: `❌ Você precisa de ${itens[item]} pontos!`, quoted: msg });
+                if (!item || !itens[item]) return await sock.sendMessage(sender, { text: "❌ Item não encontrado na loja! Digite !loja para ver as opções.", quoted: msg });
+                if (saldo < itens[item]) return await sock.sendMessage(sender, { text: `❌ Tá liso! Você precisa de ${itens[item]} pontos para comprar *${item.toUpperCase()}*. Seu saldo: ${saldo}`, quoted: msg });
 
                 let sucesso = false;
 
                 if (item === 'mute') {
-                    if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione o alvo!", quoted: msg });
+                    if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione o alvo do mute! Ex: !comprar mute @fulano", quoted: msg });
                     try {
                         const metadata = await sock.groupMetadata(sender);
                         const groupAdmins = metadata.participants.filter(p => p.admin !== null).map(p => p.id);
-                        if (groupAdmins.includes(mention)) {
-                            return await sock.sendMessage(sender, { text: "❌ Não posso mutar um ADM, eles mandam no grupo! 😂", quoted: msg });
+                        if (groupAdmins.includes(mention) || mention.includes('5527992997083')) {
+                            return await sock.sendMessage(sender, { text: "❌ Tá doido? Tentar mutar a Elite do grupo é pedir pra morrer! 😂", quoted: msg });
                         }
                     } catch (e) {
                         console.error("Erro ao verificar admins para o mute:", e);
@@ -1940,52 +1971,97 @@ _Não perca tempo, compartilhe agora!_`.trim();
                     mutados[mention] = Date.now() + 60000;
                     fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
                     sucesso = true;
+                    await sock.sendMessage(sender, { text: `🔇 Compra efetuada! O @${mention.split('@')[0]} tomou um cala-boca de 1 minuto!`, mentions: [mention], quoted: msg });
+                
                 } else if (item === 'desmute') {
-                    if (!mutados[participant]) {
-                        return await sock.sendMessage(sender, { text: "❌ Você não está mutado, não precisa gastar pontos!", quoted: msg });
-                    }
+                    if (!mutados[participant]) return await sock.sendMessage(sender, { text: "❌ Você não está mutado, não precisa gastar seus pontos à toa!", quoted: msg });
                     delete mutados[participant];
                     fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
                     sucesso = true;
-                } else if (item === 'fúria') {
+                    await sock.sendMessage(sender, { text: "🔊 Compra efetuada! Você comprou sua liberdade e já pode falar!", quoted: msg });
+                
+                } else if (item === 'furia') {
                     ataquesFuria[participant] = true; 
-                    await sock.sendMessage(sender, { 
-                        text: "🔥 *FÚRIA ATIVADA!* Seu próximo ataque no Boss será dobrado! Use !atacar logo antes que a fúria passe!",
-                        quoted: msg 
-                    });
+                    await sock.sendMessage(sender, { text: "🔥 *FÚRIA ATIVADA!* Seu próximo ataque no Boss causará o DOBRO de dano!", quoted: msg });
                     sucesso = true; 
+                
                 } else if (item === 'escudo') {
                     escudosAtivos[participant] = Date.now() + 3600000;
+                    await sock.sendMessage(sender, { text: "🛡️ *ESCUDO ATIVADO!* Você está imune a roubos (!roubar) por 1 HORA!", quoted: msg });
                     sucesso = true;
+                
                 } else if (item === 'vip') {
                     cargos[participant] = "VIP";
                     fs.writeFileSync(arquivoCargos, JSON.stringify(cargos, null, 2));
+                    await sock.sendMessage(sender, { text: "💎 *PARABÉNS!* Agora você ostenta o cargo de VIP no bonde!", quoted: msg });
                     sucesso = true;
+                
                 } else if (item === 'adm') {
                     admsTemporarios[participant] = Date.now() + 3600000;
-                    await sock.sendMessage(sender, { text: "👑 ADM de Fachada ativado (1h)!" });
+                    await sock.sendMessage(sender, { text: "👑 *Poder Concedido!* Você agora é ADM de Fachada por 1 hora. Use !limpar, !fixar e !status à vontade!", quoted: msg });
+                    sucesso = true;
+                
+                } else if (item === 'corrente') {
+                    if (!mention) return await sock.sendMessage(sender, { text: "❌ Em quem você quer jogar as correntes? Marque o alvo! Ex: !comprar corrente @fulano", quoted: msg });
+                    await sock.sendMessage(sender, { 
+                        text: `⛓️ *CORRENTES DO CAOS!*\n\nO @${participant.split('@')[0]} prendeu o @${mention.split('@')[0]} com correntes pesadas! Ele agora tá humilhado em praça pública! 😂`, 
+                        mentions: [participant, mention], quoted: msg 
+                    });
+                    sucesso = true;
+                
+                } else if (item === 'oraculo') {
+                    if (!mention) return await sock.sendMessage(sender, { text: "❌ De quem você quer saber o futuro? Marque o alvo! Ex: !comprar oraculo @fulano", quoted: msg });
+                    const previsoes = [
+                        "vai tomar um chifre em menos de 1 semana.",
+                        "ganhará na loteria, mas vai perder o bilhete.",
+                        "vai ser pego(a) no flagra fofocando de quem não devia.",
+                        "sofrerá um golpe do Pix agendado ainda hoje.",
+                        "vai encontrar o grande amor da sua vida... no Tinder, e é perfil fake."
+                    ];
+                    const prev = previsoes[Math.floor(Math.random() * previsoes.length)];
+                    await sock.sendMessage(sender, { 
+                        text: `🔮 *O ORÁCULO FALOU!*\n\nAs entidades me revelaram que o(a) @${mention.split('@')[0]} ${prev} 👁️`, 
+                        mentions: [mention], quoted: msg 
+                    });
+                    sucesso = true;
+                
+                } else if (item === 'sorte') {
+                    await sock.sendMessage(sender, { text: "🍀 *AMULETO DA SORTE COMPRADO!* As deusas da sorte estão sorrindo para você hoje. (Dica: tente a !roleta ou !cassino)", quoted: msg });
+                    sucesso = true;
+                
+                } else if (item === 'chave') {
+                    await sock.sendMessage(sender, { text: "🔑 *CHAVE MESTRA OBTIDA!* O que ela abre? Ninguém sabe. Mas você parece mais rico e poderoso ostentando isso no grupo! 😎", quoted: msg });
                     sucesso = true;
                 }
 
+                // Debita o saldo e salva apenas se a compra funcionou
                 if (sucesso) {
                     placar[participant] -= itens[item];
                     fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
-                    await sock.sendMessage(sender, { text: `✅ Compra de *${item.toUpperCase()}* realizada!`, quoted: msg });
+                    await sock.sendMessage(sender, { react: { text: '✅', key: msg.key } });
                 }
+
             } else {
-                if (!admsTemporarios[participant] || admsTemporarios[participant] < Date.now()) 
-                    return await sock.sendMessage(sender, { text: "❌ Você não tem o cargo de ADM de Fachada!", quoted: msg });
+                // Comandos EXCLUSIVOS de quem comprou "ADM DE FACHADA"
+                if (!admsTemporarios[participant] || admsTemporarios[participant] < Date.now()) {
+                    return await sock.sendMessage(sender, { text: "❌ Sai pra lá! Você não tem o cargo de *ADM de Fachada*. Compre na !loja primeiro para mandar aqui!", quoted: msg });
+                }
 
                 if (text.startsWith('!limpar')) {
-                    const messages = await sock.fetchMessagesFromHistory(sender, 10);
-                    for (let m of messages) await sock.sendMessage(sender, { delete: m.key });
-                    await sock.sendMessage(sender, { text: "✅ Chat limpo!" });
+                    try {
+                        const messages = await sock.fetchMessagesFromHistory(sender, 10);
+                        for (let m of messages) await sock.sendMessage(sender, { delete: m.key });
+                        await sock.sendMessage(sender, { text: "✅ Chat limpo pelo ADM de Fachada!" });
+                    } catch (err) {
+                        await sock.sendMessage(sender, { text: "❌ O bot precisa ser ADM real pra apagar as mensagens dos outros!" }, { quoted: msg });
+                    }
                 } else if (text.startsWith('!fixar')) {
                     const msgFix = text.replace('!fixar', '').trim();
-                    await sock.sendMessage(sender, { text: `📌 *FIXADO:*\n${msgFix}` });
+                    if(!msgFix) return await sock.sendMessage(sender, { text: "❌ Escreve a mensagem pra eu fixar, ué!", quoted: msg });
+                    await sock.sendMessage(sender, { text: `📌 *FIXADO PELO ADM DE FACHADA:*\n\n${msgFix}` });
                 } else if (text.startsWith('!status')) {
                     const totalMsg = Object.values(contagemMensagens).reduce((a, b) => a + b, 0);
-                    await sock.sendMessage(sender, { text: `📊 *ESTATÍSTICAS:* ${totalMsg} msgs no total.` });
+                    await sock.sendMessage(sender, { text: `📊 *STATUS DO GRUPO:*\n\n💬 Total de Mensagens: ${totalMsg}\n👑 Seu cargo temporário está ATIVO!` });
                 }
             }
         }
