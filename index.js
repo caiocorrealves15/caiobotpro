@@ -359,7 +359,7 @@ async function connectToWhatsApp() {
         }
 
         if (text.startsWith('!')) {
-            const comandosExistentes = ['!menu', '!comprar', '!roleta', '!bafometro', '!verdade', '!fuga', '!corrida', '!macumba', '!calvo', '!qi', '!serasa', '!historico', '!fakenews', '!rinha', '!vasco', '!gravida', '!feio', '!clt', '!bola8', '!perfil', '!culpado', '!inocente', '!shippar',  '!julgar', '!loja', '!pesquisar', '!backup', '!dar_pontos', '!atacar', '!boss', '!rank', '!casar', '!casais', '!piada', '!avisoadm', '!descasar', '!emoji', '!sortear', '!cadastros', '!perguntas', '!jogar', '!forca', '!jogosoff', '!jogoson', '!limpar', '!fixar', '!status', '!link', '!tier', '!ranking', '!placar', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute', '!gado', '!corno', '!fofoca', '!roubar', '!cargos', '!comprar_cargo', '!dar_cargo'];
+            const comandosExistentes = ['!menu', '!todos', '!pix', '!fantasmas', '!lembrete', '!apagar', '!decidir', '!cassino', '!conselho', '!resumo', '!regras', '!comprar', '!roleta', '!bafometro', '!verdade', '!fuga', '!corrida', '!macumba', '!calvo', '!qi', '!serasa', '!historico', '!fakenews', '!rinha', '!vasco', '!gravida', '!feio', '!clt', '!bola8', '!perfil', '!culpado', '!inocente', '!shippar',  '!julgar', '!loja', '!pesquisar', '!backup', '!dar_pontos', '!atacar', '!boss', '!rank', '!casar', '!casais', '!piada', '!avisoadm', '!descasar', '!emoji', '!sortear', '!cadastros', '!perguntas', '!jogar', '!forca', '!jogosoff', '!jogoson', '!limpar', '!fixar', '!status', '!link', '!tier', '!ranking', '!placar', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute', '!gado', '!corno', '!fofoca', '!roubar', '!cargos', '!comprar_cargo', '!dar_cargo'];
             const cmdDigitado = text.split(' ')[0]; 
             
             if (!comandosExistentes.includes(cmdDigitado)) {
@@ -719,6 +719,7 @@ _Não perca tempo, compartilhe agora!_`.trim();
 💎 *MERCADO & ECONOMIA*
  ┣ 🛒 !loja ➾ 💰 !roubar
  ┣ 💳 !comprar_cargo ➾ 🎁 !comprar
+ ┣ 💸 !pix ➾ 🎰 !cassino
  ┗ 🏆 !ranking ➾ 🥇 !rank
 
 🎲 *DIVERSÃO & SORTE*
@@ -727,7 +728,8 @@ _Não perca tempo, compartilhe agora!_`.trim();
  ┣ 💀 !forca ➾ ⚽ !penalti
  ┣ 🧠 !perguntas ➾ 🎤 !musica
  ┣ 🎬 !emoji ➾ 🤡 !piada
- ┗ 🎱 !bola8 ➾ 💘 !shippar
+ ┣ ⚖️ !decidir ➾ 🎱 !bola8
+ ┗ 💘 !shippar @mencao
 
 😈 *CAOS & TRETA*
  ┣ ⚖️ !julgar ➾ 💍 !casar
@@ -744,7 +746,8 @@ _Não perca tempo, compartilhe agora!_`.trim();
  ┣ 🤥 !verdade ➾ 💸 !serasa
  ┣ 💼 !clt ➾ 🍼 !gravida
  ┣ ⚰️ !vasco ➾ 💻 !historico
- ┗ 🗞️ !fakenews
+ ┣ 🗞️ !fakenews ➾ 🧠 !conselho
+ ┗ 📝 !resumo
 
 ⚔️ *GUERRA & STATUS*
  ┣ 👹 !boss ➾ ⚔️ !atacar
@@ -756,12 +759,14 @@ _Não perca tempo, compartilhe agora!_`.trim();
  ┣ 🔓 !abrir ➾ 👑 !adm
  ┣ 🕹️ !jogoson ➾ 🚫 !jogosoff
  ┣ 💰 !dar_pontos ➾ 📣 !avisoadm
- ┗ 📋 !cadastros
+ ┣ 📋 !cadastros ➾ 📣 !todos
+ ┗ 👻 !fantasmas
 
 🛠️ *SISTEMA*
  ┣ 🌤️ !clima ➾ 🔍 !pesquisar
  ┣ 🔗 !link ➾ 💾 !backup
- ┗ 📛 !menu
+ ┣ ⏰ !lembrete ➾ 🧹 !apagar
+ ┗ 📜 !regras ➾ 📛 !menu
 
 ━━━━━━━━━━━━━━━━━━━━
 ⚠️ _O sistema nunca dorme._`.trim();
@@ -1552,6 +1557,228 @@ _Não perca tempo, compartilhe agora!_`.trim();
             
             // Trava a execução para não cair no "Comando Inválido"
             return;
+        }
+
+        // ==========================================
+        // 1. 📣 MEGAMENÇÃO (!todos) - EXCLUSIVO ADM
+        // Útil para: Avisos importantes sem ninguém fingir que não viu.
+        // ==========================================
+        if (text.startsWith('!todos')) {
+            if (!isAdmin) return await sock.sendMessage(sender, { text: "❌ Abaixa a bola, só a Elite pode invocar o grupo todo!" }, { quoted: msg });
+            
+            const metadata = await sock.groupMetadata(sender);
+            const ppts = metadata.participants.map(p => p.id);
+            const mensagemAdicional = text.replace('!todos', '').trim();
+            
+            let textoTodos = `📣 *CHAMADA GERAL DO BONDE!* 📣\n\n${mensagemAdicional || "Apareçam, o chefe tá chamando!"}\n\n`;
+            ppts.forEach(p => { textoTodos += `• @${p.split('@')[0]}\n`; });
+            
+            await sock.sendMessage(sender, { text: textoTodos, mentions: ppts });
+        }
+
+        // ==========================================
+        // 2. 💸 TRANSFERÊNCIA (!pix @mencao [valor])
+        // Útil para: A galera trocar pontos entre si ou pagar dívidas do cassino/rinha.
+        // ==========================================
+        if (text.startsWith('!pix')) {
+            const args = text.split(' ');
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            const valor = parseInt(args[2] || args[1]); // Pega o número, tendo espaço a mais ou não
+
+            if (!mention || isNaN(valor) || valor <= 0) return await sock.sendMessage(sender, { text: "❌ Formato errado! Use: !pix @mencao [valor]" }, { quoted: msg });
+            if (mention === participant) return await sock.sendMessage(sender, { text: "❌ Tentando lavar dinheiro mandando pra si mesmo? A Receita Federal tá de olho! 😂" }, { quoted: msg });
+
+            let placar = lerArquivoSeguro(arquivoPlacar);
+            if ((placar[participant] || 0) < valor) return await sock.sendMessage(sender, { text: `❌ Tá liso! Seu saldo atual é de apenas ${placar[participant] || 0} pontos.` }, { quoted: msg });
+
+            // Executa a transação
+            placar[participant] -= valor;
+            placar[mention] = (placar[mention] || 0) + valor;
+            fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
+
+            await sock.sendMessage(sender, { react: { text: '💸', key: msg.key } });
+            await sock.sendMessage(sender, { 
+                text: `💸 *TRANSFERÊNCIA APROVADA!*\n\nO magnata @${participant.split('@')[0]} enviou *${valor} pontos* via PIX para @${mention.split('@')[0]}!`, 
+                mentions: [participant, mention] 
+            }, { quoted: msg });
+        }
+
+        // ==========================================
+        // 3. 👻 CAÇA AOS INATIVOS (!fantasmas) - EXCLUSIVO ADM
+        // Útil para: Ver quem está no grupo, mas NUNCA mandou uma mensagem.
+        // ==========================================
+        if (text === '!fantasmas') {
+            if (!isAdmin) return await sock.sendMessage(sender, { text: "❌ Só a Elite tem acesso ao radar paranormal!" });
+            
+            const metadata = await sock.groupMetadata(sender);
+            const ppts = metadata.participants;
+            const rank = lerArquivoSeguro(ARQUIVO_RANK);
+            const botId = sock.user.id.split(':')[0] + '@s.whatsapp.net';
+            
+            let fantasmas = [];
+            ppts.forEach(p => {
+                // Se a pessoa não está no rank de mensagens e não é o bot
+                if (!rank[p.id] && p.id !== botId) fantasmas.push(p.id);
+            });
+
+            if (fantasmas.length === 0) return await sock.sendMessage(sender, { text: "✅ O grupo tá limpo! Nenhum fantasma por aqui." });
+
+            let msgFantasma = `👻 *OPERAÇÃO CAÇA-FANTASMAS* 👻\n\nEsses membros estão no grupo, mas nunca mandaram 1 miséria de mensagem:\n\n`;
+            fantasmas.forEach(f => { msgFantasma += `• @${f.split('@')[0]}\n`; });
+            msgFantasma += `\n_A foice da limpeza tá passando, hein! 🔨_`;
+            
+            await sock.sendMessage(sender, { text: msgFantasma, mentions: fantasmas }, { quoted: msg });
+        }
+
+        // ==========================================
+        // 4. ⏰ SECRETÁRIA DO CAOS (!lembrete [minutos] [msg])
+        // Útil para: Avisar algo importante (ex: !lembrete 15 tirar a comida do fogo).
+        // ==========================================
+        if (text.startsWith('!lembrete')) {
+            const args = text.replace('!lembrete', '').trim().split(' ');
+            const minutos = parseInt(args[0]);
+            const mensagemLembrete = args.slice(1).join(' ');
+
+            if (isNaN(minutos) || !mensagemLembrete) return await sock.sendMessage(sender, { text: "❌ Use o formato certo: !lembrete [minutos] [mensagem]\nEx: !lembrete 10 desligar o arroz" }, { quoted: msg });
+            if (minutos > 180) return await sock.sendMessage(sender, { text: "❌ Máximo de 180 minutos (3 horas). Não sou calendário pra lembrar amanhã! 😂" }, { quoted: msg });
+
+            await sock.sendMessage(sender, { react: { text: '⏰', key: msg.key } });
+            await sock.sendMessage(sender, { text: `⏰ *Anotado!* Daqui a ${minutos} minuto(s) eu te marco para lembrar disso.` }, { quoted: msg });
+
+            setTimeout(async () => {
+                await sock.sendMessage(sender, { 
+                    text: `🚨 *BIP BIP BIP! HORA DO SEU LEMBRETE!* 🚨\n\nAcorda, @${participant.split('@')[0]}! Você me pediu pra avisar isso agora:\n\n👉 "${mensagemLembrete}"`, 
+                    mentions: [participant] 
+                });
+            }, minutos * 60 * 1000);
+        }
+
+        // ==========================================
+        // 5. 🧹 BORRACHA MÁGICA (!apagar)
+        // Útil para: Responder a uma mensagem DO BOT e pedir pra ele apagar (limpeza de poluição).
+        // ==========================================
+        if (text === '!apagar') {
+            const quotedMsg = msg.message.extendedTextMessage?.contextInfo;
+            if (!quotedMsg || !quotedMsg.stanzaId) return await sock.sendMessage(sender, { text: "❌ Você tem que RESPONDER a mensagem que quer que eu apague, usando !apagar" });
+            
+            const botId = sock.user.id.split(':')[0] + '@s.whatsapp.net';
+            
+            if (quotedMsg.participant !== botId) {
+                return await sock.sendMessage(sender, { text: "❌ Eu só posso apagar as MINHAS próprias mensagens! Vai pedir pra apagar mensagem dos outros na casa do chapéu!" }, { quoted: msg });
+            }
+
+            await sock.sendMessage(sender, { delete: { remoteJid: sender, fromMe: true, id: quotedMsg.stanzaId, participant: botId } });
+        }
+
+        // ==========================================
+        // 6. ⚖️ O JUIZ DECISOR (!decidir [A] ou [B])
+        // Útil para: Acabar com qualquer discussão sobre o que fazer/escolher.
+        // ==========================================
+        if (text.startsWith('!decidir')) {
+            const opcoesStr = text.replace('!decidir', '').trim();
+            if (!opcoesStr.includes(' ou ')) return await sock.sendMessage(sender, { text: "❌ Você precisa me dar opções separadas por 'ou'.\nEx: !decidir comer pizza ou comer lanche" }, { quoted: msg });
+
+            const opcoes = opcoesStr.split(' ou ');
+            const escolha = opcoes[Math.floor(Math.random() * opcoes.length)].trim();
+
+            await sock.sendMessage(sender, { react: { text: '⚖️', key: msg.key } });
+            await sock.sendMessage(sender, { 
+                text: `⚖️ *O JUIZ SUPREMO DECIDIU!* ⚖️\n\nParei de jogar paciência pra resolver o problema de vocês. A melhor escolha, sem dúvida, é:\n\n👉 *${escolha.toUpperCase()}*` 
+            }, { quoted: msg });
+        }
+
+        // ==========================================
+        // 7. 🎰 CASSINO DE PONTOS (!cassino [valor])
+        // Útil para: Fazer a economia girar (o risco é triplicar ou perder tudo).
+        // ==========================================
+        if (text.startsWith('!cassino')) {
+            const args = text.replace('!cassino', '').trim();
+            const aposta = parseInt(args);
+            if (isNaN(aposta) || aposta < 10) return await sock.sendMessage(sender, { text: "❌ Aposte no mínimo 10 pontos! Ex: !cassino 50" }, { quoted: msg });
+
+            let placar = lerArquivoSeguro(arquivoPlacar);
+            if ((placar[participant] || 0) < aposta) return await sock.sendMessage(sender, { text: `❌ Caloteiro! Seu saldo atual é só ${placar[participant] || 0} pontos.` }, { quoted: msg });
+
+            placar[participant] -= aposta; // Desconta a aposta de cara
+            
+            const sorte = Math.random();
+            let multiplicador = 0;
+            let msgCassino = "";
+
+            if (sorte < 0.25) { // 25% de chance de ganhar o dobro
+                multiplicador = 2;
+                msgCassino = `🎰 *JACKPOT!* A máquina cuspiu moedas! Você DOBROU sua aposta e recebeu *${aposta * 2} pontos*! 🍒🍒🍒`;
+            } else if (sorte < 0.35) { // 10% chance de ganhar o triplo
+                multiplicador = 3;
+                msgCassino = `💎 *MEGA PRÊMIO!* VOCÊ QUEBROU A BANCA! TRIPlicou sua aposta e faturou absurdos *${aposta * 3} pontos*! 💎💎💎`;
+            } else { // 65% de chance de perder tudo
+                msgCassino = `💸 *DEU RUIM!* As máquinas engoliram seu dinheiro. Perdeu os ${aposta} pontos. O dono do cassino agradece sua doação! 🤡`;
+            }
+
+            if (multiplicador > 0) placar[participant] += (aposta * multiplicador);
+            fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
+
+            await sock.sendMessage(sender, { 
+                video: { url: 'https://media.tenor.com/iNJ3cA3wV18AAAPo/the-simpsons-mr-burns.mp4' }, 
+                gifPlayback: true,
+                caption: msgCassino 
+            }, { quoted: msg });
+        }
+
+        // ==========================================
+        // 8. 🧠 COACH DA ZUEIRA (!conselho)
+        // Útil para: Quebrar o gelo quando o chat tá morto com sabedoria duvidosa.
+        // ==========================================
+        if (text === '!conselho') {
+            const conselhos = [
+                "Se alguém te chamar de feio, não ligue. Feio é quem mente, você é só exótico.",
+                "Trabalhe com o que você ama e você nunca mais vai amar nada na sua vida.",
+                "O 'não' você já tem. Agora vista uma roupa e vá atrás da humilhação!",
+                "Nunca deixe ninguém te dizer que você não consegue. Mostre você mesmo que você é um fracasso.",
+                "Não desanime por ter acordado tarde. O importante é acordar cansado de novo amanhã.",
+                "Se a vida te der limões, esprema bem no olho de quem te irrita.",
+                "O dinheiro não traz felicidade, mas traz coisas que a tristeza não pode comprar (tipo um lanche).",
+                "Acredite sempre no seu potencial de fazer cagada logo de manhã.",
+                "Se tudo der errado, lembre-se: pelo menos você serviu de mau exemplo pros outros.",
+                "Paciência é uma virtude que eu gasto rápido. Use a sua enquanto tem."
+            ];
+            const conselho = conselhos[Math.floor(Math.random() * conselhos.length)];
+            await sock.sendMessage(sender, { react: { text: '🧠', key: msg.key } });
+            await sock.sendMessage(sender, { text: `🧠 *COACH QUÂNTICO DO BONDE INFORMA:* \n\n_"${conselho}"_` }, { quoted: msg });
+        }
+
+        // ==========================================
+        // 9. 📝 RESUMÃO DO DIA (!resumo)
+        // Útil para: Simular um resumo de inteligência artificial de forma irônica.
+        // ==========================================
+        if (text === '!resumo') {
+            const resumos = [
+                "1. Alguém mandou meme velho achando que era novidade.\n2. Dois se ofenderam por motivo idiota e quase choraram.\n3. O de sempre: ninguém trabalhando.",
+                "1. Muito papo furado e zero produtividade.\n2. Alguém tá devendo no grupo e fingindo demência.\n3. Mais um dia salvo pela falta do que fazer da Elite.",
+                "1. Falaram de um assunto polêmico e quase rolou banimento em massa.\n2. Foi detectada uma taxa alta de chifre no ar.\n3. O bot (eu) continua sendo a melhor coisa que tem aqui."
+            ];
+            await sock.sendMessage(sender, { react: { text: '📝', key: msg.key } });
+            await sock.sendMessage(sender, { 
+                text: `📝 *RESUMO GERADO PELA IA DO BOT:*\n\n${resumos[Math.floor(Math.random() * resumos.length)]}\n\n*Conclusão:* Vão caçar uma carteira de trabalho! 💼` 
+            }, { quoted: msg });
+        }
+
+        // ==========================================
+        // 10. 📜 REGRAS DO GRUPO (!regras)
+        // Útil para: Facilitar a vida do ADM na hora de enquadrar um novato.
+        // ==========================================
+        if (text === '!regras') {
+            const textoRegras = `📜 *O CÓDIGO PENAL DO BONDE VIP* 📜
+
+1️⃣ *PROIBIDO CONTEÚDO +18:* Mandou putaria ou gore? O ban entra na velocidade da luz sem aviso. 🔞⛔
+2️⃣ *INVASÃO DE PV:* Chamar os outros no privado sem autorização é crime inafiançável. Ban direto. 🕵️‍♂️
+3️⃣ *LINKS E TRAVAS:* Link suspeito ou mensagem gigante pra travar o zap? O sistema exclui e te pune com mute. 🔗🗑️
+4️⃣ *CADASTRO OBRIGATÓRIO:* Fantasmas que não enviam *FOTO | CIDADE | IDADE | NOME* levam rodo automático. 👻🔪
+5️⃣ *RESPEITO:* A zueira não tem limites, mas evite virar chato. Acabou a graça? O martelo do Tribunal (!julgar) cai. ⚖️
+
+👑 *A ELITE OBSERVA TUDO. JOGUEM SUJO, MAS JOGUEM DENTRO DA LEI!*`;
+            
+            await sock.sendMessage(sender, { text: textoRegras }, { quoted: msg });
         }
 
         if (text.startsWith('!matar')) {
