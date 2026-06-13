@@ -1899,7 +1899,7 @@ _Não perca tempo, compartilhe agora!_`.trim();
             }, { quoted: msg });
         }
         // ==========================================
-        // 🌤️ COMANDO !CLIMA (VERSÃO DEBOCHADA, COM GIF E 100% PT-BR)
+        // 🌤️ COMANDO !CLIMA (VERSÃO BLINDADA CONTRA QUEDAS)
         // ==========================================
         if (text.startsWith('!clima')) {
             const cidade = text.replace('!clima', '').trim();
@@ -1915,16 +1915,24 @@ _Não perca tempo, compartilhe agora!_`.trim();
             await sock.sendMessage(sender, { react: { text: '🌤️', key: msg.key } });
 
             try {
+                // Configuração para fingir ser um navegador (evita o bloqueio do site)
+                const axiosConfig = {
+                    headers: { 'User-Agent': 'BondeDoBrasilBot/1.0' },
+                    timeout: 10000 // Limite de 10 segundos para não travar o bot
+                };
+
                 // Força o idioma para pt-br na chamada da API
-                const res = await axios.get(`https://wttr.in/${encodeURIComponent(cidade)}?format=j1&lang=pt-br`);
+                const res = await axios.get(`https://wttr.in/${encodeURIComponent(cidade)}?format=j1&lang=pt-br`, axiosConfig);
                 const cond = res.data.current_condition[0];
                 const temp = cond.temp_C;
-                const desc = cond.lang_pt[0].value; // Descrição já vem em PT-BR
+                
+                // Leitura blindada: Se o site não retornar a tradução PT-BR, ele pega em inglês pra não dar erro
+                const desc = cond.lang_pt?.[0]?.value || cond.weatherDesc?.[0]?.value || "Desconhecido";
                 
                 // Classificação automática da zueira
                 let tipo = 'nublado';
-                if (desc.toLowerCase().includes('sol') || desc.toLowerCase().includes('limpo')) tipo = 'sol';
-                if (desc.toLowerCase().includes('chuva') || desc.toLowerCase().includes('garoa')) tipo = 'chuva';
+                if (desc.toLowerCase().includes('sol') || desc.toLowerCase().includes('limpo') || desc.toLowerCase().includes('clear') || desc.toLowerCase().includes('sunny')) tipo = 'sol';
+                if (desc.toLowerCase().includes('chuva') || desc.toLowerCase().includes('garoa') || desc.toLowerCase().includes('rain')) tipo = 'chuva';
 
                 const fraseBot = piadas[tipo][Math.floor(Math.random() * piadas[tipo].length)];
 
@@ -1941,7 +1949,8 @@ _Não perca tempo, compartilhe agora!_`.trim();
                 }, { quoted: msg });
                 
             } catch (err) {
-                await sock.sendMessage(sender, { text: "❌ Cidade não encontrada! O satélite tá ruim ou você inventou essa cidade? 😂", quoted: msg });
+                console.error("Erro na API de Clima:", err.message); // Vai te mostrar no terminal se a API caiu de vez
+                await sock.sendMessage(sender, { text: "❌ Cidade não encontrada ou o satélite do clima pifou! 😂 Tente de novo.", quoted: msg });
             }
         }
 
