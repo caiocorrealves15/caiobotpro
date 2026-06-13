@@ -1898,6 +1898,52 @@ _Não perca tempo, compartilhe agora!_`.trim();
                 mentions: [participant, mention] 
             }, { quoted: msg });
         }
+        // ==========================================
+        // 🌤️ COMANDO !CLIMA (VERSÃO DEBOCHADA, COM GIF E 100% PT-BR)
+        // ==========================================
+        if (text.startsWith('!clima')) {
+            const cidade = text.replace('!clima', '').trim();
+            if (!cidade) return await sock.sendMessage(sender, { text: "❌ O gênio, esqueceu a cidade! Ex: !clima Cariacica", quoted: msg });
+
+            // Zueiras customizadas por tipo de tempo
+            const piadas = {
+                sol: ["Tá um sol que parece o próprio inferno! 🔥", "Dia perfeito pra fritar um ovo no asfalto. 🍳", "Cuidado pra não derreter, hein! ☀️"],
+                chuva: ["Chovendo? Ótimo, desculpa perfeita pra não fazer nada! 🌧️", "Combo: chuva, netflix e solidão. ☕", "Traz o guarda-chuva ou vira um rato molhado! 🐭"],
+                nublado: ["Tempo nublado, igual ao seu futuro. ☁️", "Parece que vai chover... ou não. O tempo tá indeciso igual você! 🌩️", "Céu cinza, perfeito pra dormir o dia todo. 💤"]
+            };
+
+            await sock.sendMessage(sender, { react: { text: '🌤️', key: msg.key } });
+
+            try {
+                // Força o idioma para pt-br na chamada da API
+                const res = await axios.get(`https://wttr.in/${encodeURIComponent(cidade)}?format=j1&lang=pt-br`);
+                const cond = res.data.current_condition[0];
+                const temp = cond.temp_C;
+                const desc = cond.lang_pt[0].value; // Descrição já vem em PT-BR
+                
+                // Classificação automática da zueira
+                let tipo = 'nublado';
+                if (desc.toLowerCase().includes('sol') || desc.toLowerCase().includes('limpo')) tipo = 'sol';
+                if (desc.toLowerCase().includes('chuva') || desc.toLowerCase().includes('garoa')) tipo = 'chuva';
+
+                const fraseBot = piadas[tipo][Math.floor(Math.random() * piadas[tipo].length)];
+
+                const msgClima = `🌤 *TEMPO NO BONDE: ${cidade.toUpperCase()}*\n\n` +
+                                 `🌡 *Temperatura:* ${temp}°C\n` +
+                                 `☁️ *Condição:* ${desc}\n\n` +
+                                 `💬 *Analista do NeymarBOT:* ${fraseBot}`;
+
+                await sock.sendMessage(sender, { 
+                    video: { url: 'https://media.tenor.com/Ke8JW6DGWTgAAAPo/dog-weather.mp4' }, 
+                    gifPlayback: true,
+                    caption: msgClima,
+                    mentions: [participant]
+                }, { quoted: msg });
+                
+            } catch (err) {
+                await sock.sendMessage(sender, { text: "❌ Cidade não encontrada! O satélite tá ruim ou você inventou essa cidade? 😂", quoted: msg });
+            }
+        }
 
         // --- SALVAMENTO FINAL DE RANKING ---
         contagemMensagens[participant] = (contagemMensagens[participant] || 0) + 1;
