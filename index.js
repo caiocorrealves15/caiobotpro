@@ -2574,22 +2574,20 @@ _Não perca tempo, compartilhe agora!_`.trim();
         }
 
         // ==========================================
-        // 🎵 SISTEMA DE MÚSICA (!play) - O DJ DO BONDE (MÉTODO BLINDADO)
+        // 🎵 SISTEMA DE MÚSICA (!play) - O DJ DO BONDE (API TRIPLA BLINDADA)
         // ==========================================
         if (text.startsWith('!play')) {
             const musica = text.replace('!play', '').trim();
 
             if (!musica) {
-                return await sock.sendMessage(sender, { text: "❌ Tá querendo ouvir o silêncio? Digita o nome da música! Ex: !play DJ Arana" }, { quoted: msg });
+                return await sock.sendMessage(sender, { text: "❌ Tá querendo ouvir o silêncio? Digita o nome da música! Ex: !play Save your tears" }, { quoted: msg });
             }
 
             await sock.sendMessage(sender, { react: { text: '🎧', key: msg.key } });
             await sock.sendMessage(sender, { text: `🔍 *DJ NeymarBOT na pista!*\n\nProcurando por _"${musica}"_... Aguenta aí que o grave já vai bater!` }, { quoted: msg });
 
             try {
-                const ytdl = require('@distube/ytdl-core');
-                
-                // 1. Pesquisa o vídeo no YouTube
+                // 1. Pesquisa o vídeo no YouTube (O motor de busca continua o mesmo)
                 const resultados = await ytSearch(musica);
                 const video = resultados.videos.length > 0 ? resultados.videos[0] : null;
 
@@ -2608,52 +2606,48 @@ _Não perca tempo, compartilhe agora!_`.trim();
                                 `⏱️ *Duração:* ${video.timestamp}\n` +
                                 `👀 *Views:* ${video.views.toLocaleString('pt-BR')}\n` +
                                 `🔗 *Canal:* ${video.author.name}\n\n` +
-                                `_Baixando o áudio, prepara o passinho..._ 🕺💃`;
+                                `_Extraindo o áudio dos servidores secretos..._ 🕺💃`;
                 
                 await sock.sendMessage(sender, { 
                     image: { url: video.thumbnail }, 
                     caption: infoMsg 
                 }, { quoted: msg });
 
-                // 3. DOWNLOAD SEGURO: Cria um arquivo temporário no sistema
-                const tempFile = `./musica_${Date.now()}.mp3`;
-                const stream = ytdl(video.url, { filter: 'audioonly', quality: 'highestaudio' });
-                const fileStream = fs.createWriteStream(tempFile);
-
-                // Joga a música do YouTube pra dentro do arquivo
-                stream.pipe(fileStream);
-
-                // 4. Quando o download terminar, envia pro WhatsApp e apaga o arquivo
-                fileStream.on('finish', async () => {
+                // 3. O PULO DO GATO: Usa APIs públicas feitas para burlar o YouTube
+                let downloadUrl = "";
+                
+                try {
+                    // Tentativa 1: API Ryzendesu (Super rápida)
+                    const resApi = await axios.get(`https://api.ryzendesu.vip/api/downloader/ytmp3?url=${video.url}`);
+                    downloadUrl = resApi.data.url || resApi.data.data?.url;
+                } catch (e1) {
                     try {
-                        await sock.sendMessage(sender, { 
-                            audio: { url: tempFile }, 
-                            mimetype: 'audio/mpeg', 
-                            ptt: false 
-                        }, { quoted: msg });
-
-                        await sock.sendMessage(sender, { react: { text: '✅', key: msg.key } });
-                    } catch (sendError) {
-                        console.error("Erro ao enviar o áudio pro WhatsApp:", sendError);
-                        await sock.sendMessage(sender, { text: "❌ Deu um engasgo na hora de enviar o áudio! 😭" }, { quoted: msg });
-                    } finally {
-                        // Independentemente de dar erro ou não, ele APAGA o arquivo pra liberar espaço
-                        if (fs.existsSync(tempFile)) {
-                            fs.unlinkSync(tempFile);
-                        }
+                        // Tentativa 2: API Siputzx (Plano B)
+                        const resApi2 = await axios.get(`https://api.siputzx.my.id/api/d/ytmp3?url=${video.url}`);
+                        downloadUrl = resApi2.data.data.dl;
+                    } catch (e2) {
+                        // Tentativa 3: API Vreden (O Último Recurso)
+                        const resApi3 = await axios.get(`https://api.vreden.web.id/api/ytmp3?url=${video.url}`);
+                        downloadUrl = resApi3.data.result.download.url;
                     }
-                });
+                }
 
-                fileStream.on('error', async (err) => {
-                    console.error("Erro ao salvar áudio:", err);
-                    await sock.sendMessage(sender, { react: { text: '❌', key: msg.key } });
-                    if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile); // Limpa o rastro
-                });
+                if (!downloadUrl) throw new Error("Nenhuma API conseguiu quebrar o bloqueio.");
+
+                // 4. Envia o áudio usando o link direto!
+                // O Baileys faz o trabalho sujo de converter e enviar sem forçar a memória do seu servidor
+                await sock.sendMessage(sender, { 
+                    audio: { url: downloadUrl }, 
+                    mimetype: 'audio/mpeg', 
+                    ptt: false 
+                }, { quoted: msg });
+
+                await sock.sendMessage(sender, { react: { text: '✅', key: msg.key } });
 
             } catch (erro) {
                 console.error("Erro no comando !play:", erro);
                 await sock.sendMessage(sender, { react: { text: '❌', key: msg.key } });
-                await sock.sendMessage(sender, { text: "❌ O YouTube percebeu a pirataria e cortou meu barato! Deu erro ao pesquisar." }, { quoted: msg });
+                await sock.sendMessage(sender, { text: "❌ O YouTube ligou o modo FBI e barrou a extração do áudio! Tente de novo com outra música. 😭" }, { quoted: msg });
             }
         }
        // ==========================================
