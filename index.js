@@ -12,6 +12,7 @@ const arquivoMutados = ARQUIVO_MUTADOS;
 const arquivoPlacar = path.join(dataPath, 'placar.json');
 const arquivoCargos = path.join(dataPath, 'cargos.json');
 const arquivoCasais = path.join(dataPath, 'casais.json');
+const cooldownImaginar = {};
 const cooldownRoleta = {};
 const cookies = process.env.COOKIES_JSON ? JSON.parse(process.env.COOKIES_JSON) : [];
 const { Sticker, StickerTypes } = require('wa-sticker-formatter');
@@ -375,7 +376,7 @@ async function connectToWhatsApp() {
         }
 
         if (text.startsWith('!')) {
-            const comandosExistentes = ['!menu', '!todos', '!pix', '!play', '!fantasmas', '!lembrete', '!apagar', '!decidir', '!cassino', '!conselho', '!resumo', '!regras', '!comprar', '!roleta', '!bafometro', '!verdade', '!fuga', '!corrida', '!macumba', '!calvo', '!qi', '!serasa', '!historico', '!fakenews', '!rinha', '!vasco', '!gravida', '!feio', '!clt', '!bola8', '!perfil', '!culpado', '!inocente', '!shippar',  '!julgar', '!loja', '!pesquisar', '!backup', '!dar_pontos', '!atacar', '!boss', '!rank', '!casar', '!casais', '!piada', '!avisoadm', '!descasar', '!emoji', '!sortear', '!cadastros', '!perguntas', '!jogar', '!forca', '!jogosoff', '!jogoson', '!limpar', '!fixar', '!status', '!link', '!tier', '!ranking', '!placar', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute', '!gado', '!corno', '!fofoca', '!roubar', '!cargos', '!comprar_cargo', '!dar_cargo'];
+            const comandosExistentes = ['!menu', '!todos', '!pix', '!imaginar', '!fantasmas', '!lembrete', '!apagar', '!decidir', '!cassino', '!conselho', '!resumo', '!regras', '!comprar', '!roleta', '!bafometro', '!verdade', '!fuga', '!corrida', '!macumba', '!calvo', '!qi', '!serasa', '!historico', '!fakenews', '!rinha', '!vasco', '!gravida', '!feio', '!clt', '!bola8', '!perfil', '!culpado', '!inocente', '!shippar',  '!julgar', '!loja', '!pesquisar', '!backup', '!dar_pontos', '!atacar', '!boss', '!rank', '!casar', '!casais', '!piada', '!avisoadm', '!descasar', '!emoji', '!sortear', '!cadastros', '!perguntas', '!jogar', '!forca', '!jogosoff', '!jogoson', '!limpar', '!fixar', '!status', '!link', '!tier', '!ranking', '!placar', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute', '!gado', '!corno', '!fofoca', '!roubar', '!cargos', '!comprar_cargo', '!dar_cargo'];
             const cmdDigitado = text.split(' ')[0]; 
             
             if (!comandosExistentes.includes(cmdDigitado)) {
@@ -2565,65 +2566,57 @@ _Não perca tempo, compartilhe agora!_`.trim();
         }
 
        // ==========================================
-        // 🎵 SISTEMA DE MÚSICA (!play) - A MÁQUINA DEFINITIVA (COBALT + LINK DIRETO)
+        // 🎨 GERADOR DE IMAGENS IA (!imaginar) - COM TRAVA ANTI-SPAM
         // ==========================================
-        if (text.startsWith('!play')) {
-            const musica = text.replace('!play', '').trim();
-            if (!musica) return await sock.sendMessage(sender, { text: "❌ Digita o nome da música! Ex: !play Save your tears" }, { quoted: msg });
+        if (text.startsWith('!imaginar')) {
+            const promptTexto = text.replace('!imaginar', '').trim();
+            if (!promptTexto) return await sock.sendMessage(sender, { text: "❌ O que você quer que eu desenhe? Ex: !imaginar cachorro rebaixado de oculos" }, { quoted: msg });
 
-            await sock.sendMessage(sender, { react: { text: '🎧', key: msg.key } });
-            await sock.sendMessage(sender, { text: `🔍 *DJ NeymarBOT na pista!*\n\nBuscando: _"${musica}"_... ⏳` }, { quoted: msg });
+            // --- TRAVA 1: SISTEMA DE COOLDOWN (LIMITE DE TEMPO) ---
+            const agora = Date.now();
+            const tempoCooldown = 3 * 60 * 1000; // 3 minutos de espera
+            
+            if (cooldownImaginar[participant] && (agora - cooldownImaginar[participant]) < tempoCooldown) {
+                const tempoRestante = Math.ceil((tempoCooldown - (agora - cooldownImaginar[participant])) / (60 * 1000));
+                return await sock.sendMessage(sender, { 
+                    text: `⏳ *CALMA LÁ, DA VINCI!* O pincel da IA está esfriando pra não pegar fogo. Tente novamente daqui a ${tempoRestante} minuto(s). 🎨`, 
+                    quoted: msg 
+                });
+            }
+
+            // --- TRAVA 2: ECONOMIA (CUSTA 30 PONTOS) ---
+            let placar = lerArquivoSeguro(arquivoPlacar);
+            const custo = 30;
+            if ((placar[participant] || 0) < custo) {
+                return await sock.sendMessage(sender, { text: `❌ Tá achando que IA trabalha de graça? Você precisa de ${custo} pontos pra gerar uma arte! Vai jogar ou roubar alguém. 😂`, quoted: msg });
+            }
+            // ---------------------------------------------
+
+            await sock.sendMessage(sender, { react: { text: '🎨', key: msg.key } });
+            await sock.sendMessage(sender, { text: `🧠 *Iniciando motor de Inteligência Artificial...*\n\nDesenhando: _"${promptTexto}"_\n_Isso pode levar uns 10 segundinhos, aguenta coração!_ ⏳` }, { quoted: msg });
 
             try {
-                // 1. Pesquisa no YouTube
-                const resultados = await ytSearch(musica);
-                const video = resultados.videos.length > 0 ? resultados.videos[0] : null;
+                const seed = Math.floor(Math.random() * 1000000);
+                const promptFormatado = encodeURIComponent(promptTexto);
+                const imageUrl = `https://image.pollinations.ai/prompt/${promptFormatado}?seed=${seed}&width=1024&height=1024&nologo=true`;
 
-                if (!video) return await sock.sendMessage(sender, { text: "❌ Não achei essa música." }, { quoted: msg });
-                if (video.seconds > 600) return await sock.sendMessage(sender, { text: "❌ Áudio muito longo (max 10 min) pra não explodir meu servidor!" }, { quoted: msg });
-
-                // Manda a capa
+                // Envia a imagem pro Zap
                 await sock.sendMessage(sender, { 
-                    image: { url: video.thumbnail }, 
-                    caption: `🎵 *TOCANDO AGORA:* ${video.title}\n⏱️ *Duração:* ${video.timestamp}\n\n_Conectando ao satélite..._ 🚀` 
+                    image: { url: imageUrl }, 
+                    caption: `🎨 *OBRA DE ARTE CONCLUÍDA!*\n\n💭 *Você pediu:* ${promptTexto}\n\n_Chora, Picasso! O NeymarBOT é o rei da arte!_ 😎` 
                 }, { quoted: msg });
 
-                let downloadUrl = "";
-
-                // 2. TENTATIVA 1: COBALT API (O Santo Graal)
-                try {
-                    const cobaltRes = await axios.post('https://api.cobalt.tools/api/json', {
-                        url: video.url,
-                        isAudioOnly: true,
-                        aFormat: 'mp3' // Garante que venha no formato que o Zap ama
-                    }, {
-                        headers: {
-                            'Accept': 'application/json',
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    downloadUrl = cobaltRes.data.url;
-                } catch (e1) {
-                    // PLANO B: Se o Cobalt piscar, tenta essa API secundária
-                    const resApi = await axios.get(`https://api.vreden.web.id/api/ytmp3?url=${encodeURIComponent(video.url)}`);
-                    downloadUrl = resApi.data.result?.download?.url || "";
-                }
-
-                if (!downloadUrl) throw new Error("As APIs foram blindadas pelo YouTube.");
-
-                // 3. ENVIO DIRETO DA NUVEM (SEM USAR MEMÓRIA DO SERVIDOR)
-                await sock.sendMessage(sender, { 
-                    audio: { url: downloadUrl }, 
-                    mimetype: 'audio/mpeg', 
-                    ptt: false 
-                }, { quoted: msg });
+                // SUCESSO! Agora sim debita o dinheiro e ativa a trava de tempo
+                placar[participant] -= custo;
+                fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
+                cooldownImaginar[participant] = agora; 
 
                 await sock.sendMessage(sender, { react: { text: '✅', key: msg.key } });
 
             } catch (erro) {
-                console.error("Erro no !play:", erro.message);
+                console.error("Erro no !imaginar:", erro.message);
                 await sock.sendMessage(sender, { react: { text: '❌', key: msg.key } });
-                await sock.sendMessage(sender, { text: `❌ O YouTube barrou a conexão! Tente outra música.` }, { quoted: msg });
+                await sock.sendMessage(sender, { text: `❌ Meu cérebro de IA fritou tentando desenhar isso! A criatividade foi longe demais. Tente outra coisa.` }, { quoted: msg });
             }
         }
        // ==========================================
