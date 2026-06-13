@@ -1310,15 +1310,36 @@ _Não perca tempo, compartilhe agora!_`.trim();
             }, 60000);
         }
 
-        if (text === '!culpado' || text === '!inocente') {
+        // ==========================================
+        // ⚖️ SISTEMA DE VOTAÇÃO BLINDADO ⚖️
+        // ==========================================
+        const votoDigitado = text.toLowerCase().trim();
+        
+        if (votoDigitado === '!culpado' || votoDigitado === '!inocente') {
             if (!tribunal.ativo) return;
-            if (participant === tribunal.vitima || participant === tribunal.acusador) return;
-            if (tribunal.votos[participant]) return;
+            
+            // Impede o réu e o promotor de votarem
+            if (participant === tribunal.vitima || participant === tribunal.acusador) {
+                if (!isLid) await sock.sendMessage(sender, { react: { text: '🚫', key: msg.key } });
+                return;
+            }
+            
+            // Impede a pessoa de votar duas vezes
+            if (tribunal.votos[participant]) {
+                if (!isLid) await sock.sendMessage(sender, { react: { text: '👀', key: msg.key } });
+                return;
+            }
 
-            tribunal.votos[participant] = text.replace('!', ''); 
+            // Registra o voto limpo na memória ('culpado' ou 'inocente')
+            tribunal.votos[participant] = votoDigitado.replace('!', ''); 
+            
+            // Confirma pro usuário que o voto foi computado
             if (!isLid) await sock.sendMessage(sender, { react: { text: '⚖️', key: msg.key } });
+            
+            // Trava a execução para não cair no "Comando Inválido"
+            return;
         }
-
+        
         if (text.startsWith('!matar')) {
             const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
             
