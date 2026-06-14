@@ -259,27 +259,51 @@ async function connectToWhatsApp() {
             if (!msgCorpo) return;
 
             // ==========================================
-            // 👁️ VERIFICAÇÃO DEFINITIVA DE MÍDIA (RAIO-X)
+            // 👁️ O CÃO DE GUARDA CAÇA-MÍDIA (BLINDADO)
             // ==========================================
-            
-            // Transforma a mensagem INTEIRA em texto. 
-            // Não importa o quão fundo o WhatsApp esconda a mídia, os nomes não mudam.
-            const msgStr = JSON.stringify(msgCorpo);
+            let mandouViewOnce = false;
 
-            // Verifica se a palavra 'imageMessage' ou 'videoMessage' existe em qualquer lugar do código da mensagem
-            const temImagem = msgStr.includes('imageMessage');
-            const temVideo = msgStr.includes('videoMessage');
-            
-            // Verifica se a mensagem tem a tag de visualização única
-            const mandouViewOnce = msgStr.includes('viewOnce'); 
+            // Função farejadora: varre a mensagem inteira procurando a foto
+            const checarMidia = (obj) => {
+                if (!obj || typeof obj !== 'object') return false;
+                
+                const chaves = Object.keys(obj);
+                for (const chave of chaves) {
+                    // Trava anti-fraude: Ignora 'contextInfo' pra não aprovar quem apenas "respondeu" uma foto de outra pessoa
+                    if (chave === 'contextInfo' || chave === 'quotedMessage') continue;
 
-            // Se tiver imagem ou vídeo, a mídia é válida!
-            const midia = temImagem || temVideo;
+                    // Achou mídia nativa!
+                    if (chave === 'imageMessage' || chave === 'videoMessage' || chave === 'ptvMessage') {
+                        return true;
+                    }
+                    
+                    // Se for View Once, liga a flag e aprofunda a busca
+                    if (chave.toLowerCase().includes('viewonce')) {
+                        mandouViewOnce = true;
+                        return checarMidia(obj[chave]);
+                    }
+                    
+                    // Se o grupo tiver mensagens temporárias ligadas, a mídia fica escondida aqui
+                    if (chave === 'ephemeralMessage' || chave === 'message') {
+                        return checarMidia(obj[chave]);
+                    }
+                }
+                return false;
+            };
+
+            // Dispara o cão farejador
+            const midia = checarMidia(msgCorpo);
 
             // ==========================================
+
+            // Extrai o texto da apresentação caso a pessoa mande junto com a foto ou só o texto
+            const textoNaMensagem = msgCorpo.conversation || 
+                                    msgCorpo.extendedTextMessage?.text || 
+                                    msgCorpo.imageMessage?.caption || 
+                                    msgCorpo.videoMessage?.caption || "";
 
             const padraoApresentacao = /\|/g;
-            const enviouTextoCorreto = (text && (text.match(padraoApresentacao) || []).length >= 3);
+            const enviouTextoCorreto = (textoNaMensagem && (textoNaMensagem.match(padraoApresentacao) || []).length >= 3);
 
             const numeroExibicao = participant.split('@')[0];
 
@@ -287,7 +311,6 @@ async function connectToWhatsApp() {
                 let textoConfirmacao = `✅ *Cadastro confirmado!* 🎉\n\nFala, @${numeroExibicao}! Você mandou muito bem na apresentação. Bem-vindo(a) à elite do Bonde! 🚀🔥`;
                 let emojiReacao = '✅';
                 
-                // Se foi mídia E tem a tag de View Once, manda a zueira da visão biônica
                 if (midia && mandouViewOnce) {
                     textoConfirmacao = `🕵️‍♂️ *Visão Biônica Ativada!* 👀\n\nRelaxa, @${numeroExibicao}, eu consegui validar sua foto/vídeo de visualização única! Ninguém precisa ver, só o sistema! 🔒✨\n\n✅ *Cadastro 100% confirmado!* Bem-vindo(a) ao Bonde! 🚀🎉`;
                     emojiReacao = '🕵️‍♂️';
@@ -376,7 +399,7 @@ async function connectToWhatsApp() {
         }
 
         if (text.startsWith('!')) {
-            const comandosExistentes = ['!menu', '!todos', '!pix', '!imaginar', '!fantasmas', '!lembrete', '!apagar', '!decidir', '!cassino', '!conselho', '!resumo', '!regras', '!comprar', '!roleta', '!bafometro', '!verdade', '!fuga', '!corrida', '!macumba', '!calvo', '!qi', '!serasa', '!historico', '!fakenews', '!rinha', '!vasco', '!gravida', '!feio', '!clt', '!bola8', '!perfil', '!culpado', '!inocente', '!shippar',  '!julgar', '!loja', '!pesquisar', '!backup', '!dar_pontos', '!atacar', '!boss', '!rank', '!casar', '!casais', '!piada', '!avisoadm', '!descasar', '!emoji', '!sortear', '!cadastros', '!perguntas', '!jogar', '!forca', '!jogosoff', '!jogoson', '!limpar', '!fixar', '!status', '!link', '!tier', '!ranking', '!placar', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute', '!gado', '!corno', '!fofoca', '!roubar', '!cargos', '!comprar_cargo', '!dar_cargo'];
+            const comandosExistentes = ['!menu', '!todos', '!pix', '!imaginar', '!fantasmas', '!lembrete', '!apagar', '!decidir', '!cassino', '!conselho', '!resumo', '!regras', '!comprar', '!roleta', '!bafometro', '!verdade', '!fuga', '!corrida', '!macumba', '!calvo', '!qi', '!serasa', '!historico', '!fakenews', '!rinha', '!vasco', '!gravida', '!feio', '!clt', '!bola8', '!perfil', '!culpado', '!inocente', '!shippar', '!julgar', '!loja', '!pesquisar', '!backup', '!dar_pontos', '!atacar', '!boss', '!rank', '!casar', '!casais', '!piada', '!avisoadm', '!descasar', '!emoji', '!sortear', '!cadastros', '!perguntas', '!jogar', '!forca', '!jogosoff', '!jogoson', '!limpar', '!fixar', '!status', '!link', '!tier', '!ranking', '!placar', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute', '!gado', '!corno', '!fofoca', '!roubar', '!cargos', '!comprar_cargo', '!dar_cargo', '!pescar', '!loteria', '!garimpo', '!imposto', '!hacker', '!tinder', '!pecado', '!raiox', '!pobre', '!atestado', '!multa', '!chapeu', '!nomefunk', '!processo', '!urna'];
             const cmdDigitado = text.split(' ')[0]; 
             
             if (!comandosExistentes.includes(cmdDigitado)) {
@@ -419,7 +442,7 @@ async function connectToWhatsApp() {
             return await sock.sendMessage(sender, { text: "🔓 *JOGOS ATIVADOS!* Podem soltar a bagunça! 🎉", quoted: msg });
         }
 
-        const comandosDeJogo = ['!piada', '!casar', '!descasar', '!forca', '!penalti', '!sortear', '!emoji', '!jogar', '!musica', '!perguntas', '!roleta', '!fuga', '!corrida', '!cassino', '!bola8', '!shippar', '!decidir'];
+        const comandosDeJogo = ['!piada', '!casar', '!descasar', '!forca', '!penalti', '!sortear', '!emoji', '!jogar', '!perguntas', '!roleta', '!fuga', '!corrida', '!cassino', '!bola8', '!shippar', '!decidir', '!imaginar', '!pescar', '!loteria', '!garimpo', '!hacker', '!tinder', '!pecado', '!raiox', '!pobre', '!atestado', '!multa', '!chapeu', '!nomefunk', '!processo', '!urna'];
         if (!jogosLiberados && comandosDeJogo.some(cmd => text.startsWith(cmd))) {
             if (isAdmin) {
                 await sock.sendMessage(sender, { text: "🤖 Os jogos estão trancados, mas você é ADM, vou abrir uma exceção! 👑", quoted: msg });
@@ -483,13 +506,49 @@ async function connectToWhatsApp() {
 
         if (text === '!perguntas') {
             const quiz = [
-                { q: "Qual a capital da Austrália? (Dica: não é Sydney) 🦘", r: "canberra" },
-                { q: "Qual o elemento químico de símbolo 'W' na tabela periódica? 🧪", r: "tungstenio" },
-                { q: "Quem escreveu o clássico da literatura 'A Divina Comédia'? 📖", r: "dante alighieri" },
-                { q: "Qual o deserto mais árido do mundo, localizado no norte do Chile? 🏜️", r: "atacama" },
-                { q: "Qual o nome do menor osso do corpo humano, localizado no ouvido médio? 👂", r: "estribo" },
-                { q: "Em que ano ocorreu a queda do Muro de Berlim? 🧱", r: "1989" },
-                { q: "Qual a unidade de medida do Sistema Internacional para resistência elétrica? ⚡", r: "ohm" }
+                // GEOGRAFIA EXTREMA
+                { q: "Qual é o país com o maior número de ilhas no mundo? 🗺️", r: "suecia" },
+                { q: "Qual a capital de Burkina Faso? 🌍", r: "ouagadougou" },
+                { q: "Qual é o rio mais profundo do mundo? 🏞️", r: "congo" },
+                { q: "Em qual ilha Napoleão Bonaparte morreu no exílio? 🏝️", r: "santa helena" },
+                { q: "Qual é o menor país insular e república independente do mundo? 🏝️", r: "nauru" },
+                { q: "Qual a capital do Butão? 🇧🇹", r: "thimphu" },
+                { q: "Qual o lago navegável mais alto do mundo? ⛵", r: "titicaca" },
+                
+                // CIÊNCIA & NATUREZA EXTREMA
+                { q: "Qual é o metal mais caro e raro do mundo, superando o ouro e a platina? 💰", r: "rodio" },
+                { q: "Na biologia, qual enzima é responsável por 'descompactar' a dupla hélice do DNA? 🧬", r: "helicase" },
+                { q: "Qual é o animal mais resistente do mundo, capaz de sobreviver no vácuo do espaço? 🔬", r: "tardigrado" },
+                { q: "Quem formulou o Princípio da Incerteza na mecânica quântica? ⚛️", r: "heisenberg" },
+                { q: "Qual a estrela mais brilhante do céu noturno vista da Terra? ✨", r: "sirius" },
+                { q: "Qual a montanha mais alta do Sistema Solar, localizada em Marte? 🪐", r: "monte olimpo" },
+                { q: "Qual elemento químico é representado pelo símbolo 'Sb' na tabela periódica? 🧪", r: "antimonio" },
+                { q: "Qual glândula do corpo humano é frequentemente chamada de 'glândula mestre'? 🧠", r: "hipofise" },
+                { q: "Quem desenvolveu o cálculo infinitesimal de forma independente de Isaac Newton? 🧮", r: "leibniz" },
+                { q: "Qual é o metal líquido em temperatura ambiente além do mercúrio e frâncio? 🌡️", r: "galio" },
+
+                // HISTÓRIA & ARTE OBSCURA
+                { q: "Quem pintou a obra 'O Grito'? 🖼️", r: "edvard munch" },
+                { q: "Qual foi a primeira vacina criada na história da humanidade (contra qual doença)? 💉", r: "variola" },
+                { q: "Qual foi o imperador romano que supostamente nomeou seu cavalo como cônsul? 🐎", r: "caligula" },
+                { q: "Qual filósofo grego foi forçado a cometer suicídio bebendo cicuta? 🏛️", r: "socrates" },
+                { q: "Qual o nome do inventor da prensa de tipos móveis, que revolucionou a história da leitura? 📚", r: "gutenberg" },
+                { q: "Qual foi a guerra mais curta da história (durou cerca de 38 minutos)? ⚔️", r: "zanzibar" },
+                { q: "Qual cidade romana, além de Pompeia, foi completamente destruída pela erupção do Vesúvio? 🌋", r: "herculano" },
+                { q: "Quem foi o primeiro imperador a unificar a China (Dinastia Qin)? 🐉", r: "qin shi huang" },
+                { q: "Em que cidade italiana está localizada a obra 'A Última Ceia' de Da Vinci? 🎨", r: "milao" },
+                { q: "Qual tratado dividiu as terras recém-descobertas entre Portugal e Espanha em 1494? 📜", r: "tordesilhas" },
+
+                // MITOLOGIA & GERAIS
+                { q: "Na mitologia nórdica, qual o nome do esquilo que corre pela árvore Yggdrasil espalhando fofocas? 🐿️", r: "ratatoskr" },
+                { q: "Qual o nome do oceano supermassivo que existia na época do supercontinente Pangeia? 🌊", r: "pantalassa" },
+                { q: "Qual idioma tem o maior alfabeto do mundo, com 74 letras? 🗣️", r: "khmer" },
+                { q: "Qual é o nome da fobia de palavras muito longas? (Escreva exatamente a palavra sem acentos) 🔠", r: "hipopotomonstrosesquipedaliofobia" },
+                { q: "Qual o único mamífero capaz de voar de forma verdadeira e sustentada? 🦇", r: "morcego" },
+                { q: "Em que ano a União Soviética entrou em colapso oficialmente? 🇷🇺", r: "1991" },
+                { q: "Como se chama o medo irracional e persistente do número 13? 👻", r: "triscaidecafobia" },
+                { q: "Qual o nome do primeiro satélite artificial lançado ao espaço em 1957? 🛰️", r: "sputnik" },
+                { q: "Na mitologia grega, quem é o barqueiro que transporta as almas dos mortos pelo rio Estige? 🛶", r: "caronte" }
             ];
 
             const sorteada = quiz[Math.floor(Math.random() * quiz.length)];
@@ -497,7 +556,7 @@ async function connectToWhatsApp() {
             const msgQuiz = await sock.sendMessage(sender, { 
                 video: { url: 'https://media.tenor.com/OoxmND1_sEMAAAPo/batman-doubt.mp4' }, 
                 gifPlayback: true,
-                caption: `🧠 *QUIZ DO BONDE - NÍVEL AVANÇADO (VALENDO 30 PONTOS)* 🧠\n\n${sorteada.q}\n\n*Responda em cima desta mensagem!*`, 
+                caption: `🧠 *QUIZ DO BONDE - NÍVEL IMPOSSÍVEL (VALENDO 50 PONTOS)* 🧠\n\n${sorteada.q}\n\n*Responda em cima desta mensagem! O Google não vai te salvar a tempo!*`, 
             }, { quoted: msg });
             
             jogoPerguntas.ativo = true;
@@ -512,18 +571,20 @@ async function connectToWhatsApp() {
             if (respostaUsuario === respostaCerta) {
                 jogoPerguntas.ativo = false;
                 let placar = lerArquivoSeguro(arquivoPlacar);
-                placar[participant] = (placar[participant] || 0) + 30; 
+                
+                // Recompensa ajustada para 50 pontos!
+                placar[participant] = (placar[participant] || 0) + 50; 
                 fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
 
                 await sock.sendMessage(sender, { react: { text: '🏆', key: msg.key } });
                 await sock.sendMessage(sender, { 
-                    text: `🎉 BRABO! @${participant.split('@')[0]} ganhou 30 pontos! A resposta era: *${jogoPerguntas.resposta.toUpperCase()}*`, 
+                    text: `🎉 GENIAL! @${participant.split('@')[0]} transcendeu e ganhou 50 pontos! A resposta era: *${jogoPerguntas.resposta.toUpperCase()}*`, 
                     mentions: [participant], 
                     quoted: msg 
                 });
             } else {
                 await sock.sendMessage(sender, { react: { text: '❌', key: msg.key } });
-                await sock.sendMessage(sender, { text: `❌ Errou! Estuda mais, hein! 😂`, quoted: msg });
+                await sock.sendMessage(sender, { text: `❌ Errou feio! O QI da temperatura ambiente ataca novamente! 😂`, quoted: msg });
             }
         }
 
@@ -773,6 +834,9 @@ _Não perca tempo, compartilhe agora!_`.trim();
             await sock.sendMessage(sender, { react: { text: emojiSorteado, key: msg.key } });
         }
 
+        // ==========================================
+        // 📛 MENU PRINCIPAL DO BOT
+        // ==========================================
         if (text === '!menu') {
             const senderId = msg.key.participant || msg.key.remoteJid; 
             const dataAtual = new Date().toLocaleDateString('pt-BR');
@@ -790,9 +854,12 @@ _Não perca tempo, compartilhe agora!_`.trim();
  ┣ 🛒 !loja ➾ 💰 !roubar
  ┣ 💳 !comprar_cargo ➾ 🎁 !comprar
  ┣ 💸 !pix ➾ 🎰 !cassino
- ┗ 🏆 !ranking ➾ 🥇 !rank
+ ┣ 🎣 !pescar ➾ 🎟️ !loteria
+ ┣ ⛏️ !garimpo ➾ 🏆 !ranking
+ ┗ 🥇 !rank
 
 🎲 *DIVERSÃO & SORTE*
+ ┣ 🎨 !imaginar
  ┣ 👾 !jogar ➾ 🏎️ !fuga
  ┣ 🏇 !corrida ➾ 🔫 !roleta
  ┣ 💀 !forca ➾ ⚽ !penalti
@@ -816,8 +883,15 @@ _Não perca tempo, compartilhe agora!_`.trim();
  ┣ 🤥 !verdade ➾ 💸 !serasa
  ┣ 💼 !clt ➾ 🍼 !gravida
  ┣ ⚰️ !vasco ➾ 💻 !historico
- ┣ 🗞️ !fakenews ➾ 🧠 !conselho
- ┗ 📝 !resumo
+ ┣ 💻 !hacker ➾ 🔥 !tinder
+ ┣ 👿 !pecado ➾ 💀 !raiox
+ ┣ 🛒 !pobre ➾ 🗞️ !fakenews
+ ┗ 🧠 !conselho ➾ 📝 !resumo
+
+🎭 *FAKES & ROLEPLAY*
+ ┣ 🏥 !atestado ➾ 🚓 !multa
+ ┣ 🧙‍♂️ !chapeu ➾ 🎤 !nomefunk
+ ┗ ⚖️ !processo ➾ 🗳️ !urna
 
 ⚔️ *GUERRA & STATUS*
  ┣ 👹 !boss ➾ ⚔️ !atacar
@@ -828,9 +902,9 @@ _Não perca tempo, compartilhe agora!_`.trim();
  ┣ 🔊 !desmute ➾ 🔒 !fechar
  ┣ 🔓 !abrir ➾ 👑 !adm
  ┣ 🕹️ !jogoson ➾ 🚫 !jogosoff
- ┣ 💰 !dar_pontos ➾ 📣 !avisoadm
- ┣ 📋 !cadastros ➾ 📣 !todos
- ┗ 👻 !fantasmas
+ ┣ 💰 !dar_pontos ➾ 👹 !imposto
+ ┣ 📣 !avisoadm ➾ 📋 !cadastros
+ ┗ 📣 !todos ➾ 👻 !fantasmas
 
 🛠️ *SISTEMA*
  ┣ 🌤️ !clima ➾ 🔍 !pesquisar
@@ -1476,6 +1550,290 @@ _Não perca tempo, compartilhe agora!_`.trim();
             await sock.sendMessage(sender, { text: `🧟‍♂️ *ESCALA DA BELEZA* 🧟‍♂️\n\nO @${mention.split('@')[0]} é ${feiura}% FEIO!\n\n${diag}`, mentions: [mention] }, { quoted: msg });
         }
 
+        // ==========================================
+        // 🎰 JOGOS & ECONOMIA (GIRANDO OS PONTOS)
+        // ==========================================
+
+        if (text === '!pescar') {
+            let placar = lerArquivoSeguro(arquivoPlacar);
+            if ((placar[participant] || 0) < 15) return await sock.sendMessage(sender, { text: "❌ Você não tem 15 pontos nem pra comprar a isca! Vai trabalhar." }, { quoted: msg });
+            
+            placar[participant] -= 15;
+            const pescas = [
+                { item: "Uma bota velha furada 🥾", pontos: 0, msg: "Perdeu a isca!" },
+                { item: "Um pneu de Monza 1994 🚗", pontos: 0, msg: "Deu ruim!" },
+                { item: "Um lambari raquítico 🐟", pontos: 20, msg: "Dá pro gasto." },
+                { item: "Um Tambaqui de 10kg 🐠", pontos: 80, msg: "Boa pescaria!" },
+                { item: "Uma maleta de dinheiro boiando 💼", pontos: 250, msg: "Tá rico!" },
+                { item: "O BAIACU DE OURO LENDÁRIO 🐡✨", pontos: 500, msg: "MITOU DEMAIS!" }
+            ];
+            
+            await sock.sendMessage(sender, { react: { text: '🎣', key: msg.key } });
+            const sorteio = pescas[Math.floor(Math.random() * pescas.length)];
+            placar[participant] += sorteio.pontos;
+            fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
+            
+            await sock.sendMessage(sender, { 
+                text: `🎣 *PESCARIA DO BONDE*\n\nO @${participant.split('@')[0]} jogou a isca...\n\nPuxou! Caramba, você pescou: *${sorteio.item}*\n\n${sorteio.msg}\n💰 *Ganho:* +${sorteio.pontos} pontos!`, 
+                mentions: [participant] 
+            }, { quoted: msg });
+        }
+
+        if (text === '!loteria') {
+            let placar = lerArquivoSeguro(arquivoPlacar);
+            if ((placar[participant] || 0) < 50) return await sock.sendMessage(sender, { text: "❌ O bilhete da loteria custa 50 pontos. Você tá liso!" }, { quoted: msg });
+            
+            placar[participant] -= 50;
+            const ganhou = Math.random() < 0.02; // 2% de chance de ganhar
+            
+            await sock.sendMessage(sender, { react: { text: '🎟️', key: msg.key } });
+            
+            if (ganhou) {
+                placar[participant] += 5000;
+                fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
+                await sock.sendMessage(sender, { text: `🎉 *MEGA-SENA DA ZUEIRA!* 🎉\n\nINACREDITÁVEL! O @${participant.split('@')[0]} acertou os 6 números e ganhou o prêmio acumulado de *5.000 PONTOS*! O novo bilionário do grupo! 💰💎`, mentions: [participant] }, { quoted: msg });
+            } else {
+                fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
+                await sock.sendMessage(sender, { text: `🎟️ *Sorteio da Loteria...*\n\nSeu número: 42\nSorteado: 99\n\n💸 Você rasgou 50 pontos. Continue tentando enriquecer o dono da loteria! 😂`, mentions: [participant] }, { quoted: msg });
+            }
+        }
+
+        if (text === '!garimpo') {
+            let placar = lerArquivoSeguro(arquivoPlacar);
+            const agora = Date.now();
+            
+            await sock.sendMessage(sender, { react: { text: '⛏️', key: msg.key } });
+            
+            const eventos = Math.random();
+            if (eventos < 0.20) { // 20% de chance de morrer (Mute)
+                mutados[participant] = agora + 60000; // 1 minuto de mute
+                fs.writeFileSync(ARQUIVO_MUTADOS, JSON.stringify(mutados));
+                placar[participant] = Math.max(0, (placar[participant] || 0) - 100);
+                fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
+                
+                await sock.sendMessage(sender, { text: `💥 *BUMMMM!* 💥\n\nO @${participant.split('@')[0]} bateu a picareta numa bomba do Creeper! Perdeu 100 pontos e foi pro hospital (Mutado por 1 minuto). ⚰️`, mentions: [participant] }, { quoted: msg });
+            } else if (eventos < 0.60) { // 40% de achar ouro
+                placar[participant] = (placar[participant] || 0) + 150;
+                fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
+                await sock.sendMessage(sender, { text: `⛏️ O @${participant.split('@')[0]} desceu na mina e achou uma *Pepita de Ouro*! Ganhou 150 pontos! 🪙`, mentions: [participant] }, { quoted: msg });
+            } else { // 40% de achar nada
+                await sock.sendMessage(sender, { text: `⛏️ O @${participant.split('@')[0]} garimpou por 10 horas e só achou pedra e lama. Não ganhou nada! 🤡`, mentions: [participant] }, { quoted: msg });
+            }
+        }
+
+        if (text === '!imposto') {
+            if (!isAdmin) return await sock.sendMessage(sender, { text: "❌ Só a Elite (ADM) pode cobrar impostos da plebe! Senta lá." }, { quoted: msg });
+            
+            let placar = lerArquivoSeguro(arquivoPlacar);
+            let arrecadado = 0;
+            
+            for (const usuario in placar) {
+                // Tira 10% de todo mundo que tem mais de 0
+                if (placar[usuario] > 0) {
+                    const taxa = Math.floor(placar[usuario] * 0.10);
+                    placar[usuario] -= taxa;
+                    arrecadado += taxa;
+                }
+            }
+            fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
+            
+            await sock.sendMessage(sender, { react: { text: '👹', key: msg.key } });
+            await sock.sendMessage(sender, { text: `👹 *O LEÃO DO IMPOSTO CHEGOU!* 👹\n\nPor ordem dos ADMs, foi decretada a taxação do Bonde! *10% do saldo de TODOS OS MEMBROS* foi confiscado para a "manutenção do servidor" (Bolo no pote dos admins).\n\n💰 *Total rou... arrecadado:* ${arrecadado} pontos!\n\n_Faz o L!_ 😂` }, { quoted: msg });
+        }
+
+        // ==========================================
+        // 😈 EXPOSED E HUMILHAÇÃO AUTOMÁTICA
+        // ==========================================
+
+        if (text.startsWith('!hacker')) {
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione de quem você quer invadir o celular!" }, { quoted: msg });
+            
+            const arquivos = [
+                "Audio_choro_pela_ex.mp3", "como_ficar_rico_dormindo.pdf", "foto_murchando_a_barriga.jpg", 
+                "comprovante_pix_falso.png", "pesquisa_como_saber_se_sou_corno.txt", "video_dancinha_escondido.mp4",
+                "gemidao_do_zap_cortado.mp3", "simpatia_pra_ficar_bonito.docx"
+            ];
+            
+            // Pega 3 arquivos aleatórios diferentes
+            const sorteados = arquivos.sort(() => 0.5 - Math.random()).slice(0, 3);
+            
+            await sock.sendMessage(sender, { react: { text: '💻', key: msg.key } });
+            await sock.sendMessage(sender, { text: `💻 *INVASÃO CONCLUÍDA!* 💻\n\nExtraindo arquivos ocultos do celular do(a) @${mention.split('@')[0]}...\n\n📁 ${sorteados[0]}\n📁 ${sorteados[1]}\n📁 ${sorteados[2]}\n\nQue nojeira, cara... Apaga isso! 🤢`, mentions: [mention] }, { quoted: msg });
+        }
+
+        if (text.startsWith('!tinder')) {
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            if (!mention) return await sock.sendMessage(sender, { text: "❌ Marque o encalhado!" }, { quoted: msg });
+            
+            const bios = [
+                "'Moro com a mãe, fumo vape de chiclete e não tenho CNH.'",
+                "'Sou frio e calculista (na verdade só tenho medo de mulher).'",
+                "'Se não for pra pagar meu lanche, nem dá match.'",
+                "'Empreendedor digital (devendo 5 mil no Nubank).'",
+                "'Otaku fedido procurando alguém pra dividir a conta de luz.'"
+            ];
+            const motivos = [
+                "A foto de perfil parece foto de assaltante do Datena.",
+                "Mandou 'oi sumida' pra própria prima.",
+                "Usa sapatênis com meia soquete.",
+                "Colocou foto sem camisa no espelho sujo do banheiro."
+            ];
+            
+            await sock.sendMessage(sender, { react: { text: '🔥', key: msg.key } });
+            await sock.sendMessage(sender, { text: `🔥 *PERFIL DO TINDER VAZADO* 🔥\n\n👤 *Nome:* @${mention.split('@')[0]}\n📝 *Bio:* ${bios[Math.floor(Math.random() * bios.length)]}\n\n❌ *Matches na semana:* 0%\n⚠️ *Motivo da rejeição:* ${motivos[Math.floor(Math.random() * motivos.length)]}`, mentions: [mention] }, { quoted: msg });
+        }
+
+        if (text.startsWith('!pecado')) {
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            if (!mention) return await sock.sendMessage(sender, { text: "❌ Marque o pecador!" }, { quoted: msg });
+            
+            const chance = Math.floor(Math.random() * 51) + 50; // Chance entre 50% e 100% de ir pro inferno
+            const pecados = [
+                "Colocou feijão por baixo do arroz no prato.",
+                "Não deu bom dia pro porteiro.",
+                "Fugiu do agiota usando identidade falsa.",
+                "Roubou WiFi do vizinho e ainda reclamou que tava lento.",
+                "Fingiu que tava dormindo pra não ceder o lugar no ônibus.",
+                "Falou mal de cachorro caramelo na internet."
+            ];
+            
+            await sock.sendMessage(sender, { react: { text: '👿', key: msg.key } });
+            await sock.sendMessage(sender, { text: `👿 *TRIBUNAL DO CAPIROTO* 👿\n\nO(a) @${mention.split('@')[0]} tem *${chance}%* de chance de ir de tobogã pro inferno!\n\n🔥 *Último pecado cometido:* ${pecados[Math.floor(Math.random() * pecados.length)]}`, mentions: [mention] }, { quoted: msg });
+        }
+
+        if (text.startsWith('!raiox')) {
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            if (!mention) return await sock.sendMessage(sender, { text: "❌ Marque o paciente!" }, { quoted: msg });
+            
+            const diag = [
+                "10% serragem, 40% música do Tik Tok, 50% vento.",
+                "99% cachaça e 1% de vontade de trabalhar.",
+                "Um macaco batendo pratos e teia de aranha.",
+                "Apenas um eco infinito dizendo 'onde eu tô?'.",
+                "80% fofoca retida, risco de explosão!"
+            ];
+            
+            await sock.sendMessage(sender, { react: { text: '💀', key: msg.key } });
+            await sock.sendMessage(sender, { text: `💀 *EXAME DE RAIO-X* 💀\n\nAnalisando o crânio do(a) @${mention.split('@')[0]}...\n\n⚠️ *Resultado do exame:* Encontrado ${diag[Math.floor(Math.random() * diag.length)]}\n\n_Recomenda-se internação imediata!_`, mentions: [mention] }, { quoted: msg });
+        }
+
+        if (text.startsWith('!pobre')) {
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            if (!mention) return await sock.sendMessage(sender, { text: "❌ Marque o lascado!" }, { quoted: msg });
+            
+            const itens = [
+                "Pote de sorvete com feijão dentro no congelador.",
+                "Havaiana consertada com prego.",
+                "Copo de requeijão sendo usado como copo de visita.",
+                "Tubo de pasta de dente cortado ao meio pra render.",
+                "Carregador de celular enrolado com fita isolante."
+            ];
+            
+            await sock.sendMessage(sender, { react: { text: '🛒', key: msg.key } });
+            await sock.sendMessage(sender, { text: `🛒 *AUDITORIA FINANCEIRA* 🛒\n\nNível de pobreza do(a) @${mention.split('@')[0]}: *100% LASCADO PREMIUM!*\n\n🔎 *Evidência encontrada na casa:* ${itens[Math.floor(Math.random() * itens.length)]}`, mentions: [mention] }, { quoted: msg });
+        }
+
+        // ==========================================
+        // 🎭 FAKES E ROLEPLAY
+        // ==========================================
+
+        if (text.startsWith('!atestado')) {
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            if (!mention) return await sock.sendMessage(sender, { text: "❌ Para quem é o atestado?" }, { quoted: msg });
+            
+            const dias = Math.floor(Math.random() * 14) + 1;
+            const motivos = [
+                "Luxação no polegar de tanto rolar o feed do Instagram.",
+                "Alergia severa à carteira de trabalho.",
+                "Trauma psicológico após perder 50 pontos no cassino do bot.",
+                "Intoxicação alimentar após comer churrasco de pombo na praça.",
+                "Miopia aguda: não está conseguindo enxergar motivo pra trabalhar hoje."
+            ];
+            
+            await sock.sendMessage(sender, { react: { text: '🏥', key: msg.key } });
+            await sock.sendMessage(sender, { text: `🏥 *CLÍNICA MÉDICA DO BONDE* 🏥\n\nAtesto, para os devidos fins, que o(a) paciente @${mention.split('@')[0]} necessita de *${dias} dias de afastamento* de suas atividades.\n\n🩺 *CID / Motivo:* ${motivos[Math.floor(Math.random() * motivos.length)]}\n\n_Ass: Dr. NeymarBOT_`, mentions: [mention] }, { quoted: msg });
+        }
+
+        if (text.startsWith('!multa')) {
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            if (!mention) return await sock.sendMessage(sender, { text: "❌ Marque o infrator!" }, { quoted: msg });
+            
+            const motivos = [
+                "Trafegar pelo grupo mandando 'bom dia' com foto de florzinha.",
+                "Excesso de lerdeza para entender uma piada.",
+                "Estacionar na conversa alheia sem pedir licença.",
+                "Ultrapassar o limite de chatice permitido por lei.",
+                "Fugir do pedágio da fofoca (leu a treta e não comentou)."
+            ];
+            
+            await sock.sendMessage(sender, { react: { text: '🚓', key: msg.key } });
+            await sock.sendMessage(sender, { text: `🚓 *DEPARTAMENTO DE TRÂNSITO DO ZAP* 🚓\n\n*AUTO DE INFRAÇÃO*\nInfrator(a): @${mention.split('@')[0]}\n\n🛑 *Motivo:* ${motivos[Math.floor(Math.random() * motivos.length)]}\n💸 *Penalidade:* Rir de todas as piadas do ADM por 1 semana!\n\n_Recorrer da multa resultará em BAN._`, mentions: [mention] }, { quoted: msg });
+        }
+
+        if (text.startsWith('!chapeu')) {
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            const alvo = mention || participant; // Pode ver de si mesmo ou dos outros
+            
+            const casas = [
+                "🏰 *ZÉ DROGUINHA DA PRAÇA* (Coragem e vape)",
+                "🏰 *FALSIDADE SONSERINA* (Fofoca e bloqueio no Zap)",
+                "🏰 *GADO LUFA-LUFA* (Corno manso e coração partido)",
+                "🏰 *NERDOLA CORVINAL* (QI alto e 0 contato feminino)"
+            ];
+            
+            await sock.sendMessage(sender, { react: { text: '🧙‍♂️', key: msg.key } });
+            await sock.sendMessage(sender, { text: `🧙‍♂️ *O CHAPÉU SELETOR BRASILEIRO* 🧙‍♂️\n\n"Hummm... difícil, muito difícil. Vejo muita lerdeza e um histórico de pesquisa duvidoso..."\n\nO destino de @${alvo.split('@')[0]} é a casa:\n\n👉 ${casas[Math.floor(Math.random() * casas.length)]}!`, mentions: [alvo] }, { quoted: msg });
+        }
+
+        if (text.startsWith('!nomefunk')) {
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            const alvo = mention || participant;
+            
+            const mcs = ["Cleyton", "Brisa", "Menor", "Doguinha", "Mandrake", "Princesa", "Gordão", "Magrao"];
+            const hits = [
+                "Sarra na Garupa da Minha Biz",
+                "Descendo no Grau com o Agiota",
+                "Chifre não Dói, o que Dói é a Fatura",
+                "Empina a Rabeta no Celta Preto",
+                "O Pix do Patrão Caiu na Minha Conta"
+            ];
+            
+            await sock.sendMessage(sender, { react: { text: '🎤', key: msg.key } });
+            await sock.sendMessage(sender, { text: `🎤 *GERADOR DE FUNKEIRO* 🎤\n\nSe @${alvo.split('@')[0]} fosse pro mundo do funk...\n\n😎 *Nome Artístico:* MC ${mcs[Math.floor(Math.random() * mcs.length)]}\n📀 *Música de Ouro:* "${hits[Math.floor(Math.random() * hits.length)]}"`, mentions: [alvo] }, { quoted: msg });
+        }
+
+        if (text.startsWith('!processo')) {
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            if (!mention) return await sock.sendMessage(sender, { text: "❌ Marque o réu do processo!" }, { quoted: msg });
+            
+            const crimes = [
+                "Danos morais após mandar áudio de 4 minutos sem avisar o assunto.",
+                "Estelionato sentimental (iludiu 3 no grupo e não beijou ninguém).",
+                "Formação de quadrilha para roubar figurinha e não dar os créditos.",
+                "Falsidade ideológica (usar filtro de cachorro no Instagram em pleno 2024)."
+            ];
+            
+            await sock.sendMessage(sender, { react: { text: '⚖️', key: msg.key } });
+            await sock.sendMessage(sender, { text: `⚖️ *TRIBUNAL DE JUSTIÇA DO WHATSAPP* ⚖️\n\n*MANDADO DE INTIMAÇÃO*\n\nO(A) senhor(a) @${mention.split('@')[0]} está sendo oficialmente processado(a) no artigo 171 do código da Zueira.\n\n📜 *Acusação:* ${crimes[Math.floor(Math.random() * crimes.length)]}\n\n_Compareça à delegacia do Bonde imediatamente!_`, mentions: [mention] }, { quoted: msg });
+        }
+
+        if (text.startsWith('!urna')) {
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            if (!mention) return await sock.sendMessage(sender, { text: "❌ Marque o eleitor!" }, { quoted: msg });
+            
+            const candidatos = [
+                "Tião Borracheiro (Partido do Litrão - PL)",
+                "Cleyton do Grau (Partido da Fuga - PF)",
+                "Dona Neide da Fofoca (Partido da Janela - PJ)",
+                "Cachorro Caramelo (Partido dos Vira-Latas - PVL)",
+                "Agiota Amigo (Partido do Juros Alto - PJA)"
+            ];
+            
+            await sock.sendMessage(sender, { react: { text: '🗳️', key: msg.key } });
+            await sock.sendMessage(sender, { text: `🗳️ *TRIBUNAL SUPERIOR ELEITORAL (HACKEADO)* 🗳️\n\nQuebrando o sigilo eleitoral do(a) @${mention.split('@')[0]}...\n\n✅ *Voto confirmado para vereador:* ${candidatos[Math.floor(Math.random() * candidatos.length)]}\n\n_O Brasil que a gente quer começa aqui!_ 🇧🇷😂`, mentions: [mention] }, { quoted: msg });
+        }
+
         if (text.startsWith('!clt')) {
             const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
             if (!mention) return await sock.sendMessage(sender, { text: "❌ Marque o vagabundo que precisa de emprego!" }, { quoted: msg });
@@ -1843,10 +2201,13 @@ _Não perca tempo, compartilhe agora!_`.trim();
             await sock.sendMessage(sender, { text: textoRegras }, { quoted: msg });
         }
 
+        // ==========================================
+        // 🔪 SISTEMA DE ELIMINAÇÃO (!matar) - MODO FATALITY
+        // ==========================================
         if (text.startsWith('!matar')) {
             const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
             
-            if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione alguém para eliminar, covarde!", quoted: msg });
+            if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione alguém para eliminar, covarde! Vai bater no vento?", quoted: msg });
             
             const isDono = mention.includes('5527992997083');
             const isAdm = groupAdmins.includes(mention);
@@ -1854,34 +2215,133 @@ _Não perca tempo, compartilhe agora!_`.trim();
 
             if (isAdm || isDono || isBot) {
                 return await sock.sendMessage(sender, { 
-                    text: "❌ *TENTATIVA DE HOMICÍDIO FALHA:* Você não tem autorização para tocar na Elite ou no Bot! 🛡️", 
+                    text: "🛡️ *TENTATIVA DE HOMICÍDIO FALHA!* 🛡️\n\nO colete à prova de balas da Elite refletiu o seu ataque! Você tomou um contra-ataque e quase foi de arrasta pra cima. Mexe com quem tá quieto!", 
                     quoted: msg 
                 });
             }
 
-            if (mention === participant) return await sock.sendMessage(sender, { text: "❌ Quer cometer suicídio? Procure ajuda, maluco! 😂", quoted: msg });
+            if (mention === participant) return await sock.sendMessage(sender, { text: "❌ Quer cometer suicídio? Procure terapia, maluco! Aqui a gente só elimina os outros. 😂", quoted: msg });
 
             const autor = participant.split('@')[0];
             const alvo = mention.split('@')[0];
             
-            const frasesMatar = [
-                `O @${autor} mandou o @${alvo} de arrasta pra cima! Que vacilo, hein? 💀`,
-                `Vixi... @${autor} não teve piedade e eliminou o @${alvo} do mapa! ⚰️`,
-                `O @${autor} decidiu que o @${alvo} não precisava mais respirar. Que maldade! 🗡️`,
-                `@${autor} aplicou o golpe final no @${alvo}. RIP para esse guerreiro! 🪦`,
-                `Game Over para o @${alvo}! O @${autor} deu um fim na história dele aqui. 😂`,
-                `O @${autor} acabou de fazer uma limpa no @${alvo}. Tá com Deus agora! 👻`,
-                `@${autor} deletou o @${alvo} da existência com requintes de crueldade! 🔪`,
-                `O @${autor} enterrou o @${alvo} vivo. Que fase, hein? ⚱️`
+            // Mortes nível Brasil-Sil-Sil
+            const mortesBrutais = [
+                `🚗 O @${autor} atropelou o @${alvo} com um Celta rebaixado tocando funk no talo! Não sobrou nem o chinelo.`,
+                `🧠 @${autor} amarrou o @${alvo} numa cadeira e o obrigou a ouvir 10 horas de podcast de coach. O cérebro derreteu!`,
+                `🏴‍☠️ *FOI JOGAR NO VASCO!* O @${autor} comprou a passagem e despachou o @${alvo} pro gigante da colina. Descanse em paz!`,
+                `🥋 O @${autor} deu uma voadora com os dois pés no peito do @${alvo} estilo Lindomar, o Sub-Zero Brasileiro!`,
+                `🍻 @${autor} colocou chumbinho no litrão de Kaiser do @${alvo}. Caiu duro na mesa do bar de boca aberta!`,
+                `💣 O @${autor} convenceu o @${alvo} de que desarmar uma bomba com um garfo era uma boa ideia. Virou purê!`,
+                `🩸 *FATALITY!* O @${autor} arrancou a espinha dorsal do @${alvo} no meio do grupo e ainda tirou selfie pro Instagram!`,
+                `🚀 O @${autor} amarrou o @${alvo} num foguete do Elon Musk e mandou direto pro sol. Churrasco garantido!`,
+                `🐕 O @${autor} soltou 3 Pinschers raivosos em cima do @${alvo}. Apenas os ossos foram encontrados.`
             ];
 
-            const sorteioMatar = frasesMatar[Math.floor(Math.random() * frasesMatar.length)];
-            const linkGifMatar = "https://media.tenor.com/3gus0SGhiEIAAAPo/cool-beans.mp4";
+            // As últimas palavras antes de ir pro caixão
+            const ultimasPalavras = [
+                "A culpa é da minha internet que tava com lag...",
+                "Apaguem o meu histórico do navegador, por favor!",
+                "Eu só queria um Pix de 20 reais...",
+                "Pelo menos eu não sou calvo...",
+                "Foi o lag, mano, juro...",
+                "Vasco da Gama...",
+                "Eu volto pra assombrar vocês!"
+            ];
 
+            // Sorteia as frases
+            const causaMortis = mortesBrutais[Math.floor(Math.random() * mortesBrutais.length)];
+            const palavraFinal = ultimasPalavras[Math.floor(Math.random() * ultimasPalavras.length)];
+            
+            // Roleta de GIFs engraçados de ação/luta/explosão
+            const gifs = [
+                "https://media.tenor.com/3gus0SGhiEIAAAPo/cool-beans.mp4", // O seu original
+                "https://media.tenor.com/Ce8ZMfAcjdoAAAPo/anime.mp4",    // Atropelamento
+                "https://media.tenor.com/tN5MkB9Q_jYAAAPo/dean-supernatural.mp4" // Homer Simpson
+            ];
+            const gifSorteado = gifs[Math.floor(Math.random() * gifs.length)];
+
+            // Monta o relatório policial
+            const boletimOcorrencia = `🚨 *BOLETIM DE OCORRÊNCIA* 🚨\n\n💀 *Causa Mortis:*\n${causaMortis}\n\n💬 *Últimas palavras do @${alvo}:*\n_“${palavraFinal}”_\n\n⚰️ *Status:* Foi de base.`;
+
+            // Envia a execução pro grupo
+            await sock.sendMessage(sender, { react: { text: '🔪', key: msg.key } });
             await sock.sendMessage(sender, { 
-                video: { url: linkGifMatar }, 
+                video: { url: gifSorteado }, 
                 gifPlayback: true,
-                caption: `⚖️ *RELATÓRIO DE ÓBITO*\n\n${sorteioMatar}`, 
+                caption: boletimOcorrencia, 
+                mentions: [participant, mention] 
+            }, { quoted: msg });
+        }
+
+        // ==========================================
+        // 🥊 SISTEMA DE PORRADA (!socar) - MODO UFC BRASIL
+        // ==========================================
+        if (text.startsWith('!socar')) {
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            
+            if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione alguém para encher de porrada! Vai ficar socando o ar?", quoted: msg });
+            
+            const isDono = mention.includes('5527992997083');
+            const isAdm = groupAdmins.includes(mention);
+            const isBot = mention.includes(sock.user.id.split(':')[0]);
+
+            if (isAdm || isDono || isBot) {
+                return await sock.sendMessage(sender, { 
+                    text: "🛡️ *TENTATIVA DE AGRESSÃO FALHA!* 🛡️\n\nA Elite do grupo tem reflexos de ninja. Você tentou dar um soco, errou miseravelmente e tomou uma rasteira. Fica esperto! 🥋", 
+                    quoted: msg 
+                });
+            }
+
+            if (mention === participant) return await sock.sendMessage(sender, { text: "❌ Tá se batendo, doido? Vai procurar um psicólogo! Clube da Luta é só no cinema. 🤡", quoted: msg });
+
+            const autor = participant.split('@')[0];
+            const alvo = mention.split('@')[0];
+            
+            // Socos nível Brasil-Sil-Sil
+            const socosBrutais = [
+                `🥊 O @${autor} deu um cruzado de direita no @${alvo} estilo Popó derrubando o Bambam! Durou nem 36 segundos!`,
+                `🩴 @${autor} tirou a Havaiana de pau e desceu a lenha na cara do @${alvo}! A marca do chinelo ficou cravada na testa!`,
+                `🐉 O @${autor} encaixou um *Shoryuken* perfeito no queixo do @${alvo}. Voou até o teto e caiu desmontado!`,
+                `🖐️💥 O @${autor} deu um tapa de mão aberta no @${alvo} que estalou e ensurdeceu o grupo inteiro!`,
+                `🪑 BRIGA DE BAR! O @${autor} pegou uma cadeira amarela de plástico da Skol e quebrou nas costas do @${alvo}!`,
+                `🥣 O @${autor} acertou um soco direto nos dentes do @${alvo}. Vai ter que jantar sopa de canudinho por um mês!`,
+                `🌪️ @${autor} meteu um combo de 35 hits no @${alvo} igual no Mortal Kombat. Flawless Victory!`,
+                `👜 O @${autor} perdeu a paciência e começou a dar bolsada na cara do @${alvo} no meio da rua. Que humilhação!`
+            ];
+
+            // A reação (choradeira) de quem apanhou
+            const reacoes = [
+                "Ai, minha cara não! Eu trabalho com a minha beleza!",
+                "Peraí mano, meu óculos caiu! Tamo cego!",
+                "Eu deixei você bater pra não te humilhar na frente da galera...",
+                "Você bate fofo, tá doendo nada... (disse segurando o choro)",
+                "Mããããe, vem ver o que o covarde fez comigo!",
+                "Calma calabreso, pra que tanta agressividade?",
+                "Isso é injusto, eu tava com o controle do videogame desconectado!"
+            ];
+
+            // Sorteia as frases
+            const golpe = socosBrutais[Math.floor(Math.random() * socosBrutais.length)];
+            const reacaoFinal = reacoes[Math.floor(Math.random() * reacoes.length)];
+            
+            // Roleta de GIFs engraçados de porrada/tapa
+            const gifsSoco = [
+                "https://media.tenor.com/scEQBySFfUMAAAPo/markiplier.mp4", // Batman dando tapa no Robin
+                "https://media.tenor.com/4p0TgJHX69sAAAPo/punching-fight.mp4", // Soco épico de anime
+                "https://media.tenor.com/4gk1E75rDNYAAAPo/cat-punch.mp4", // Tapa engraçado na cara
+                "https://media.tenor.com/uuqTsRLtrzAAAAPo/murro-punch.mp4" // Soco clássico de boxe no queixo
+            ];
+            const gifSorteado = gifsSoco[Math.floor(Math.random() * gifsSoco.length)];
+
+            const ringueDaZueira = `🥊 *CLUBE DA LUTA DO BONDE* 🥊\n\n${golpe}\n\n🤕 *Reação do @${alvo}:*\n_“${reacaoFinal}”_\n\n🏥 *Status:* Precisando de gelo.`;
+
+            // Envia a porrada pro grupo
+            await sock.sendMessage(sender, { react: { text: '🥊', key: msg.key } });
+            await sock.sendMessage(sender, { 
+                video: { url: gifSorteado }, 
+                gifPlayback: true,
+                caption: ringueDaZueira, 
                 mentions: [participant, mention] 
             }, { quoted: msg });
         }
@@ -2195,28 +2655,69 @@ _Não perca tempo, compartilhe agora!_`.trim();
             await sock.sendMessage(sender, { text: texto, mentions: listaMentions, quoted: msg });
         }
 
+        // ==========================================
+        // 💋 SISTEMA DE ROMANCE (!beijar) - CENA DE NOVELA
+        // ==========================================
         if (text.startsWith('!beijar')) {
             const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
-            if (mention) {
-                const quemBeija = participant.split('@')[0];
-                const quemRecebe = mention.split('@')[0];
-                const frasesBeijo = [
-                    `O @${quemBeija} está dando um beijão no @${quemRecebe}! Que clima de romance... 💋`,
-                    `Oh lá lá! O @${quemBeija} tascou um beijo apaixonado no @${quemRecebe}! 👩‍❤️‍💋‍👨`,
-                    `O amor está no ar! @${quemBeija} beijou o @${quemRecebe} e deixou todo mundo sem graça. 😍`,
-                    `Clima de romance! @${quemBeija} e @${quemRecebe} protagonizaram um beijão de cinema! 💘`
-                ];
-                const sorteioBeijo = frasesBeijo[Math.floor(Math.random() * frasesBeijo.length)];
-                
-                await sock.sendMessage(sender, { 
-                    video: { url: "https://media.tenor.com/eCNrTq7wOpgAAAPo/kiss.mp4" }, 
-                    gifPlayback: true,
-                    caption: sorteioBeijo, 
-                    mentions: [participant, mention] 
-                }, { quoted: msg }); 
-            } else {
-                await sock.sendMessage(sender, { text: "❌ Mencione alguém para beijar!", quoted: msg });
-            }
+            
+            if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione alguém para beijar! Vai ficar beijando a parede do grupo?", quoted: msg });
+            
+            if (mention === participant) return await sock.sendMessage(sender, { text: "❌ Quer beijar o espelho, narcisista? Vai arrumar um contatinho real! 😂", quoted: msg });
+            
+            const isBot = mention.includes(sock.user.id.split(':')[0]);
+            if (isBot) return await sock.sendMessage(sender, { text: "🤖 Opa, tira o bico pra lá! Sou um bot de respeito, puro e feito de código. Tenta a sorte com os humanos!", quoted: msg });
+
+            const autor = participant.split('@')[0];
+            const alvo = mention.split('@')[0];
+            
+            // Beijos nível Brasil-Sil-Sil
+            const beijosZueiros = [
+                `💋 O @${autor} encurralou o @${alvo} e tascou um beijo *desentupidor de pia*! Quase sugou a alma da pessoa!`,
+                `🎬 *BEIJO TÉCNICO!* @${autor} deu um beijão de novela das 9 no @${alvo}. O grupo inteiro parou de mandar mensagem pra assistir!`,
+                `🧅 Coragem! O @${autor} tinha acabado de comer pastel de cebola, mas o amor falou mais alto e roubou um beijo do @${alvo}!`,
+                `🧛‍♂️ *Beijo de vampiro!* O @${autor} foi dar um beijinho inocente no pescoço do @${alvo} e acabou deixando um chupão daqueles!`,
+                `🍻 Com bafo de litrão quente e coração partido, o @${autor} agarrou o @${alvo} no meio da pista. Que cena deprimente (e romântica)!`,
+                `👅 Carente demais! O @${autor} deu uma lambida na cara do @${alvo} estilo cachorro caramelo pedindo carinho!`,
+                `👩‍❤️‍💋‍👨 O clima esquentou! @${autor} pegou o @${alvo} de jeito e deram um beijo cinematográfico na chuva!`,
+                `🫣 O @${autor} tentou dar um beijo de cinema, mas errou a mira e beijou a orelha do @${alvo}. Que constrangimento...`
+            ];
+
+            // A reação de quem recebeu o beijo
+            const reacoes = [
+                "Eca! Alguém me dá um Listerine, pelo amor de Deus!",
+                "Até que enfim! Já tava achando que você ia enrolar o ano todo...",
+                "Mãe, tô namorando! Já vou olhar o preço das alianças. 💍",
+                "Gente, que beijo de liquidificador foi esse? Fiquei tonto... 😵‍💫",
+                "Vou ter que lavar minha boca com sabão em pó Omo.",
+                "Eita... bateu até uma química aqui. Vamo de novo pro cantinho? 😏",
+                "Me solta, doido! Eu só vim aqui pra pegar figurinha!",
+                "Nossa, beija bem demais... tô até com as pernas bambas!"
+            ];
+
+            // Sorteia as frases
+            const cena = beijosZueiros[Math.floor(Math.random() * beijosZueiros.length)];
+            const reacaoFinal = reacoes[Math.floor(Math.random() * reacoes.length)];
+            
+            // Roleta de GIFs (Românticos, Engraçados e Bizarros)
+            const gifsBeijo = [
+                "https://media.tenor.com/eCNrTq7wOpgAAAPo/kiss.mp4", // O seu original apaixonado
+                "https://media.tenor.com/TDH8IWrrj8EAAAPo/passionate-kiss-kiss.mp4", // Cachorro lambendo a tela
+                "https://media.tenor.com/N57Xg6F8-vYAAAPo/monke.mp4", // Beijão exagerado de anime
+                "https://media.tenor.com/2ES7YijqoOwAAAPo/kiss.mp4" // Sapo mandando beijo / bico
+            ];
+            const gifSorteado = gifsBeijo[Math.floor(Math.random() * gifsBeijo.length)];
+
+            const roteiroRomance = `🎬 *CENA DE NOVELA DO BONDE* 🎬\n\n${cena}\n\n💭 *Reação do @${alvo}:*\n_“${reacaoFinal}”_\n\n💘 *Status:* O amor está no ar (ou a vergonha alheia).`;
+
+            // Envia a cena pro grupo
+            await sock.sendMessage(sender, { react: { text: '💋', key: msg.key } });
+            await sock.sendMessage(sender, { 
+                video: { url: gifSorteado }, 
+                gifPlayback: true,
+                caption: roteiroRomance, 
+                mentions: [participant, mention] 
+            }, { quoted: msg });
         }
 
         if (text.startsWith('!corno')) {
