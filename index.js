@@ -30,6 +30,12 @@ const cooldownRoubo = {}; // Armazena o timestamp do último roubo
 let membrosPendentes = {}; // { jid: timestamp }
 const cacheAdmins = {}; // <--- SÓ ADICIONAR ISSO AQUI
 
+
+let jogoBomba = { ativo: false, comQuem: null, timer: null };
+let jogoAssalto = { ativo: false, equipe: [], timer: null };
+let jogoDescubra = { ativo: false, original: "", idMensagem: null, timer: null };
+let jogoDuelo = { ativo: false, p1: null, p2: null, valor: 0, timer: null };
+
 async function getProfilePic(sock, jid) {
     try {
         const ppUrl = await sock.profilePictureUrl(jid, 'image');
@@ -399,8 +405,7 @@ async function connectToWhatsApp() {
         }
 
         if (text.startsWith('!')) {
-            const comandosExistentes = ['!menu', '!todos', '!pix', '!imaginar', '!fantasmas', '!lembrete', '!apagar', '!decidir', '!cassino', '!conselho', '!resumo', '!regras', '!comprar', '!roleta', '!bafometro', '!verdade', '!fuga', '!corrida', '!macumba', '!calvo', '!qi', '!serasa', '!historico', '!fakenews', '!rinha', '!vasco', '!gravida', '!feio', '!clt', '!bola8', '!perfil', '!culpado', '!inocente', '!shippar', '!julgar', '!loja', '!pesquisar', '!backup', '!dar_pontos', '!atacar', '!boss', '!rank', '!casar', '!casais', '!piada', '!avisoadm', '!descasar', '!emoji', '!sortear', '!cadastros', '!perguntas', '!jogar', '!forca', '!jogosoff', '!jogoson', '!limpar', '!fixar', '!status', '!link', '!tier', '!ranking', '!placar', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute', '!gado', '!corno', '!fofoca', '!roubar', '!cargos', '!comprar_cargo', '!dar_cargo', '!pescar', '!loteria', '!garimpo', '!imposto', '!hacker', '!tinder', '!pecado', '!raiox', '!pobre', '!atestado', '!multa', '!chapeu', '!nomefunk', '!processo', '!urna'];
-            const cmdDigitado = text.split(' ')[0]; 
+const comandosExistentes = ['!menu', '!todos', '!pix', '!imaginar', '!fantasmas', '!lembrete', '!apagar', '!decidir', '!cassino', '!conselho', '!resumo', '!regras', '!comprar', '!roleta', '!bafometro', '!verdade', '!fuga', '!corrida', '!macumba', '!calvo', '!qi', '!serasa', '!historico', '!fakenews', '!rinha', '!vasco', '!gravida', '!feio', '!clt', '!bola8', '!perfil', '!culpado', '!inocente', '!shippar', '!julgar', '!loja', '!pesquisar', '!backup', '!dar_pontos', '!atacar', '!boss', '!rank', '!casar', '!casais', '!piada', '!avisoadm', '!descasar', '!emoji', '!sortear', '!cadastros', '!perguntas', '!jogar', '!forca', '!jogosoff', '!jogoson', '!limpar', '!fixar', '!status', '!link', '!tier', '!ranking', '!placar', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute', '!gado', '!corno', '!fofoca', '!roubar', '!cargos', '!comprar_cargo', '!dar_cargo', '!pescar', '!loteria', '!garimpo', '!imposto', '!hacker', '!tinder', '!pecado', '!raiox', '!pobre', '!atestado', '!multa', '!chapeu', '!nomefunk', '!processo', '!urna', '!bicho', '!bomba', '!passar', '!assalto', '!entrar', '!descubra', '!duelo', '!aceitarduelo'];            const cmdDigitado = text.split(' ')[0]; 
             
             if (!comandosExistentes.includes(cmdDigitado)) {
                 await sock.sendMessage(sender, { react: { text: '🤦‍♂️', key: msg.key } });
@@ -442,8 +447,7 @@ async function connectToWhatsApp() {
             return await sock.sendMessage(sender, { text: "🔓 *JOGOS ATIVADOS!* Podem soltar a bagunça! 🎉", quoted: msg });
         }
 
-        const comandosDeJogo = ['!piada', '!casar', '!descasar', '!forca', '!penalti', '!sortear', '!emoji', '!jogar', '!perguntas', '!roleta', '!fuga', '!corrida', '!cassino', '!bola8', '!shippar', '!decidir', '!imaginar', '!pescar', '!loteria', '!garimpo', '!hacker', '!tinder', '!pecado', '!raiox', '!pobre', '!atestado', '!multa', '!chapeu', '!nomefunk', '!processo', '!urna'];
-        if (!jogosLiberados && comandosDeJogo.some(cmd => text.startsWith(cmd))) {
+const comandosDeJogo = ['!piada', '!casar', '!descasar', '!forca', '!penalti', '!sortear', '!emoji', '!jogar', '!perguntas', '!roleta', '!fuga', '!corrida', '!cassino', '!bola8', '!shippar', '!decidir', '!imaginar', '!pescar', '!loteria', '!garimpo', '!hacker', '!tinder', '!pecado', '!raiox', '!pobre', '!atestado', '!multa', '!chapeu', '!nomefunk', '!processo', '!urna', '!bicho', '!bomba', '!passar', '!assalto', '!entrar', '!descubra', '!duelo', '!aceitarduelo'];        if (!jogosLiberados && comandosDeJogo.some(cmd => text.startsWith(cmd))) {
             if (isAdmin) {
                 await sock.sendMessage(sender, { text: "🤖 Os jogos estão trancados, mas você é ADM, vou abrir uma exceção! 👑", quoted: msg });
             } else {
@@ -855,18 +859,19 @@ _Não perca tempo, compartilhe agora!_`.trim();
  ┣ 💳 !comprar_cargo ➾ 🎁 !comprar
  ┣ 💸 !pix ➾ 🎰 !cassino
  ┣ 🎣 !pescar ➾ 🎟️ !loteria
- ┣ ⛏️ !garimpo ➾ 🏆 !ranking
- ┗ 🥇 !rank
+ ┣ ⛏️ !garimpo ➾ 🐒 !bicho
+ ┣ 🏦 !assalto ➾ 🥷 !entrar
+ ┗ 🏆 !ranking ➾ 🥇 !rank
 
 🎲 *DIVERSÃO & SORTE*
- ┣ 🎨 !imaginar
+ ┣ 🎨 !imaginar ➾ 🔠 !descubra
  ┣ 👾 !jogar ➾ 🏎️ !fuga
  ┣ 🏇 !corrida ➾ 🔫 !roleta
  ┣ 💀 !forca ➾ ⚽ !penalti
- ┣ 🧠 !perguntas ➾ 🎤 !musica
- ┣ 🎬 !emoji ➾ 🤡 !piada
- ┣ ⚖️ !decidir ➾ 🎱 !bola8
- ┗ 💘 !shippar @mencao
+ ┣ 🧠 !perguntas ➾ 💣 !bomba
+ ┣ 🧨 !passar ➾ 🎬 !emoji
+ ┣ 🤡 !piada ➾ ⚖️ !decidir
+ ┗ 🎱 !bola8 ➾ 💘 !shippar
 
 😈 *CAOS & TRETA*
  ┣ ⚖️ !julgar ➾ 💍 !casar
@@ -895,6 +900,7 @@ _Não perca tempo, compartilhe agora!_`.trim();
 
 ⚔️ *GUERRA & STATUS*
  ┣ 👹 !boss ➾ ⚔️ !atacar
+ ┣ ⚔️ !duelo ➾ 🤝 !aceitarduelo
  ┗ 🎖️ !cargos ➾ 📊 !tier
 
 🚨 *CONTROLE (ADMS)*
@@ -974,6 +980,247 @@ _Não perca tempo, compartilhe agora!_`.trim();
                     caption: frasesDerrota[Math.floor(Math.random() * frasesDerrota.length)]
                 }, { quoted: msg });
             }
+        }
+
+        // ==========================================
+        // 🎰 CASSINO CLANDESTINO E MINIGAMES DE CAOS
+        // ==========================================
+
+        // 🐒 1. JOGO DO BICHO (!bicho <animal> <valor>)
+        if (text.startsWith('!bicho')) {
+            const args = text.split(' ');
+            if (args.length < 3) return await sock.sendMessage(sender, { text: "❌ Formato errado! Use: !bicho <animal> <valor>\nEx: !bicho macaco 50", quoted: msg });
+
+            const animalEscolhido = args[1].toLowerCase();
+            const valorAposta = parseInt(args[2]);
+
+            if (isNaN(valorAposta) || valorAposta <= 0) return await sock.sendMessage(sender, { text: "❌ Valor de aposta inválido!", quoted: msg });
+
+            const animais = ["macaco", "leao", "cobra", "veado", "porco", "cachorro", "gato", "galo", "touro", "urso"];
+            
+            if (!animais.includes(animalEscolhido)) {
+                return await sock.sendMessage(sender, { text: `❌ Animal inválido! Escolha um destes:\n${animais.join(', ')}`, quoted: msg });
+            }
+
+            let placar = lerArquivoSeguro(arquivoPlacar);
+            if ((placar[participant] || 0) < valorAposta) return await sock.sendMessage(sender, { text: `❌ Você não tem ${valorAposta} pontos pra bancar o bicheiro!`, quoted: msg });
+
+            placar[participant] -= valorAposta; // Tira o dinheiro da aposta
+            
+            await sock.sendMessage(sender, { react: { text: '🐒', key: msg.key } });
+            
+            const animalSorteado = animais[Math.floor(Math.random() * animais.length)];
+            
+            if (animalEscolhido === animalSorteado) {
+                const premio = valorAposta * 10;
+                placar[participant] += premio;
+                fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
+                await sock.sendMessage(sender, { text: `🎰 *DEU NO POSTE!* 🎰\n\nBicho sorteado: *${animalSorteado.toUpperCase()}*\n\n🔥 INACREDITÁVEL! @${participant.split('@')[0]} quebrou a banca, multiplicou por 10x e ganhou *${premio} PONTOS*!`, mentions: [participant] }, { quoted: msg });
+            } else {
+                fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
+                await sock.sendMessage(sender, { text: `🎰 *DEU NO POSTE!* 🎰\n\nBicho sorteado: *${animalSorteado.toUpperCase()}*\n\n💸 Que azar! @${participant.split('@')[0]} apostou no ${animalEscolhido} e perdeu os ${valorAposta} pontos pro bicheiro!`, mentions: [participant] }, { quoted: msg });
+            }
+        }
+
+        // 💣 2. BATATA QUENTE EXPLOSIVA (!bomba e !passar)
+        if (text === '!bomba') {
+            if (jogoBomba.ativo) return await sock.sendMessage(sender, { text: "❌ Já tem uma bomba armada no grupo! Corram!", quoted: msg });
+
+            jogoBomba.ativo = true;
+            jogoBomba.comQuem = participant;
+            
+            await sock.sendMessage(sender, { react: { text: '💣', key: msg.key } });
+            await sock.sendMessage(sender, { 
+                video: { url: "https://media.tenor.com/JiEUXIlkIn8AAAPo/incident.mp4" },
+                gifPlayback: true,
+                caption: `💣 *A BOMBA FOI ARMADA!* 💣\n\nO terrorista @${participant.split('@')[0]} ativou o explosivo! A bomba está no colo dele.\n\n⚠️ Digite rapidamente *!passar @mencao* para jogar a bomba em outra pessoa!\n⏱️ *Vocês têm 30 segundos antes da explosão!*`, 
+                mentions: [participant] 
+            });
+
+            jogoBomba.timer = setTimeout(async () => {
+                if (!jogoBomba.ativo) return;
+                
+                let placar = lerArquivoSeguro(arquivoPlacar);
+                placar[jogoBomba.comQuem] = Math.max(0, (placar[jogoBomba.comQuem] || 0) - 150);
+                fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
+
+                await sock.sendMessage(sender, { 
+                    text: `💥 *KABUUUUM!!!* 💥\n\nA bomba explodiu no colo do @${jogoBomba.comQuem.split('@')[0]}!\n📉 *Perdeu 150 pontos e a dignidade!*`, 
+                    mentions: [jogoBomba.comQuem] 
+                });
+                
+                jogoBomba = { ativo: false, comQuem: null, timer: null }; // Reseta o jogo
+            }, 30000);
+        }
+
+        if (text.startsWith('!passar')) {
+            if (!jogoBomba.ativo) return await sock.sendMessage(sender, { text: "❌ Não tem nenhuma bomba armada!", quoted: msg });
+            if (jogoBomba.comQuem !== participant) return await sock.sendMessage(sender, { text: "❌ A bomba não tá com você, seu doido! Fica quieto!", quoted: msg });
+
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione para quem você quer passar a bomba (Ex: !passar @cleyton)!", quoted: msg });
+            if (mention === participant) return await sock.sendMessage(sender, { text: "❌ Vai passar a bomba pra si mesmo? Gênio!", quoted: msg });
+
+            jogoBomba.comQuem = mention;
+            await sock.sendMessage(sender, { text: `🔥 *PASSOOOOU!* 🔥\n\nA bomba agora está no colo do @${mention.split('@')[0]}! Se vira pra passar pra frente!`, mentions: [mention] }, { quoted: msg });
+        }
+
+        // 🏦 3. O GRANDE ASSALTO (!assalto e !entrar)
+        if (text === '!assalto') {
+            if (jogoAssalto.ativo) return await sock.sendMessage(sender, { text: "❌ Já tem um roubo em andamento! Espere a poeira baixar.", quoted: msg });
+
+            jogoAssalto.ativo = true;
+            jogoAssalto.equipe = [participant];
+            
+            await sock.sendMessage(sender, { react: { text: '🥷', key: msg.key } });
+            await sock.sendMessage(sender, { 
+                video: { url: "https://media.tenor.com/bJAblMqehFoAAAPo/homer-stealing.mp4" },
+                gifPlayback: true,
+                caption: `🏦 *MISSÃO: ROUBO AO BANCO CENTRAL* 🏦\n\n@${participant.split('@')[0]} está organizando um assalto!\n\n⚠️ *Precisamos de pelo menos 3 pessoas na equipe para invadir o cofre.*\n👉 Digitem *!entrar* rápido!\n⏱️ *O carro de fuga sai em 45 segundos!*`, 
+                mentions: [participant] 
+            });
+
+            jogoAssalto.timer = setTimeout(async () => {
+                if (!jogoAssalto.ativo) return;
+                
+                if (jogoAssalto.equipe.length < 3) {
+                    await sock.sendMessage(sender, { text: `🚨 *MISSÃO ABORTADA!* 🚨\n\nFaltou gente pro assalto. O motorista de fuga foi embora e o plano falhou!` });
+                } else {
+                    const sucesso = Math.random() > 0.5; // 50% de chance
+                    let placar = lerArquivoSeguro(arquivoPlacar);
+                    let mencoes = jogoAssalto.equipe;
+                    let textoFinal = "";
+
+                    if (sucesso) {
+                        const premio = 3000;
+                        const premioPorPessoa = Math.floor(premio / jogoAssalto.equipe.length);
+                        jogoAssalto.equipe.forEach(membro => { placar[membro] = (placar[membro] || 0) + premioPorPessoa; });
+                        textoFinal = `💰 *ASSALTO CONCLUÍDO COM SUCESSO!* 💰\n\nVocês limparam o cofre antes do BOPE chegar! O prêmio de ${premio} pontos foi dividido.\n💸 Cada membro da equipe ganhou *+${premioPorPessoa} pontos*!`;
+                    } else {
+                        const multa = 300;
+                        jogoAssalto.equipe.forEach(membro => { placar[membro] = Math.max(0, (placar[membro] || 0) - multa); });
+                        textoFinal = `🚓 *O BOPE INVADIU! DEU RUIM!* 🚓\n\nAlguém disparou o alarme! Vocês foram pegos e apanharam na delegacia.\n📉 Cada membro da equipe pagou uma fiança de *-${multa} pontos*!`;
+                    }
+                    
+                    fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
+                    await sock.sendMessage(sender, { text: textoFinal, mentions: mencoes });
+                }
+                jogoAssalto = { ativo: false, equipe: [], timer: null }; // Reseta
+            }, 45000);
+        }
+
+        if (text === '!entrar') {
+            if (!jogoAssalto.ativo) return;
+            if (jogoAssalto.equipe.includes(participant)) return await sock.sendMessage(sender, { text: "❌ Você já está no carro de fuga, veste a máscara logo!", quoted: msg });
+            
+            jogoAssalto.equipe.push(participant);
+            await sock.sendMessage(sender, { text: `🥷 @${participant.split('@')[0]} entrou para a equipe de assalto! (${jogoAssalto.equipe.length} assaltantes prontos)`, mentions: [participant] }, { quoted: msg });
+        }
+
+        // 🔠 4. CÓDIGO CRIPTOGRAFADO (!descubra)
+        if (text === '!descubra') {
+            if (jogoDescubra.ativo) return await sock.sendMessage(sender, { text: "❌ Já tem um código ativo no grupo!", quoted: msg });
+
+            const palavras = ["NEYMAR", "FUTEBOL", "CASSINO", "CERVEJA", "CALVO", "FIGURINHA", "WHATSAPP", "VASCO", "CHIFRE"];
+            jogoDescubra.original = palavras[Math.floor(Math.random() * palavras.length)];
+            
+            // Embaralha as letras
+            let embaralhada = jogoDescubra.original.split('').sort(() => 0.5 - Math.random()).join(' ');
+
+            jogoDescubra.ativo = true;
+            await sock.sendMessage(sender, { react: { text: '🔠', key: msg.key } });
+            
+            const msgDescubra = await sock.sendMessage(sender, { 
+                text: `🔠 *CÓDIGO CRIPTOGRAFADO (VALE 50 PONTOS)* 🔠\n\nDesembaralhe a palavra abaixo e seja o primeiro a mandar a resposta certa:\n\n👉 *${embaralhada}*\n\n⏱️ _Você tem 60 segundos!_`
+            });
+
+            jogoDescubra.timer = setTimeout(async () => {
+                if (!jogoDescubra.ativo) return;
+                await sock.sendMessage(sender, { text: `⏰ *TEMPO ESGOTADO!* ⏰\n\nVocês são muito lerdos! A palavra certa era: *${jogoDescubra.original}*. Ninguém ganhou nada!` });
+                jogoDescubra = { ativo: false, original: "", timer: null };
+            }, 60000);
+        }
+
+        // VERIFICADOR DO !DESCUBRA (Sem precisar de comando, só digitar a palavra no chat)
+        if (jogoDescubra.ativo) {
+            if (text.toUpperCase() === jogoDescubra.original) {
+                clearTimeout(jogoDescubra.timer); // Para o relógio
+                jogoDescubra.ativo = false; // Fecha o jogo
+
+                let placar = lerArquivoSeguro(arquivoPlacar);
+                placar[participant] = (placar[participant] || 0) + 50;
+                fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
+
+                await sock.sendMessage(sender, { react: { text: '🏆', key: msg.key } });
+                await sock.sendMessage(sender, { text: `🏆 *GÊNIO DA BOLA!* 🏆\n\n@${participant.split('@')[0]} desembaralhou o código rápido demais e ganhou 50 pontos! A palavra era *${jogoDescubra.original}*.`, mentions: [participant], quoted: msg });
+            }
+        }
+
+        // ✂️ 5. DUELO DE JOQUEMPÔ MORTAL (!duelo @mencao <valor> e !aceitarduelo)
+        if (text.startsWith('!duelo')) {
+            if (jogoDuelo.ativo) return await sock.sendMessage(sender, { text: "❌ Já tem dois malucos brigando na arena! Espera sua vez.", quoted: msg });
+
+            const args = text.split(' ');
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            const valorAposta = parseInt(args[2]);
+
+            if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione quem você quer desafiar!", quoted: msg });
+            if (mention === participant) return await sock.sendMessage(sender, { text: "❌ Vai lutar contra o espelho?", quoted: msg });
+            if (isNaN(valorAposta) || valorAposta <= 0) return await sock.sendMessage(sender, { text: "❌ Informe um valor válido para a aposta (Ex: !duelo @cleyton 100)", quoted: msg });
+
+            let placar = lerArquivoSeguro(arquivoPlacar);
+            if ((placar[participant] || 0) < valorAposta) return await sock.sendMessage(sender, { text: `❌ Você não tem ${valorAposta} pontos pra apostar, caloteiro!`, quoted: msg });
+            if ((placar[mention] || 0) < valorAposta) return await sock.sendMessage(sender, { text: `❌ O seu adversário é pobre e não tem ${valorAposta} pontos pra cobrir a aposta!`, quoted: msg });
+
+            jogoDuelo = { ativo: true, p1: participant, p2: mention, valor: valorAposta };
+
+            await sock.sendMessage(sender, { text: `⚔️ *DESAFIO LANÇADO!* ⚔️\n\n@${participant.split('@')[0]} desafiou @${mention.split('@')[0]} para um Joquempô mortal valendo *${valorAposta} pontos*!\n\n👉 O desafiado tem 30 segundos para digitar *!aceitarduelo*.`, mentions: [participant, mention] }, { quoted: msg });
+
+            jogoDuelo.timer = setTimeout(async () => {
+                if (!jogoDuelo.ativo) return;
+                await sock.sendMessage(sender, { text: `🐔 *ARREGOU!* 🐔\n\nO @${jogoDuelo.p2.split('@')[0]} correu da briga e o duelo foi cancelado.`, mentions: [jogoDuelo.p2] });
+                jogoDuelo = { ativo: false, p1: null, p2: null, valor: 0, timer: null };
+            }, 30000);
+        }
+
+        if (text === '!aceitarduelo') {
+            if (!jogoDuelo.ativo) return await sock.sendMessage(sender, { text: "❌ Ninguém te desafiou pra nada, tá carente?", quoted: msg });
+            if (jogoDuelo.p2 !== participant) return await sock.sendMessage(sender, { text: "❌ O desafio não é pra você, não se mete!", quoted: msg });
+
+            clearTimeout(jogoDuelo.timer);
+            
+            const escolhas = ["🪨 Pedra", "📄 Papel", "✂️ Tesoura"];
+            const p1Jogada = escolhas[Math.floor(Math.random() * escolhas.length)];
+            const p2Jogada = escolhas[Math.floor(Math.random() * escolhas.length)];
+
+            await sock.sendMessage(sender, { text: "🎲 *O BOT ESTÁ GIRANDO O JOQUEMPÔ PARA OS DOIS...* 🎲" });
+
+            setTimeout(async () => {
+                let placar = lerArquivoSeguro(arquivoPlacar);
+                let resultadoStr = `⚔️ *RESULTADO DO DUELO* ⚔️\n\n🥊 @${jogoDuelo.p1.split('@')[0]} jogou: ${p1Jogada}\n🥊 @${jogoDuelo.p2.split('@')[0]} jogou: ${p2Jogada}\n\n`;
+                let mentions = [jogoDuelo.p1, jogoDuelo.p2];
+
+                if (p1Jogada === p2Jogada) {
+                    resultadoStr += "⚖️ *EMPATE!* Ninguém perdeu pontos. A batalha foi digna de anime!";
+                } else if (
+                    (p1Jogada.includes("Pedra") && p2Jogada.includes("Tesoura")) ||
+                    (p1Jogada.includes("Papel") && p2Jogada.includes("Pedra")) ||
+                    (p1Jogada.includes("Tesoura") && p2Jogada.includes("Papel"))
+                ) {
+                    placar[jogoDuelo.p1] += jogoDuelo.valor;
+                    placar[jogoDuelo.p2] -= jogoDuelo.valor;
+                    resultadoStr += `🏆 *VITÓRIA DO DESAFIANTE!*\n\n@${jogoDuelo.p1.split('@')[0]} esmagou o adversário e levou os *${jogoDuelo.valor} pontos* pra casa! O humilhado que vá trabalhar!`;
+                } else {
+                    placar[jogoDuelo.p2] += jogoDuelo.valor;
+                    placar[jogoDuelo.p1] -= jogoDuelo.valor;
+                    resultadoStr += `🏆 *VITÓRIA DO DESAFIADO!*\n\n@${jogoDuelo.p2.split('@')[0]} virou o jogo no contra-ataque e tomou os *${jogoDuelo.valor} pontos*! Quem manda ser emocionado?`;
+                }
+
+                fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
+                await sock.sendMessage(sender, { text: resultadoStr, mentions: mentions });
+
+                jogoDuelo = { ativo: false, p1: null, p2: null, valor: 0, timer: null }; // Fim de jogo
+            }, 3000); // 3 segundinhos de suspense
         }
 
         // ==========================================
