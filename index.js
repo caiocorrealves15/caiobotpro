@@ -380,7 +380,11 @@ const comandosExistentes = [
     '!bicho', '!bomba', '!passar', '!assalto', '!entrar', '!descubra', '!duelo', '!aceitarduelo', 
     '!registro', '!trair', '!cornos', '!serrote', '!calvar', '!calvos', '!turquia', '!cobrar', 
     '!spc', '!pagar'
-];            if (!comandosExistentes.includes(cmdDigitado)) {
+];
+
+const cmdDigitado = text.split(' ')[0];
+if (!comandosExistentes.includes(cmdDigitado)) {
+    
                 await sock.sendMessage(sender, { react: { text: '🤦‍♂️', key: msg.key } });
                 await sock.sendMessage(sender, { 
                     text: `Aí que você quer demais né, @${participant.split('@')[0]}? Olha o menu e digite esse maldito comando direito!!!!!`, 
