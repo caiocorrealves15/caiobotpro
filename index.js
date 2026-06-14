@@ -265,40 +265,38 @@ async function connectToWhatsApp() {
             if (!msgCorpo) return;
 
             // ==========================================
-            // 👁️ O CÃO DE GUARDA CAÇA-MÍDIA (BLINDADO)
+            // 👁️ DETECTOR DE MÍDIA DEFINITIVO (RAIO-X 2.0)
             // ==========================================
             let mandouViewOnce = false;
+            let midia = false;
 
-            // Função farejadora: varre a mensagem inteira procurando a foto
-            const checarMidia = (obj) => {
-                if (!obj || typeof obj !== 'object') return false;
+            // Função trator: varre a mensagem inteira sem parar no meio
+            const vasculharMensagem = (obj) => {
+                if (!obj || typeof obj !== 'object') return;
                 
-                const chaves = Object.keys(obj);
-                for (const chave of chaves) {
-                    // Trava anti-fraude: Ignora 'contextInfo' pra não aprovar quem apenas "respondeu" uma foto de outra pessoa
-                    if (chave === 'contextInfo' || chave === 'quotedMessage') continue;
-
-                    // Achou mídia nativa!
+                for (const chave in obj) {
+                    // Trava 1: Ignora se a pessoa estiver apenas respondendo a foto de outra pessoa
+                    if (chave === 'quotedMessage' || chave === 'contextInfo') continue;
+                    
+                    // Achou imagem ou vídeo nativo (mesmo escondido no 5º subsolo do código)
                     if (chave === 'imageMessage' || chave === 'videoMessage' || chave === 'ptvMessage') {
-                        return true;
+                        midia = true;
                     }
                     
-                    // Se for View Once, liga a flag e aprofunda a busca
+                    // Verificou se tem a flag de visualização única
                     if (chave.toLowerCase().includes('viewonce')) {
                         mandouViewOnce = true;
-                        return checarMidia(obj[chave]);
                     }
                     
-                    // Se o grupo tiver mensagens temporárias ligadas, a mídia fica escondida aqui
-                    if (chave === 'ephemeralMessage' || chave === 'message') {
-                        return checarMidia(obj[chave]);
+                    // Continua cavando mais fundo na mensagem sem abortar o processo
+                    if (typeof obj[chave] === 'object') {
+                        vasculharMensagem(obj[chave]);
                     }
                 }
-                return false;
             };
 
-            // Dispara o cão farejador
-            const midia = checarMidia(msgCorpo);
+            // Inicia a varredura absoluta
+            vasculharMensagem(msgCorpo);
 
             // ==========================================
 
@@ -323,14 +321,18 @@ async function connectToWhatsApp() {
                 }
 
                 await sock.sendMessage(sender, { react: { text: emojiReacao, key: msg.key } });
+                
+                // O { quoted: msg } FORÇA o bot a responder grudado na mensagem da pessoa
                 await sock.sendMessage(sender, { 
                     text: textoConfirmacao, 
                     mentions: [participant] 
-                }, { quoted: msg });
+                }, { quoted: msg }); 
                 
                 delete membrosPendentes[participant];
             } else {
                 await sock.sendMessage(sender, { react: { text: '⚠️', key: msg.key } });
+                
+                // Aqui também, o bot vai cobrar MAS respondendo em cima do que a pessoa mandou
                 await sock.sendMessage(sender, { 
                     text: `⚠️ Ei, @${numeroExibicao}, cadê a apresentação? Você não seguiu o padrão! 🤦‍♂️\n\nEnvie uma *FOTO/VÍDEO* (pode ser de visualização única 🔒) ou o formato:\n*FOTO | CIDADE | IDADE | NOME* 📸`, 
                     mentions: [participant] 
