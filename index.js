@@ -260,87 +260,42 @@ async function connectToWhatsApp() {
             return; 
         }
 
-       if (membrosPendentes[participant]) {
-            const msgCorpo = msg.message;
-            if (!msgCorpo) return;
+      // ==========================================
+        // 📝 SISTEMA DE REGISTRO MANUAL (SÓ PARA ADMS)
+        // ==========================================
+        if (text.startsWith('!registro')) {
+            if (!isAdmin) return await sock.sendMessage(sender, { text: "❌ *Acesso Negado!* Apenas os ADMs podem oficializar o registro de um novato e aprovar a apresentação!", quoted: msg });
 
-            // ==========================================
-            // 👁️ DETECTOR CIRÚRGICO (SEM TRAVAR O BOT)
-            // ==========================================
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione o novato que se apresentou corretamente!\n👉 Exemplo: *!registro @mencao*", quoted: msg });
             
-            // Função limpa que abre as "caixas" do WhatsApp sem ler arquivos pesados
-            const analisarMensagem = (msg) => {
-                let isViewOnce = false;
-                let isMidia = false;
-                let textContent = msg.conversation || msg.extendedTextMessage?.text || "";
+            if (mention === participant) return await sock.sendMessage(sender, { text: "❌ Vai aprovar o próprio registro, chefe? Que feio... 😂", quoted: msg });
 
-                // 1. Desembrulha mensagens temporárias primeiro (se o grupo tiver ativado)
-                let msgReal = msg;
-                if (msg.ephemeralMessage && msg.ephemeralMessage.message) {
-                    msgReal = msg.ephemeralMessage.message;
-                }
-
-                // 2. Verifica se a mídia está solta na raiz
-                if (msgReal.imageMessage || msgReal.videoMessage || msgReal.ptvMessage) isMidia = true;
-                if (msgReal.imageMessage?.caption) textContent = msgReal.imageMessage.caption;
-                if (msgReal.videoMessage?.caption) textContent = msgReal.videoMessage.caption;
-
-                // 3. Verifica se a mensagem está dentro das caixas de Visualização Única ou Documento
-                const caixasEspeciais = ['viewOnceMessage', 'viewOnceMessageV2', 'viewOnceMessageV2Extension', 'documentWithCaptionMessage'];
-                
-                for (const caixa of caixasEspeciais) {
-                    if (msgReal[caixa] && msgReal[caixa].message) {
-                        const subMsg = msgReal[caixa].message;
-                        
-                        if (caixa.includes('viewOnce')) isViewOnce = true;
-                        
-                        if (subMsg.imageMessage || subMsg.videoMessage || subMsg.ptvMessage) isMidia = true;
-                        if (subMsg.imageMessage?.caption) textContent = subMsg.imageMessage.caption;
-                        if (subMsg.videoMessage?.caption) textContent = subMsg.videoMessage.caption;
-                        if (subMsg.extendedTextMessage?.text) textContent = subMsg.extendedTextMessage.text;
-                    }
-                }
-
-                return { midia: isMidia, viewOnce: isViewOnce, texto: textContent };
-            };
-
-            // Aplica a análise segura
-            const dadosMsg = analisarMensagem(msgCorpo);
-
-            // ==========================================
-
-            const padraoApresentacao = /\|/g;
-            const enviouTextoCorreto = (dadosMsg.texto && (dadosMsg.texto.match(padraoApresentacao) || []).length >= 3);
-            const numeroExibicao = participant.split('@')[0];
-
-            if (dadosMsg.midia || enviouTextoCorreto) {
-                let textoConfirmacao = `✅ *Cadastro confirmado!* 🎉\n\nFala, @${numeroExibicao}! Você mandou muito bem na apresentação. Bem-vindo(a) à elite do Bonde! 🚀🔥`;
-                let emojiReacao = '✅';
-                
-                if (dadosMsg.midia && dadosMsg.viewOnce) {
-                    textoConfirmacao = `🕵️‍♂️ *Visão Biônica Ativada!* 👀\n\nRelaxa, @${numeroExibicao}, eu consegui validar sua foto/vídeo de visualização única! Ninguém precisa ver, só o sistema! 🔒✨\n\n✅ *Cadastro 100% confirmado!* Bem-vindo(a) ao Bonde! 🚀🎉`;
-                    emojiReacao = '🕵️‍♂️';
-                }
-
-                await sock.sendMessage(sender, { react: { text: emojiReacao, key: msg.key } });
-                
-                // O { quoted: msg } força a responder EM CIMA da foto da pessoa
-                await sock.sendMessage(sender, { 
-                    text: textoConfirmacao, 
-                    mentions: [participant] 
-                }, { quoted: msg }); 
-                
-                delete membrosPendentes[participant];
-            } else {
-                await sock.sendMessage(sender, { react: { text: '⚠️', key: msg.key } });
-                
-                // Responde EM CIMA da mensagem errada cobrando a foto
-                await sock.sendMessage(sender, { 
-                    text: `⚠️ Ei, @${numeroExibicao}, cadê a apresentação? Você não seguiu o padrão! 🤦‍♂️\n\nEnvie uma *FOTO/VÍDEO* (pode ser de visualização única 🔒) ou o formato:\n*FOTO | CIDADE | IDADE | NOME* 📸`, 
-                    mentions: [participant] 
-                }, { quoted: msg });
+            // Tira o novato da lista de fantasmas (se ele estiver lá)
+            if (typeof membrosPendentes !== 'undefined' && membrosPendentes[mention]) {
+                delete membrosPendentes[mention];
             }
-            return;
+
+            let placar = lerArquivoSeguro(arquivoPlacar);
+            
+            // Verifica se o cara já ganhou o bônus antes
+            if (placar[mention] && placar[mention] >= 500) {
+                return await sock.sendMessage(sender, { 
+                    text: `❌ O @${mention.split('@')[0]} já está registrado no sistema e já pegou a grana de boas-vindas!`, 
+                    mentions: [mention], 
+                    quoted: msg 
+                });
+            }
+
+            // Dá o bônus inicial para o novato
+            placar[mention] = (placar[mention] || 0) + 500;
+            fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
+
+            await sock.sendMessage(sender, { react: { text: '✅', key: msg.key } });
+            await sock.sendMessage(sender, { 
+                text: `✅ *REGISTRO OFICIALIZADO PELO ADM!* ✅\n\nParabéns, @${mention.split('@')[0]}! Sua apresentação foi validada pela diretoria e você agora faz parte da Elite do Bonde.\n\n👻 _Você foi removido da lista de cadastros pendentes._\n💰 *BÔNUS:* 500 pontos foram depositados na sua conta para você gastar no cassino! 🎰🚀`, 
+                mentions: [mention] 
+            }, { quoted: msg });
         }
         const agora = Date.now();
         if (!contagemFlood[participant]) contagemFlood[participant] = [];
@@ -409,9 +364,23 @@ async function connectToWhatsApp() {
         }
 
         if (text.startsWith('!')) {
-const comandosExistentes = ['!menu', '!todos', '!pix', '!imaginar', '!fantasmas', '!lembrete', '!apagar', '!decidir', '!cassino', '!conselho', '!resumo', '!regras', '!comprar', '!roleta', '!bafometro', '!verdade', '!fuga', '!corrida', '!macumba', '!calvo', '!qi', '!serasa', '!historico', '!fakenews', '!rinha', '!vasco', '!gravida', '!feio', '!clt', '!bola8', '!perfil', '!culpado', '!inocente', '!shippar', '!julgar', '!loja', '!pesquisar', '!backup', '!dar_pontos', '!atacar', '!boss', '!rank', '!casar', '!casais', '!piada', '!avisoadm', '!descasar', '!emoji', '!sortear', '!cadastros', '!perguntas', '!jogar', '!forca', '!jogosoff', '!jogoson', '!limpar', '!fixar', '!status', '!link', '!tier', '!ranking', '!placar', '!penalti', '!musica', '!socar', '!beijar', '!matar', '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute', '!gado', '!corno', '!fofoca', '!roubar', '!cargos', '!comprar_cargo', '!dar_cargo', '!pescar', '!loteria', '!garimpo', '!imposto', '!hacker', '!tinder', '!pecado', '!raiox', '!pobre', '!atestado', '!multa', '!chapeu', '!nomefunk', '!processo', '!urna', '!bicho', '!bomba', '!passar', '!assalto', '!entrar', '!descubra', '!duelo', '!aceitarduelo'];            const cmdDigitado = text.split(' ')[0]; 
-            
-            if (!comandosExistentes.includes(cmdDigitado)) {
+const comandosExistentes = [
+    '!menu', '!todos', '!pix', '!imaginar', '!fantasmas', '!lembrete', '!apagar', '!decidir', 
+    '!cassino', '!conselho', '!resumo', '!regras', '!comprar', '!roleta', '!bafometro', '!verdade', 
+    '!fuga', '!corrida', '!macumba', '!calvo', '!qi', '!serasa', '!historico', '!fakenews', 
+    '!rinha', '!vasco', '!gravida', '!feio', '!clt', '!bola8', '!perfil', '!culpado', '!inocente', 
+    '!shippar', '!julgar', '!loja', '!pesquisar', '!backup', '!dar_pontos', '!atacar', '!boss', 
+    '!rank', '!casar', '!casais', '!piada', '!avisoadm', '!descasar', '!emoji', '!sortear', 
+    '!cadastros', '!perguntas', '!jogar', '!forca', '!jogosoff', '!jogoson', '!limpar', '!fixar', 
+    '!status', '!link', '!tier', '!ranking', '!placar', '!penalti', '!socar', '!beijar', '!matar', 
+    '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute', '!gado', '!corno', 
+    '!fofoca', '!roubar', '!cargos', '!comprar_cargo', '!dar_cargo', '!pescar', '!loteria', 
+    '!garimpo', '!imposto', '!hacker', '!tinder', '!pecado', '!raiox', '!pobre', '!atestado', 
+    '!multa', '!chapeu', '!nomefunk', '!processo', '!urna', 
+    '!bicho', '!bomba', '!passar', '!assalto', '!entrar', '!descubra', '!duelo', '!aceitarduelo', 
+    '!registro', '!trair', '!cornos', '!serrote', '!calvar', '!calvos', '!turquia', '!cobrar', 
+    '!spc', '!pagar'
+];            if (!comandosExistentes.includes(cmdDigitado)) {
                 await sock.sendMessage(sender, { react: { text: '🤦‍♂️', key: msg.key } });
                 await sock.sendMessage(sender, { 
                     text: `Aí que você quer demais né, @${participant.split('@')[0]}? Olha o menu e digite esse maldito comando direito!!!!!`, 
@@ -451,7 +420,15 @@ const comandosExistentes = ['!menu', '!todos', '!pix', '!imaginar', '!fantasmas'
             return await sock.sendMessage(sender, { text: "🔓 *JOGOS ATIVADOS!* Podem soltar a bagunça! 🎉", quoted: msg });
         }
 
-const comandosDeJogo = ['!piada', '!casar', '!descasar', '!forca', '!penalti', '!sortear', '!emoji', '!jogar', '!perguntas', '!roleta', '!fuga', '!corrida', '!cassino', '!bola8', '!shippar', '!decidir', '!imaginar', '!pescar', '!loteria', '!garimpo', '!hacker', '!tinder', '!pecado', '!raiox', '!pobre', '!atestado', '!multa', '!chapeu', '!nomefunk', '!processo', '!urna', '!bicho', '!bomba', '!passar', '!assalto', '!entrar', '!descubra', '!duelo', '!aceitarduelo'];        if (!jogosLiberados && comandosDeJogo.some(cmd => text.startsWith(cmd))) {
+const comandosDeJogo = [
+    '!piada', '!casar', '!descasar', '!forca', '!penalti', '!sortear', '!emoji', '!jogar', 
+    '!perguntas', '!roleta', '!fuga', '!corrida', '!cassino', '!bola8', '!shippar', '!decidir', 
+    '!imaginar', '!pescar', '!loteria', '!garimpo', '!hacker', '!tinder', '!pecado', '!raiox', 
+    '!pobre', '!atestado', '!multa', '!chapeu', '!nomefunk', '!processo', '!urna',
+    '!bicho', '!bomba', '!passar', '!assalto', '!entrar', '!descubra', '!duelo', '!aceitarduelo', 
+    '!trair', '!cornos', '!serrote', '!calvar', '!calvos', '!turquia', '!cobrar', '!spc', '!pagar'
+];
+if (!jogosLiberados && comandosDeJogo.some(cmd => text.startsWith(cmd))) {
             if (isAdmin) {
                 await sock.sendMessage(sender, { text: "🤖 Os jogos estão trancados, mas você é ADM, vou abrir uma exceção! 👑", quoted: msg });
             } else {
@@ -647,6 +624,219 @@ const comandosDeJogo = ['!piada', '!casar', '!descasar', '!forca', '!penalti', '
             } else {
                 await sock.sendMessage(sender, { text: `⚔️ Você causou ${dano} de dano!${mensagemFuria}\nHP do Boss: ${raidBoss.hp}/${raidBoss.maxHp}` });
             }
+        }
+
+        // ==========================================
+        // 🦌 SISTEMA DE CHIFRES (!trair, !cornos e !serrote)
+        // ==========================================
+
+        if (text.startsWith('!trair')) {
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione quem você vai presentear com um par de chifres! Tem que dar nome aos bois.", quoted: msg });
+            
+            if (mention === participant) return await sock.sendMessage(sender, { text: "❌ Vai trair a si mesmo? Tá precisando de terapia! 😂", quoted: msg });
+
+            const fs = require('fs');
+            // Carrega a lista de cornos e a nova lista de traidores (pra barrar quem já traiu)
+            let cornos = fs.existsSync('./cornos.json') ? JSON.parse(fs.readFileSync('./cornos.json')) : {};
+            let traidores = fs.existsSync('./traidores.json') ? JSON.parse(fs.readFileSync('./traidores.json')) : {};
+            
+            // Trava: O cara só pode trair UMA VEZ
+            if (traidores[participant]) {
+                return await sock.sendMessage(sender, { 
+                    text: "❌ *COTA ESGOTADA!* Você já pulou a cerca uma vez e espalhou chifre por aí. Sua cota de traição acabou, agora vai cuidar da sua vida!", 
+                    quoted: msg 
+                });
+            }
+
+            // Adiciona +1 chifre para o alvo e marca o autor como "já traiu"
+            cornos[mention] = (cornos[mention] || 0) + 1;
+            traidores[participant] = true; 
+            
+            fs.writeFileSync('./cornos.json', JSON.stringify(cornos, null, 2));
+            fs.writeFileSync('./traidores.json', JSON.stringify(traidores, null, 2));
+
+            const frasesTraicao = [
+                `O @${participant.split('@')[0]} pulou a cerca e o @${mention.split('@')[0]} acaba de ganhar um par de chifres novinho em folha! 🦌`,
+                `Eita! O @${participant.split('@')[0]} foi visto no motel enquanto o @${mention.split('@')[0]} achava que tava no futebol. Gado demais! 🐂`,
+                `Nasceu um cervo! @${mention.split('@')[0]} foi traído na cara dura pelo @${participant.split('@')[0]}. A galhada tá pesada! 🌿`,
+                `🚨 ALERTA DE CHIFRE! 🚨 O @${participant.split('@')[0]} não perdoou e colocou uma coroa de galhos no @${mention.split('@')[0]}! 👑🦌`
+            ];
+            const fraseSorteada = frasesTraicao[Math.floor(Math.random() * frasesTraicao.length)];
+
+            await sock.sendMessage(sender, { react: { text: '🦌', key: msg.key } });
+            await sock.sendMessage(sender, {
+                video: { url: "https://media.tenor.com/ctAc28kLSM0AAAPo/corno-corn%C3%A3o.mp4" }, 
+                gifPlayback: true,
+                caption: `💔 *TRAIÇÃO EXPOSTA NO GRUPO!* 💔\n\n${fraseSorteada}\n\n📊 O @${mention.split('@')[0]} agora carrega o peso de *${cornos[mention]} chifre(s)* na cabeça!`,
+                mentions: [participant, mention]
+            }, { quoted: msg });
+        }
+
+        if (text === '!cornos') {
+            const fs = require('fs');
+            let cornos = fs.existsSync('./cornos.json') ? JSON.parse(fs.readFileSync('./cornos.json')) : {};
+            
+            const listaCornos = Object.entries(cornos).sort((a, b) => b[1] - a[1]);
+
+            if (listaCornos.length === 0) return await sock.sendMessage(sender, { text: "🐂 Ainda não temos nenhum corno assumido no grupo. Que milagre!", quoted: msg });
+
+            let textoRanking = `🏆 *TOP CORNOS DO BONDE* 🏆\n\nOs maiores portadores de chifre do grupo:\n\n`;
+            const medalhas = ['🥇', '🥈', '🥉'];
+            let mencoes = [];
+
+            for (let i = 0; i < Math.min(listaCornos.length, 10); i++) {
+                const cornoId = listaCornos[i][0];
+                const qtdChifres = listaCornos[i][1];
+                const medalha = i < 3 ? medalhas[i] : '🦌';
+                
+                textoRanking += `${medalha} @${cornoId.split('@')[0]} - ${qtdChifres} chifre(s)\n`;
+                mencoes.push(cornoId);
+            }
+
+            textoRanking += `\n_Digite !trair @mencao para atacar ou !serrote para limpar seu nome!_`;
+
+            await sock.sendMessage(sender, { react: { text: '🐂', key: msg.key } });
+            await sock.sendMessage(sender, { text: textoRanking, mentions: mencoes }, { quoted: msg });
+        }
+
+        // NOVO: Comando para pagar e sair da lista de cornos
+        if (text === '!serrote') {
+            const fs = require('fs');
+            let cornos = fs.existsSync('./cornos.json') ? JSON.parse(fs.readFileSync('./cornos.json')) : {};
+
+            if (!cornos[participant] || cornos[participant] === 0) {
+                return await sock.sendMessage(sender, { text: "❌ Você nem tem chifre pra serrar, tá com a cabeça limpa! (Pelo menos oficialmente 👀)", quoted: msg });
+            }
+
+            let placar = lerArquivoSeguro(arquivoPlacar);
+            const precoSerrote = 500; // Preço para sair da lista de cornos
+
+            if ((placar[participant] || 0) < precoSerrote) {
+                return await sock.sendMessage(sender, { 
+                    text: `❌ *FALTOU GRANA!* A cirurgia de remoção de chifre custa *${precoSerrote} pontos*. Você é corno e pobre, vá trabalhar!`, 
+                    quoted: msg 
+                });
+            }
+
+            // Cobra os pontos e deleta o cara da lista
+            placar[participant] -= precoSerrote;
+            fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
+
+            delete cornos[participant];
+            fs.writeFileSync('./cornos.json', JSON.stringify(cornos, null, 2));
+
+            await sock.sendMessage(sender, { react: { text: '🪚', key: msg.key } });
+            await sock.sendMessage(sender, {
+                video: { url: "https://media.tenor.com/fTMP5eo7hrwAAAPo/corno-manso-boi.mp4" }, 
+                gifPlayback: true,
+                caption: `🪚 *OPERAÇÃO DESCORNO CONCLUÍDA!* 🪚\n\n@${participant.split('@')[0]} pagou os ${precoSerrote} pontos pro cirurgião e cerrou a galhada inteira fora!\n\n_Seu nome foi limpo do Serasa dos cornos... até a próxima traição!_ 😂`,
+                mentions: [participant]
+            }, { quoted: msg });
+        }
+
+        // ==========================================
+        // 💸 SISTEMA DE AGIOTAGEM (!cobrar, !spc e !pagar)
+        // ==========================================
+
+        if (text.startsWith('!cobrar')) {
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione o caloteiro que tá te devendo!", quoted: msg });
+            if (mention === participant) return await sock.sendMessage(sender, { text: "❌ Vai cobrar a si mesmo? Tá louco?", quoted: msg });
+
+            const fs = require('fs');
+            // Estrutura: { "id_devedor": { "id_cobrador": true } }
+            let dividas = fs.existsSync('./dividas.json') ? JSON.parse(fs.readFileSync('./dividas.json')) : {};
+
+            if (!dividas[mention]) dividas[mention] = {};
+
+            if (dividas[mention][participant]) {
+                return await sock.sendMessage(sender, { 
+                    text: `❌ *VOCÊ JÁ COBROU ESSE CALOTEIRO!*\n\nO @${mention.split('@')[0]} já está no SPC por sua causa. Ele precisa usar *!pagar @${participant.split('@')[0]}* antes de você poder cobrar ele de novo!`, 
+                    mentions: [mention, participant], 
+                    quoted: msg 
+                });
+            }
+
+            dividas[mention][participant] = true;
+            fs.writeFileSync('./dividas.json', JSON.stringify(dividas, null, 2));
+
+            await sock.sendMessage(sender, { react: { text: '🤬', key: msg.key } });
+            await sock.sendMessage(sender, {
+                text: `🚨 *AGIOTAGEM NO GRUPO!* 🚨\n\nO @${participant.split('@')[0]} cansou de esperar e botou o nome do @${mention.split('@')[0]} no SPC do grupo!\n\n💸 *Status:* Dívida ativada! O caloteiro não terá paz até pagar o que deve!`,
+                mentions: [participant, mention]
+            }, { quoted: msg });
+        }
+
+        if (text === '!spc') {
+            const fs = require('fs');
+            let dividas = fs.existsSync('./dividas.json') ? JSON.parse(fs.readFileSync('./dividas.json')) : {};
+
+            let textoRanking = `🏦 *SPC DO BONDE (OS CALOTEIROS)* 🏦\n\nQuem deve quem nesse grupo:\n\n`;
+            let temDevedor = false;
+            let mencoes = [];
+
+            for (const devedor in dividas) {
+                const cobradores = Object.keys(dividas[devedor]);
+                
+                if (cobradores.length > 0) {
+                    temDevedor = true;
+                    textoRanking += `🚫 *@${devedor.split('@')[0]}* está devendo para:\n`;
+                    mencoes.push(devedor);
+                    
+                    cobradores.forEach(cobrador => {
+                        textoRanking += `   👉 @${cobrador.split('@')[0]}\n`;
+                        if (!mencoes.includes(cobrador)) mencoes.push(cobrador);
+                    });
+                    textoRanking += '\n';
+                }
+            }
+
+            if (!temDevedor) return await sock.sendMessage(sender, { text: "💳 Todo mundo do grupo tá com o nome limpo no SPC. Que milagre!", quoted: msg });
+
+            textoRanking += `_Para limpar seu nome, o devedor deve usar !pagar @mencao do agiota!_`;
+
+            await sock.sendMessage(sender, { react: { text: '📜', key: msg.key } });
+            await sock.sendMessage(sender, { text: textoRanking, mentions: mencoes }, { quoted: msg });
+        }
+
+        if (text.startsWith('!pagar')) {
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione para QUEM você está pagando a dívida (Ex: !pagar @agiota)!", quoted: msg });
+            if (mention === participant) return await sock.sendMessage(sender, { text: "❌ Quer pagar a si mesmo? Que lavagem de dinheiro é essa?", quoted: msg });
+
+            const fs = require('fs');
+            let dividas = fs.existsSync('./dividas.json') ? JSON.parse(fs.readFileSync('./dividas.json')) : {};
+
+            if (!dividas[participant] || !dividas[participant][mention]) {
+                return await sock.sendMessage(sender, { 
+                    text: `❌ Você não deve nada pro @${mention.split('@')[0]} no SPC! Tá querendo dar dinheiro de graça?`, 
+                    mentions: [mention], 
+                    quoted: msg 
+                });
+            }
+
+            let placar = lerArquivoSeguro(arquivoPlacar);
+            const valorDivida = 300; 
+
+            if ((placar[participant] || 0) < valorDivida) {
+                return await sock.sendMessage(sender, { text: `❌ *FALTOU GRANA!* Você precisa de *${valorDivida} pontos* na conta para pagar essa dívida com o agiota! Vá apostar ou pedir doação!`, quoted: msg });
+            }
+
+            placar[participant] -= valorDivida;
+            placar[mention] = (placar[mention] || 0) + valorDivida;
+            fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
+
+            delete dividas[participant][mention];
+            fs.writeFileSync('./dividas.json', JSON.stringify(dividas, null, 2));
+
+            await sock.sendMessage(sender, { react: { text: '🤝', key: msg.key } });
+            await sock.sendMessage(sender, {
+                video: { url: "https://media.tenor.com/p0x_FLhsLMkAAAPo/ocean-park-roy.mp4" }, 
+                gifPlayback: true,
+                caption: `🤝 *DÍVIDA PAGA COM SUCESSO!* 🤝\n\nO @${participant.split('@')[0]} tomou vergonha na cara, abriu a carteira e transferiu os *${valorDivida} pontos* que devia pro @${mention.split('@')[0]}!\n\n_Agiota satisfeito e nome retirado do SPC (em relação a ele)!_ 💸✨`,
+                mentions: [participant, mention]
+            }, { quoted: msg });
         }
 
         if (text.startsWith('!emoji')) {
