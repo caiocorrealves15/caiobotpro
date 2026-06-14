@@ -260,69 +260,71 @@ async function connectToWhatsApp() {
             return; 
         }
 
-        if (membrosPendentes[participant]) {
+       if (membrosPendentes[participant]) {
             const msgCorpo = msg.message;
             if (!msgCorpo) return;
 
             // ==========================================
-            // 👁️ DETECTOR DE MÍDIA DEFINITIVO (RAIO-X 2.0)
+            // 👁️ DETECTOR CIRÚRGICO (SEM TRAVAR O BOT)
             // ==========================================
-            let mandouViewOnce = false;
-            let midia = false;
+            
+            // Função limpa que abre as "caixas" do WhatsApp sem ler arquivos pesados
+            const analisarMensagem = (msg) => {
+                let isViewOnce = false;
+                let isMidia = false;
+                let textContent = msg.conversation || msg.extendedTextMessage?.text || "";
 
-            // Função trator: varre a mensagem inteira sem parar no meio
-            const vasculharMensagem = (obj) => {
-                if (!obj || typeof obj !== 'object') return;
+                // 1. Desembrulha mensagens temporárias primeiro (se o grupo tiver ativado)
+                let msgReal = msg;
+                if (msg.ephemeralMessage && msg.ephemeralMessage.message) {
+                    msgReal = msg.ephemeralMessage.message;
+                }
+
+                // 2. Verifica se a mídia está solta na raiz
+                if (msgReal.imageMessage || msgReal.videoMessage || msgReal.ptvMessage) isMidia = true;
+                if (msgReal.imageMessage?.caption) textContent = msgReal.imageMessage.caption;
+                if (msgReal.videoMessage?.caption) textContent = msgReal.videoMessage.caption;
+
+                // 3. Verifica se a mensagem está dentro das caixas de Visualização Única ou Documento
+                const caixasEspeciais = ['viewOnceMessage', 'viewOnceMessageV2', 'viewOnceMessageV2Extension', 'documentWithCaptionMessage'];
                 
-                for (const chave in obj) {
-                    // Trava 1: Ignora se a pessoa estiver apenas respondendo a foto de outra pessoa
-                    if (chave === 'quotedMessage' || chave === 'contextInfo') continue;
-                    
-                    // Achou imagem ou vídeo nativo (mesmo escondido no 5º subsolo do código)
-                    if (chave === 'imageMessage' || chave === 'videoMessage' || chave === 'ptvMessage') {
-                        midia = true;
-                    }
-                    
-                    // Verificou se tem a flag de visualização única
-                    if (chave.toLowerCase().includes('viewonce')) {
-                        mandouViewOnce = true;
-                    }
-                    
-                    // Continua cavando mais fundo na mensagem sem abortar o processo
-                    if (typeof obj[chave] === 'object') {
-                        vasculharMensagem(obj[chave]);
+                for (const caixa of caixasEspeciais) {
+                    if (msgReal[caixa] && msgReal[caixa].message) {
+                        const subMsg = msgReal[caixa].message;
+                        
+                        if (caixa.includes('viewOnce')) isViewOnce = true;
+                        
+                        if (subMsg.imageMessage || subMsg.videoMessage || subMsg.ptvMessage) isMidia = true;
+                        if (subMsg.imageMessage?.caption) textContent = subMsg.imageMessage.caption;
+                        if (subMsg.videoMessage?.caption) textContent = subMsg.videoMessage.caption;
+                        if (subMsg.extendedTextMessage?.text) textContent = subMsg.extendedTextMessage.text;
                     }
                 }
+
+                return { midia: isMidia, viewOnce: isViewOnce, texto: textContent };
             };
 
-            // Inicia a varredura absoluta
-            vasculharMensagem(msgCorpo);
+            // Aplica a análise segura
+            const dadosMsg = analisarMensagem(msgCorpo);
 
             // ==========================================
 
-            // Extrai o texto da apresentação caso a pessoa mande junto com a foto ou só o texto
-            const textoNaMensagem = msgCorpo.conversation || 
-                                    msgCorpo.extendedTextMessage?.text || 
-                                    msgCorpo.imageMessage?.caption || 
-                                    msgCorpo.videoMessage?.caption || "";
-
             const padraoApresentacao = /\|/g;
-            const enviouTextoCorreto = (textoNaMensagem && (textoNaMensagem.match(padraoApresentacao) || []).length >= 3);
-
+            const enviouTextoCorreto = (dadosMsg.texto && (dadosMsg.texto.match(padraoApresentacao) || []).length >= 3);
             const numeroExibicao = participant.split('@')[0];
 
-            if (midia || enviouTextoCorreto) {
+            if (dadosMsg.midia || enviouTextoCorreto) {
                 let textoConfirmacao = `✅ *Cadastro confirmado!* 🎉\n\nFala, @${numeroExibicao}! Você mandou muito bem na apresentação. Bem-vindo(a) à elite do Bonde! 🚀🔥`;
                 let emojiReacao = '✅';
                 
-                if (midia && mandouViewOnce) {
+                if (dadosMsg.midia && dadosMsg.viewOnce) {
                     textoConfirmacao = `🕵️‍♂️ *Visão Biônica Ativada!* 👀\n\nRelaxa, @${numeroExibicao}, eu consegui validar sua foto/vídeo de visualização única! Ninguém precisa ver, só o sistema! 🔒✨\n\n✅ *Cadastro 100% confirmado!* Bem-vindo(a) ao Bonde! 🚀🎉`;
                     emojiReacao = '🕵️‍♂️';
                 }
 
                 await sock.sendMessage(sender, { react: { text: emojiReacao, key: msg.key } });
                 
-                // O { quoted: msg } FORÇA o bot a responder grudado na mensagem da pessoa
+                // O { quoted: msg } força a responder EM CIMA da foto da pessoa
                 await sock.sendMessage(sender, { 
                     text: textoConfirmacao, 
                     mentions: [participant] 
@@ -332,7 +334,7 @@ async function connectToWhatsApp() {
             } else {
                 await sock.sendMessage(sender, { react: { text: '⚠️', key: msg.key } });
                 
-                // Aqui também, o bot vai cobrar MAS respondendo em cima do que a pessoa mandou
+                // Responde EM CIMA da mensagem errada cobrando a foto
                 await sock.sendMessage(sender, { 
                     text: `⚠️ Ei, @${numeroExibicao}, cadê a apresentação? Você não seguiu o padrão! 🤦‍♂️\n\nEnvie uma *FOTO/VÍDEO* (pode ser de visualização única 🔒) ou o formato:\n*FOTO | CIDADE | IDADE | NOME* 📸`, 
                     mentions: [participant] 
