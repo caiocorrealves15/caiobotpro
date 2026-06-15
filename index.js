@@ -364,23 +364,24 @@ async function connectToWhatsApp() {
         }
 
         if (text.startsWith('!')) {
-const comandosExistentes = [
-    '!menu', '!todos', '!pix', '!imaginar', '!fantasmas', '!lembrete', '!apagar', '!decidir', 
-    '!cassino', '!conselho', '!resumo', '!regras', '!comprar', '!roleta', '!bafometro', '!verdade', 
-    '!fuga', '!corrida', '!macumba', '!calvo', '!qi', '!serasa', '!historico', '!fakenews', 
-    '!rinha', '!vasco', '!gravida', '!feio', '!clt', '!bola8', '!perfil', '!culpado', '!inocente', 
-    '!shippar', '!julgar', '!loja', '!pesquisar', '!backup', '!dar_pontos', '!atacar', '!boss', 
-    '!rank', '!casar', '!casais', '!piada', '!avisoadm', '!descasar', '!emoji', '!sortear', 
-    '!cadastros', '!perguntas', '!jogar', '!forca', '!jogosoff', '!jogoson', '!limpar', '!fixar', 
-    '!status', '!link', '!tier', '!ranking', '!placar', '!penalti', '!socar', '!beijar', '!matar', 
-    '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute', '!gado', '!corno', 
-    '!fofoca', '!roubar', '!cargos', '!comprar_cargo', '!dar_cargo', '!pescar', '!loteria', 
-    '!garimpo', '!imposto', '!hacker', '!tinder', '!pecado', '!raiox', '!pobre', '!atestado', 
-    '!multa', '!chapeu', '!nomefunk', '!processo', '!urna', 
-    '!bicho', '!bomba', '!passar', '!assalto', '!entrar', '!descubra', '!duelo', '!aceitarduelo', 
-    '!registro', '!trair', '!cornos', '!serrote', '!calvar', '!calvos', '!turquia', '!cobrar', 
-    '!spc', '!pagar'
-];
+    const comandosExistentes = [
+        '!menu', '!todos', '!pix', '!imaginar',  '!fantasmas', '!lembrete', '!apagar', '!decidir', 
+        '!cassino', '!conselho', '!resumo', '!regras', '!comprar', '!roleta', '!bafometro', '!verdade', 
+        '!escapar', '!corrida', '!macumba', '!calvo', '!qi', '!serasa', '!historico', '!fakenews', 
+        '!rinha', '!vasco', '!gravida', '!feio', '!clt', '!bola8', '!perfil', '!culpado', '!inocente', 
+        '!shippar', '!julgar', '!loja', '!pesquisar', '!backup', '!dar_pontos', '!atacar', '!boss', 
+        '!rank', '!casar', '!casais', '!piada', '!avisoadm', '!descasar', '!emoji', '!sortear', 
+        '!cadastros', '!perguntas', '!jogar', '!forca', '!jogosoff', '!jogoson', '!limpar', '!fixar', 
+        '!status', '!link', '!tier', '!ranking', '!placar', '!penalti', '!socar', '!beijar', '!matar', 
+        '!f', '!ban', '!adm', '!fechar', '!abrir', '!clima', '!desmute', '!mute', '!gado', '!corno', 
+        '!fofoca', '!roubar', '!cargos', '!comprar_cargo', '!dar_cargo', '!pescar', '!loteria', 
+        '!garimpo', '!imposto', '!hacker', '!tinder', '!pecado', '!raiox', '!pobre', '!atestado', 
+        '!multa', '!chapeu', '!nomefunk', '!processo', '!urna', 
+        '!bicho', '!bomba', '!passar', '!assalto', '!entrar', '!descubra', '!duelo', '!aceitarduelo', 
+        '!registro', '!trair', '!cornos', '!serrote', '!calvar', '!calvos', '!turquia', '!cobrar', 
+        '!spc', '!pagar', 
+        '!doar', '!slot', '!raspadinha', '!dados', '!parouimpar', '!galo'
+    ];
 
 const cmdDigitado = text.split(' ')[0];
 if (!comandosExistentes.includes(cmdDigitado)) {
@@ -425,12 +426,13 @@ if (!comandosExistentes.includes(cmdDigitado)) {
         }
 
 const comandosDeJogo = [
-    '!piada', '!casar', '!descasar', '!forca', '!penalti', '!sortear', '!emoji', '!jogar', 
-    '!perguntas', '!roleta', '!fuga', '!corrida', '!cassino', '!bola8', '!shippar', '!decidir', 
+    '!piada', '!casar', '!descasar', '!forca', '!penalti', '!doar', '!sortear', '!emoji', '!jogar', 
+    '!perguntas', '!roleta', '!escapar', '!corrida', '!cassino', '!bola8', '!shippar', '!decidir', 
     '!imaginar', '!pescar', '!loteria', '!garimpo', '!hacker', '!tinder', '!pecado', '!raiox', 
     '!pobre', '!atestado', '!multa', '!chapeu', '!nomefunk', '!processo', '!urna',
     '!bicho', '!bomba', '!passar', '!assalto', '!entrar', '!descubra', '!duelo', '!aceitarduelo', 
-    '!trair', '!cornos', '!serrote', '!calvar', '!calvos', '!turquia', '!cobrar', '!spc', '!pagar'
+    '!trair', '!cornos', '!serrote', '!calvar', '!calvos', '!turquia', '!cobrar', '!spc', '!pagar',
+    '!slot', '!raspadinha', '!dados', '!parouimpar', '!galo'
 ];
 if (!jogosLiberados && comandosDeJogo.some(cmd => text.startsWith(cmd))) {
             if (isAdmin) {
@@ -588,19 +590,38 @@ if (!jogosLiberados && comandosDeJogo.some(cmd => text.startsWith(cmd))) {
                 ];
                 return await sock.sendMessage(sender, { text: frasesDeboche[Math.floor(Math.random() * frasesDeboche.length)], quoted: msg });
             }
+
+            // --- NOVO: TRAVA DE HORÁRIO / COOLDOWN ---
+            const agora = Date.now();
+            const tempoDeEspera = 60 * 60 * 1000; // 1 hora em milissegundos (pode alterar se quiser)
+
+            // Verifica se o tempo mínimo já passou desde a última vez que o Boss apareceu
+            if (raidBoss.ultimoSpawn && (agora - raidBoss.ultimoSpawn < tempoDeEspera)) {
+                const minutosRestantes = Math.ceil((tempoDeEspera - (agora - raidBoss.ultimoSpawn)) / 60000);
+                return await sock.sendMessage(sender, { 
+                    text: `⏳ *O BOSS ESTÁ DESCANSANDO!*\n\nEle apanhou muito da última vez e voltou pra caverna. Tente invocar novamente em *${minutosRestantes} minuto(s)*! 🛌👹`, 
+                    quoted: msg 
+                });
+            }
+            // -----------------------------------------
+
             raidBoss.ativo = true;
             raidBoss.hp = 500;
             raidBoss.maxHp = 500;
+            raidBoss.ultimoSpawn = agora; // Registra a hora exata que ele apareceu no sistema
+
             const msgBoss = await sock.sendMessage(sender, { 
                 video: { url: 'https://media.tenor.com/CGTSjjR7FIIAAAPo/game-interface-video-game.mp4' }, 
                 gifPlayback: true,
                 caption: `👹 *BOSS INVOCADO!* 👹\n\nHP: ${raidBoss.hp}/${raidBoss.maxHp}\n\nTodos ataquem com *!atacar* antes que ele destrua o grupo!` 
             }, { quoted: msg });
+            
             raidBoss.idMensagem = msgBoss.key.id;
         }
 
         if (text === '!atacar') {
-            if (!raidBoss.ativo) return await sock.sendMessage(sender, { text: "❌ Não tem monstro aqui. Tá batendo no vento?" });
+            if (!raidBoss.ativo) return await sock.sendMessage(sender, { text: "❌ Não tem monstro aqui. Tá batendo no vento?", quoted: msg });
+            
             let dano = Math.floor(Math.random() * 50) + 10;
             let mensagemFuria = "";
 
@@ -622,11 +643,11 @@ if (!jogosLiberados && comandosDeJogo.some(cmd => text.startsWith(cmd))) {
                 await sock.sendMessage(sender, { 
                     video: { url: 'https://media.tenor.com/NgTSh0Bq5lYAAAPo/wearwolfwere-werewolfwhere.mp4' }, 
                     gifPlayback: true,
-                    caption: `🎉 VITÓRIA! O Boss foi derrotado! @${participant.split('@')[0]} deu o golpe final e ganhou 200 pontos!`,
+                    caption: `🎉 *VITÓRIA!* O Boss foi derrotado!\n\n@${participant.split('@')[0]} deu o golpe fatal e ganhou *200 pontos* de recompensa! 💰⚔️\n\n_O Boss voltará em 1 hora..._`,
                     mentions: [participant]
                 }, { quoted: msg });
             } else {
-                await sock.sendMessage(sender, { text: `⚔️ Você causou ${dano} de dano!${mensagemFuria}\nHP do Boss: ${raidBoss.hp}/${raidBoss.maxHp}` });
+                await sock.sendMessage(sender, { text: `⚔️ Você causou *${dano}* de dano!${mensagemFuria}\n🩸 HP do Boss: ${raidBoss.hp}/${raidBoss.maxHp}`, quoted: msg });
             }
         }
 
@@ -843,6 +864,48 @@ if (!jogosLiberados && comandosDeJogo.some(cmd => text.startsWith(cmd))) {
             }, { quoted: msg });
         }
 
+        // ==========================================
+        // 💸 DOAÇÃO / TRANSFERÊNCIA DE PONTOS (!doar)
+        // ==========================================
+
+        if (text.startsWith('!doar')) {
+            const args = text.split(' ');
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            
+            // Pega o valor da doação (normalmente o terceiro item: !doar @cleyton 100)
+            const valorDoacao = parseInt(args[2]);
+
+            if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione para quem você quer doar! Exemplo: *!doar @mencao 100*", quoted: msg });
+            if (mention === participant) return await sock.sendMessage(sender, { text: "❌ Quer doar pra si mesmo? Isso se chama lavagem de dinheiro, chefe! 😂", quoted: msg });
+            if (isNaN(valorDoacao) || valorDoacao <= 0) return await sock.sendMessage(sender, { text: "❌ Informe um valor válido para doar! Exemplo: *!doar @mencao 100*", quoted: msg });
+
+            // Carrega o placar com a função segura
+            let placar = lerArquivoSeguro(arquivoPlacar);
+
+            // Verifica se o doador tem saldo suficiente
+            if ((placar[participant] || 0) < valorDoacao) {
+                return await sock.sendMessage(sender, { 
+                    text: `❌ *SALDO INSUFICIENTE!* Você só tem *${(placar[participant] || 0).toLocaleString('pt-BR')} pontos*. Vá trabalhar antes de dar uma de Silvio Santos! 💸`, 
+                    quoted: msg 
+                });
+            }
+
+            // Faz a transferência de fato
+            placar[participant] -= valorDoacao;
+            placar[mention] = (placar[mention] || 0) + valorDoacao;
+            
+            // Salva no banco de dados
+            fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
+
+            await sock.sendMessage(sender, { react: { text: '🤝', key: msg.key } });
+            await sock.sendMessage(sender, {
+                video: { url: "https://media.tenor.com/b3vP0rB72fMAAAPo/money-raining.mp4" }, 
+                gifPlayback: true,
+                caption: `🤝 *TRANSFERÊNCIA CONCLUÍDA!* 🤝\n\n💸 @${participant.split('@')[0]} deu uma de filantropo e transferiu *${valorDoacao.toLocaleString('pt-BR')} pontos* para a conta do @${mention.split('@')[0]}!\n\n_O dinheiro já está na conta!_ 🎩✨`,
+                mentions: [participant, mention]
+            }, { quoted: msg });
+        }
+
         if (text.startsWith('!emoji')) {
             const desafios = [
                 { emojis: '⏳🏜️🪰🕶️', resposta: 'duna', gif: 'https://tenor.com/pt-BR/view/mike-dune-mike-paul-dune-mikes-book-reviews-dune-mikes-book-reviews-paul-mike-atreides-gif-22418379' },
@@ -898,21 +961,35 @@ if (!jogosLiberados && comandosDeJogo.some(cmd => text.startsWith(cmd))) {
             }
 
             const entries = Object.entries(placar);
-            if (entries.length === 0) return await sock.sendMessage(sender, { text: "❌ O placar está vazio.", quoted: msg });
+            if (entries.length === 0) return await sock.sendMessage(sender, { text: "❌ O placar geral está vazio.", quoted: msg });
 
-            const ranking = entries.sort((a, b) => b[1] - a[1]).slice(0, 10);
-            let res = `💎 *TOP 10 - RICOS DO BONDE*\n\n`;
-            let listaMentions = [];
+            // Ordena o ranking inteiro em segredo
+            const ranking = entries.sort((a, b) => b[1] - a[1]);
 
-            ranking.forEach((entry, i) => {
-                const [id, pontos] = entry;
-                listaMentions.push(id); 
-                const medalha = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "🔹";
-                const numero = id.split('@')[0];
-                res += `${medalha} ${i + 1}. @${numero} - *${pontos.toLocaleString('pt-BR')} pts*\n`;
-            });
+            // Procura exatamente a posição de quem enviou o comando
+            const posicaoIndex = ranking.findIndex(entry => entry[0] === participant);
 
-            await sock.sendMessage(sender, { text: res, mentions: listaMentions }, { quoted: msg });
+            if (posicaoIndex === -1) {
+                return await sock.sendMessage(sender, { 
+                    text: `❌ @${participant.split('@')[0]}, você ainda não tem pontos registrados no sistema! Vá trabalhar ou jogar no cassino.`, 
+                    mentions: [participant], 
+                    quoted: msg 
+                });
+            }
+
+            // Pega os dados específicos da pessoa
+            const pontosUsuario = ranking[posicaoIndex][1];
+            const posicaoReal = posicaoIndex + 1; // Soma 1 porque as listas na programação começam no zero
+
+            // Define a medalha se o cara for Top 3
+            let medalha = "🔹";
+            if (posicaoReal === 1) medalha = "🥇";
+            else if (posicaoReal === 2) medalha = "🥈";
+            else if (posicaoReal === 3) medalha = "🥉";
+
+            const res = `📊 *SEU PLACAR INDIVIDUAL* 📊\n\n👤 Membro: @${participant.split('@')[0]}\n🏆 Posição Geral: *${posicaoReal}º Lugar* ${medalha}\n💰 Seus Pontos: *${pontosUsuario.toLocaleString('pt-BR')} pts*`;
+
+            await sock.sendMessage(sender, { text: res, mentions: [participant] }, { quoted: msg });
         }
 
         if (lowerText === '!link') {
@@ -1039,6 +1116,9 @@ _Não perca tempo, compartilhe agora!_`.trim();
         // ==========================================
         // 📛 MENU PRINCIPAL DO BOT
         // ==========================================
+        // ==========================================
+        // 📛 MENU PRINCIPAL DO BOT
+        // ==========================================
         if (text === '!menu') {
             const senderId = msg.key.participant || msg.key.remoteJid; 
             const dataAtual = new Date().toLocaleDateString('pt-BR');
@@ -1059,17 +1139,21 @@ _Não perca tempo, compartilhe agora!_`.trim();
  ┣ 🎣 !pescar ➾ 🎟️ !loteria
  ┣ ⛏️ !garimpo ➾ 🐒 !bicho
  ┣ 🏦 !assalto ➾ 🥷 !entrar
- ┗ 🏆 !ranking ➾ 🥇 !rank
+ ┣ 💸 !doar ➾ 🏆 !ranking
+ ┗ 🥇 !rank
 
 🎲 *DIVERSÃO & SORTE*
  ┣ 🎨 !imaginar ➾ 🔠 !descubra
- ┣ 👾 !jogar ➾ 🏎️ !fuga
+ ┣ 👾 !jogar ➾ 🏎️ !escapar
  ┣ 🏇 !corrida ➾ 🔫 !roleta
  ┣ 💀 !forca ➾ ⚽ !penalti
  ┣ 🧠 !perguntas ➾ 💣 !bomba
  ┣ 🧨 !passar ➾ 🎬 !emoji
  ┣ 🤡 !piada ➾ ⚖️ !decidir
- ┗ 🎱 !bola8 ➾ 💘 !shippar
+ ┣ 🎱 !bola8 ➾ 💘 !shippar
+ ┣ 🎰 !slot ➾ 🎫 !raspadinha
+ ┣ 🎲 !dados ➾ ✌️ !parouimpar
+ ┗ 🐓 !galo
 
 😈 *CAOS & TRETA*
  ┣ ⚖️ !julgar ➾ 💍 !casar
@@ -1218,6 +1302,182 @@ _Não perca tempo, compartilhe agora!_`.trim();
                 fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
                 await sock.sendMessage(sender, { text: `🎰 *DEU NO POSTE!* 🎰\n\nBicho sorteado: *${animalSorteado.toUpperCase()}*\n\n💸 Que azar! @${participant.split('@')[0]} apostou no ${animalEscolhido} e perdeu os ${valorAposta} pontos pro bicheiro!`, mentions: [participant] }, { quoted: msg });
             }
+        }
+
+        // ==========================================
+        // 🎰 5 NOVOS JOGOS DE APOSTA DO BONDE
+        // ==========================================
+
+        // 1. CAÇA-NÍQUEL (!slot <valor>)
+        if (text.startsWith('!slot')) {
+            const args = text.split(' ');
+            const valorAposta = parseInt(args[1]);
+
+            if (isNaN(valorAposta) || valorAposta <= 0) return await sock.sendMessage(sender, { text: "❌ Quer apostar vento? Digite um valor válido! Exemplo: *!slot 100*", quoted: msg });
+
+            let placar = lerArquivoSeguro(arquivoPlacar);
+            if ((placar[participant] || 0) < valorAposta) return await sock.sendMessage(sender, { text: `❌ Tá liso! Você só tem ${(placar[participant] || 0)} pontos.`, quoted: msg });
+
+            const simbolos = ['🍒', '🍋', '🔔', '💎', '7️⃣'];
+            const r1 = simbolos[Math.floor(Math.random() * simbolos.length)];
+            const r2 = simbolos[Math.floor(Math.random() * simbolos.length)];
+            const r3 = simbolos[Math.floor(Math.random() * simbolos.length)];
+
+            placar[participant] -= valorAposta; // Desconta a aposta
+            let resultado = "";
+            let premio = 0;
+
+            if (r1 === r2 && r2 === r3) {
+                premio = valorAposta * 10;
+                resultado = `🎰 *JACKPOT!!!* Você acertou TUDO e ganhou *${premio} pts*!`;
+            } else if (r1 === r2 || r2 === r3 || r1 === r3) {
+                premio = valorAposta * 2;
+                resultado = `🎰 *QUASE!* Combinou 2 símbolos e recuperou o dobro: *${premio} pts*!`;
+            } else {
+                resultado = `🎰 *PERDEU PLAYBOY!* Não combinou nada. O cassino agradece sua doação de *${valorAposta} pts*.`;
+            }
+
+            placar[participant] += premio;
+            fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
+
+            await sock.sendMessage(sender, { 
+                text: `🎰 *CAÇA-NÍQUEL DO BONDE* 🎰\n\n[ ${r1} | ${r2} | ${r3} ]\n\n${resultado}`, 
+                quoted: msg 
+            });
+        }
+
+        // 2. JOGO DOS DADOS (!dados <valor>)
+        if (text.startsWith('!dados')) {
+            const args = text.split(' ');
+            const valorAposta = parseInt(args[1]);
+
+            if (isNaN(valorAposta) || valorAposta <= 0) return await sock.sendMessage(sender, { text: "❌ Valor inválido! Exemplo: *!dados 50*", quoted: msg });
+
+            let placar = lerArquivoSeguro(arquivoPlacar);
+            if ((placar[participant] || 0) < valorAposta) return await sock.sendMessage(sender, { text: `❌ Saldo insuficiente! Você tem ${(placar[participant] || 0)} pts.`, quoted: msg });
+
+            const dadoUser = Math.floor(Math.random() * 6) + 1;
+            const dadoBot = Math.floor(Math.random() * 6) + 1;
+
+            let resultadoTxt = `🎲 O seu dado caiu em: *${dadoUser}*\n🤖 O meu dado caiu em: *${dadoBot}*\n\n`;
+
+            if (dadoUser > dadoBot) {
+                placar[participant] += valorAposta; // Ganha o valor apostado de lucro
+                resultadoTxt += `💸 *VOCÊ GANHOU!* Tirou sorte grande e lucrou *${valorAposta} pts*!`;
+            } else if (dadoUser < dadoBot) {
+                placar[participant] -= valorAposta;
+                resultadoTxt += `😂 *VOCÊ PERDEU!* O bot joga muito. Menos *${valorAposta} pts* na sua conta!`;
+            } else {
+                resultadoTxt += `🤝 *EMPATE!* Ninguém perde, ninguém ganha. Sorte sua!`;
+            }
+
+            fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
+            await sock.sendMessage(sender, { react: { text: '🎲', key: msg.key } });
+            await sock.sendMessage(sender, { text: resultadoTxt, quoted: msg });
+        }
+
+        // 3. RASPADINHA CLANDESTINA (!raspadinha)
+        if (text === '!raspadinha') {
+            const custo = 150;
+            let placar = lerArquivoSeguro(arquivoPlacar);
+
+            if ((placar[participant] || 0) < custo) return await sock.sendMessage(sender, { text: `❌ A raspadinha custa ${custo} pontos. Você tá quebrado!`, quoted: msg });
+
+            placar[participant] -= custo;
+
+            const chance = Math.random() * 100;
+            let premio = 0;
+            let msgPremio = "";
+
+            if (chance < 5) {
+                premio = 3000;
+                msgPremio = `🤯 *MEU DEUS! VOCÊ TIROU O PRÊMIO MÁXIMO!* Ganhou absurdos *${premio} pts*! O dono da lotérica tá chorando!`;
+            } else if (chance < 20) {
+                premio = 500;
+                msgPremio = `🤑 *BOOOA!* Raspou e achou o prêmio médio! Levou *${premio} pts*!`;
+            } else if (chance < 40) {
+                premio = 150;
+                msgPremio = `🤝 *UFA!* Recuperou o valor da cartela. Levou os mesmos *${premio} pts* de volta.`;
+            } else {
+                msgPremio = `🗑️ *PREMIADO... COM NADA!* A cartela estava vazia. Você perdeu seus ${custo} pontos.`;
+            }
+
+            placar[participant] += premio;
+            fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
+
+            await sock.sendMessage(sender, { react: { text: '🎫', key: msg.key } });
+            await sock.sendMessage(sender, { text: `🎫 *RASPADINHA DO BONDE* 🎫\n\nVocê pagou ${custo} pontos e começou a raspar com a moeda...\n\n${msgPremio}`, quoted: msg });
+        }
+
+        // 4. PAR OU ÍMPAR (!parouimpar <escolha> <valor>)
+        if (text.startsWith('!parouimpar')) {
+            const args = text.split(' ');
+            const escolha = args[1]?.toLowerCase();
+            const valorAposta = parseInt(args[2]);
+
+            if (!['par', 'impar', 'ímpar'].includes(escolha) || isNaN(valorAposta) || valorAposta <= 0) {
+                return await sock.sendMessage(sender, { text: "❌ Formato errado! Use: *!parouimpar par 100* ou *!parouimpar impar 50*", quoted: msg });
+            }
+
+            let placar = lerArquivoSeguro(arquivoPlacar);
+            if ((placar[participant] || 0) < valorAposta) return await sock.sendMessage(sender, { text: `❌ Saldo insuficiente!`, quoted: msg });
+
+            const numeroUser = Math.floor(Math.random() * 10);
+            const numeroBot = Math.floor(Math.random() * 10);
+            const soma = numeroUser + numeroBot;
+            const deuPar = soma % 2 === 0;
+
+            let ganhou = false;
+            if ((deuPar && escolha === 'par') || (!deuPar && (escolha === 'impar' || escolha === 'ímpar'))) {
+                ganhou = true;
+            }
+
+            let resultadoTxt = `✌️ *PAR OU ÍMPAR* ✊\n\nVocê escolheu *${escolha.toUpperCase()}*.\nVocê jogou *${numeroUser}* e o bot jogou *${numeroBot}*.\nSoma: *${soma}* (Deu ${deuPar ? 'PAR' : 'ÍMPAR'})!\n\n`;
+
+            if (ganhou) {
+                placar[participant] += valorAposta;
+                resultadoTxt += `🎉 Você ganhou a mão e faturou *${valorAposta} pts*!`;
+            } else {
+                placar[participant] -= valorAposta;
+                resultadoTxt += `💀 Perdeu! O bot foi mais esperto. Tchau, *${valorAposta} pts*!`;
+            }
+
+            fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
+            await sock.sendMessage(sender, { text: resultadoTxt, quoted: msg });
+        }
+
+        // 5. RINHA DE GALO (!galo <nome> <valor>)
+        if (text.startsWith('!galo')) {
+            const args = text.split(' ');
+            const valorAposta = parseInt(args[args.length - 1]);
+            const nomeGalo = args.slice(1, -1).join(' ');
+
+            if (!nomeGalo || isNaN(valorAposta) || valorAposta <= 0) {
+                return await sock.sendMessage(sender, { text: "❌ Formato errado! Use: *!galo Cleyton 200* (Nome do galo e valor)", quoted: msg });
+            }
+
+            let placar = lerArquivoSeguro(arquivoPlacar);
+            if ((placar[participant] || 0) < valorAposta) return await sock.sendMessage(sender, { text: `❌ Você não tem grana pra bancar essa briga!`, quoted: msg });
+
+            const galosAdversarios = ['Bico de Aço', 'Penas de Fogo', 'Carijó do Mal', 'Terror do Galinheiro', 'Sniper Cego'];
+            const galoBot = galosAdversarios[Math.floor(Math.random() * galosAdversarios.length)];
+
+            // 50% de chance de ganhar
+            const userVenceu = Math.random() > 0.5;
+
+            let resultadoTxt = `🐓 *RINHA DE GALO CLANDESTINA* 🐓\n\nSeu galo *"${nomeGalo}"* entrou no ringue contra o temido *"${galoBot}"*!\nAs penas estão voando...\n\n`;
+
+            if (userVenceu) {
+                placar[participant] += valorAposta;
+                resultadoTxt += `🩸 *VITÓRIA!* Seu galo depenou o adversário na bicada! Você apostou e ganhou *${valorAposta} pts*!`;
+            } else {
+                placar[participant] -= valorAposta;
+                resultadoTxt += `🍗 *VIROU CANJA!* Seu galo apanhou feio e correu pra mãe. Você perdeu os *${valorAposta} pts* apostados!`;
+            }
+
+            fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
+            await sock.sendMessage(sender, { react: { text: '🐓', key: msg.key } });
+            await sock.sendMessage(sender, { text: resultadoTxt, quoted: msg });
         }
 
         // 💣 2. BATATA QUENTE EXPLOSIVA (!bomba e !passar)
@@ -1513,8 +1773,8 @@ _Não perca tempo, compartilhe agora!_`.trim();
         // ==========================================
         // 4. 🏎️ FUGA DA POLÍCIA (!fuga) - MINI RPG
         // ==========================================
-        if (text.startsWith('!fuga')) {
-            const args = text.replace('!fuga', '').trim();
+        if (text.startsWith('!escapar')) {
+            const args = text.replace('!escapar', '').trim();
             const veiculo = parseInt(args);
 
             if (!veiculo || veiculo < 1 || veiculo > 3) {
@@ -1522,7 +1782,7 @@ _Não perca tempo, compartilhe agora!_`.trim();
                 return await sock.sendMessage(sender, { 
                     video: { url: 'https://media.tenor.com/bBJVwTdMtvgAAAPo/pay-pay-pig.mp4' }, 
                     gifPlayback: true,
-                    caption: `🚨 *VOCÊ ACABOU DE ROUBAR O BANCO DO ZAP!* 🚨\n\nA viatura tá na cola! Escolha seu veículo de fuga rápido:\n\n1️⃣ Celta Rebaixado com escada no teto\n2️⃣ Moto CG Titan cortando giro\n3️⃣ Patinete Elétrico sem freio\n\nDigite: !fuga [1, 2 ou 3]`
+                    caption: `🚨 *VOCÊ ACABOU DE ROUBAR O BANCO DO ZAP!* 🚨\n\nA viatura tá na cola! Escolha seu veículo de fuga rápido:\n\n1️⃣ Celta Rebaixado com escada no teto\n2️⃣ Moto CG Titan cortando giro\n3️⃣ Patinete Elétrico sem freio\n\nDigite: !escapar [1, 2 ou 3]`
                 }, { quoted: msg });
             }
 
@@ -2938,20 +3198,22 @@ _Não perca tempo, compartilhe agora!_`.trim();
                 }
 
                 if (text.startsWith('!limpar')) {
-                    try {
-                        const messages = await sock.fetchMessagesFromHistory(sender, 10);
-                        for (let m of messages) await sock.sendMessage(sender, { delete: m.key });
-                        await sock.sendMessage(sender, { text: "✅ Chat limpo pelo ADM de Fachada!" });
-                    } catch (err) {
-                        await sock.sendMessage(sender, { text: "❌ O bot precisa ser ADM real pra apagar as mensagens dos outros!" }, { quoted: msg });
-                    }
+                    // Cria o botão "Ler mais..." usando um caractere invisível do WhatsApp
+                    const lerMais = String.fromCharCode(8206).repeat(4000);
+                    const quebraDeLinha = '\n'.repeat(100); // Garante que a tela vai ficar em branco
+                    
+                    const msgLimpeza = `🧹 *O ADM DE FACHADA PASSOU A VASSOURA!*\n\nChat limpo pelo todo poderoso @${participant.split('@')[0]}!${lerMais}${quebraDeLinha}✅ *Chat totalmente limpo!* Ninguém viu nada. 🤫`;
+                    
+                    await sock.sendMessage(sender, { text: msgLimpeza, mentions: [participant] });
+                
                 } else if (text.startsWith('!fixar')) {
                     const msgFix = text.replace('!fixar', '').trim();
                     if(!msgFix) return await sock.sendMessage(sender, { text: "❌ Escreve a mensagem pra eu fixar, ué!", quoted: msg });
                     await sock.sendMessage(sender, { text: `📌 *FIXADO PELO ADM DE FACHADA:*\n\n${msgFix}` });
+                
                 } else if (text.startsWith('!status')) {
                     const totalMsg = Object.values(contagemMensagens).reduce((a, b) => a + b, 0);
-                    await sock.sendMessage(sender, { text: `📊 *STATUS DO GRUPO:*\n\n💬 Total de Mensagens: ${totalMsg}\n👑 Seu cargo temporário está ATIVO!` });
+                    await sock.sendMessage(sender, { text: `📊 *STATUS DO GRUPO:*\n\n💬 Total de Mensagens: ${totalMsg}\n👑 Seu cargo temporário está ATIVO e você manda aqui (por enquanto)!` });
                 }
             }
         }
