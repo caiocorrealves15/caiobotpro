@@ -367,7 +367,7 @@ async function connectToWhatsApp() {
     const comandosExistentes = [
         '!menu', '!todos', '!pix', '!imaginar',  '!fantasmas', '!lembrete', '!apagar', '!decidir', 
         '!cassino', '!conselho', '!resumo', '!regras', '!comprar', '!roleta', '!bafometro', '!verdade', 
-        '!escapar', '!corrida', '!macumba', '!calvo', '!qi', '!serasa', '!historico', '!fakenews', 
+        '!escapar', '!corrida', '!macumba', '!calvo', '!qi', '!serasa', '!tirar_pontos', '!historico', '!fakenews', 
         '!rinha', '!vasco', '!gravida', '!feio', '!clt', '!bola8', '!perfil', '!culpado', '!inocente', 
         '!shippar', '!julgar', '!loja', '!pesquisar', '!backup', '!dar_pontos', '!atacar', '!boss', 
         '!rank', '!casar', '!casais', '!piada', '!avisoadm', '!descasar', '!emoji', '!sortear', 
@@ -869,17 +869,19 @@ if (!jogosLiberados && comandosDeJogo.some(cmd => text.startsWith(cmd))) {
         // ==========================================
 
         if (text.startsWith('!doar')) {
-            const args = text.split(' ');
             const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
             
-            // Pega o valor da doação (normalmente o terceiro item: !doar @cleyton 100)
-            const valorDoacao = parseInt(args[2]);
+            // Divide o texto ignorando se a pessoa deu um ou mais espaços sem querer
+            const args = text.trim().split(/\s+/);
+            
+            // Pega sempre a última palavra digitada (que deve ser o valor numérico)
+            const valorDoacao = parseInt(args[args.length - 1]);
 
             if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione para quem você quer doar! Exemplo: *!doar @mencao 100*", quoted: msg });
             if (mention === participant) return await sock.sendMessage(sender, { text: "❌ Quer doar pra si mesmo? Isso se chama lavagem de dinheiro, chefe! 😂", quoted: msg });
-            if (isNaN(valorDoacao) || valorDoacao <= 0) return await sock.sendMessage(sender, { text: "❌ Informe um valor válido para doar! Exemplo: *!doar @mencao 100*", quoted: msg });
+            if (isNaN(valorDoacao) || valorDoacao <= 0) return await sock.sendMessage(sender, { text: "❌ Informe um valor válido para doar no final! Exemplo: *!doar @mencao 100*", quoted: msg });
 
-            // Carrega o placar com a função segura
+            // Carrega o placar (certifique-se de que a função existe no seu código)
             let placar = lerArquivoSeguro(arquivoPlacar);
 
             // Verifica se o doador tem saldo suficiente
@@ -890,10 +892,69 @@ if (!jogosLiberados && comandosDeJogo.some(cmd => text.startsWith(cmd))) {
                 });
             }
 
-            // Faz a transferência de fato
+            // ==========================================
+        // 🚨 CONTROLE DE ADM: RETIRAR PONTOS (!tirar_pontos)
+        // ==========================================
+
+        if (text.startsWith('!tirar_pontos')) {
+            // Verificação de segurança 100% blindada para garantir que só ADM e o CEO usem
+            let isAdmGeral = false;
+            try {
+                const metadata = await sock.groupMetadata(msg.key.remoteJid);
+                const admins = metadata.participants.filter(p => p.admin !== null).map(p => p.id);
+                // Substitua pelo seu número caso não seja esse
+                isAdmGeral = admins.includes(sender) || sender.includes('5527992997083'); 
+            } catch (e) {
+                console.log("Erro ao verificar admins:", e);
+            }
+
+            if (!isAdmGeral) {
+                return await sock.sendMessage(sender, { text: "❌ *Acesso Negado!* Só a verdadeira Elite (ADMs) pode confiscar bens nesse grupo! Volta pro seu lugar.", quoted: msg });
+            }
+
+            const args = text.trim().split(/\s+/);
+            const mention = msg.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            const valorRetirar = parseInt(args[args.length - 1]);
+
+            if (!mention) return await sock.sendMessage(sender, { text: "❌ Mencione de quem o Estado vai confiscar os pontos! Exemplo: *!tirar_pontos @mencao 500*", quoted: msg });
+            if (mention === participant) return await sock.sendMessage(sender, { text: "❌ Você quer confiscar seus próprios pontos? Que fetiche estranho com a Receita Federal é esse? 😂", quoted: msg });
+            if (isNaN(valorRetirar) || valorRetirar <= 0) return await sock.sendMessage(sender, { text: "❌ Digite um valor válido no final! Exemplo: *!tirar_pontos @mencao 500*", quoted: msg });
+
+            let placar = lerArquivoSeguro(arquivoPlacar);
+
+            // Verifica se a pessoa tem conta no placar
+            if (!placar[mention]) {
+                return await sock.sendMessage(sender, { text: "❌ Esse membro já está mais liso que sabonete, não tem nem conta no sistema pra ser confiscada!", quoted: msg });
+            }
+
+            // Subtrai os pontos como uma verdadeira multa
+            placar[mention] -= valorRetirar;
+
+            // 🚨 Se o saldo ficar zero ou negativo, varre o nome do cara do ranking!
+            if (placar[mention] <= 0) {
+                delete placar[mention];
+            }
+
+            fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
+
+            await sock.sendMessage(sender, { react: { text: '📉', key: msg.key } });
+            await sock.sendMessage(sender, {
+                video: { url: "https://media.tenor.com/ZONXJ3v6dD0AAAPo/kick-out-the.mp4" }, // Gif de dar um tapa/tomar algo
+                gifPlayback: true,
+                caption: `🚨 *CONFISCO DO ESTADO!* 🚨\n\nO Supremo Tribunal do Bonde bateu o martelo e confiscou *${valorRetirar.toLocaleString('pt-BR')} pontos* da conta do @${mention.split('@')[0]}!\n\n_A Receita Federal não perdoa!_ 💸🔨`,
+                mentions: [mention]
+            }, { quoted: msg });
+        }
+
+            // Faz a transferência matemática
             placar[participant] -= valorDoacao;
             placar[mention] = (placar[mention] || 0) + valorDoacao;
             
+            // 🚨 A MÁGICA AQUI: Se a pessoa doou tudo e ficou zerada (ou negativa), apaga do ranking!
+            if (placar[participant] <= 0) {
+                delete placar[participant];
+            }
+
             // Salva no banco de dados
             fs.writeFileSync(arquivoPlacar, JSON.stringify(placar, null, 2));
 
@@ -901,7 +962,7 @@ if (!jogosLiberados && comandosDeJogo.some(cmd => text.startsWith(cmd))) {
             await sock.sendMessage(sender, {
                 video: { url: "https://media.tenor.com/b3vP0rB72fMAAAPo/money-raining.mp4" }, 
                 gifPlayback: true,
-                caption: `🤝 *TRANSFERÊNCIA CONCLUÍDA!* 🤝\n\n💸 @${participant.split('@')[0]} deu uma de filantropo e transferiu *${valorDoacao.toLocaleString('pt-BR')} pontos* para a conta do @${mention.split('@')[0]}!\n\n_O dinheiro já está na conta!_ 🎩✨`,
+                caption: `🤝 *TRANSFERÊNCIA CONCLUÍDA!* 🤝\n\n💸 @${participant.split('@')[0]} deu uma de filantropo e transferiu *${valorDoacao.toLocaleString('pt-BR')} pontos* para a conta do @${mention.split('@')[0]}!\n\n_O dinheiro já foi debitado e enviado!_ 🎩✨`,
                 mentions: [participant, mention]
             }, { quoted: msg });
         }
@@ -1191,6 +1252,7 @@ _Não perca tempo, compartilhe agora!_`.trim();
  ┣ 🔓 !abrir ➾ 👑 !adm
  ┣ 🕹️ !jogoson ➾ 🚫 !jogosoff
  ┣ 💰 !dar_pontos ➾ 👹 !imposto
+ ┣ 📛 !tirar_pontos
  ┣ 📣 !avisoadm ➾ 📋 !cadastros
  ┗ 📣 !todos ➾ 👻 !fantasmas
 
